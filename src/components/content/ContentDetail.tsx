@@ -42,8 +42,10 @@ const ContentDetail = ({ content, onClose }: ContentDetailProps) => {
       
       <ScrollArea className="flex-1 p-6">
         <div className="prose prose-lg max-w-none">
-          {/* Use processContent to format the content properly */}
-          <ReactMarkdown className="whitespace-pre-wrap">{processContent(content.content)}</ReactMarkdown>
+          {/* Fix: ReactMarkdown doesn't accept className directly */}
+          <div className="whitespace-pre-wrap">
+            <ReactMarkdown>{processContent(content.content)}</ReactMarkdown>
+          </div>
           
           {/* Display any images if they're attached to the content */}
           {content.image_url && (
