@@ -1,10 +1,9 @@
 
 import React from 'react';
 import { ContentEntry } from '@/services/content/contentService';
-import { X } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ReactMarkdown from 'react-markdown';
-import { Dialog, DialogContent, DialogOverlay } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 interface ContentDetailProps {
   content: ContentEntry;
@@ -31,13 +30,6 @@ const ContentDetail = ({ content, onClose }: ContentDetailProps) => {
     <div className="flex flex-col h-full w-full bg-background">
       <header className="border-b p-6 flex justify-between items-center">
         <h1 className="text-2xl font-semibold">{content.title}</h1>
-        <button 
-          onClick={onClose}
-          className="rounded-full p-2 hover:bg-muted transition-colors"
-          aria-label="Close"
-        >
-          <X size={24} />
-        </button>
       </header>
       
       <ScrollArea className="flex-1 p-6">

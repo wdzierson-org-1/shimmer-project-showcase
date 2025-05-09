@@ -1,17 +1,16 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { createEmbeddings } from '@/services/openai';
 
+// Define the structure of a content entry
 export interface ContentEntry {
-  id?: string;
+  id: string;
   title: string;
   content: string;
   type: string;
-  created_at?: string;
-  updated_at?: string;
-  visible?: boolean;
-  image_url?: string;
-  file_url?: string;
+  created_at: string;
+  updated_at: string;
+  visible: boolean;
+  image_url?: string | null;
+  file_url?: string | null;
 }
 
 export async function fetchAllContent() {
