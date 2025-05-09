@@ -3,41 +3,48 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Newspaper, FolderOpen, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Newspaper, FolderOpen, MessageSquare, LogOut } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 const Admin = () => {
-  // In a real implementation, this would check for authentication
-  const isAuthenticated = true; // This would come from Supabase auth
+  const { signOut, user } = useAuth();
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-[400px]">
-          <CardHeader>
-            <CardTitle>Admin Access</CardTitle>
-            <CardDescription>Please login to access the admin panel</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button className="w-full">Login</Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success('You have been signed out successfully');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Failed to sign out');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-muted/20">
       <div className="container mx-auto py-8 px-4">
-        <div className="mb-8">
-          <Button asChild variant="ghost" className="mb-4">
-            <Link to="/">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Chat
-            </Link>
-          </Button>
-          <h1 className="text-3xl font-semibold">Portfolio Admin</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your projects and portfolio content
-          </p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <Button asChild variant="ghost" className="mb-4">
+              <Link to="/">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Chat
+              </Link>
+            </Button>
+            <h1 className="text-3xl font-semibold">Portfolio Admin</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage your projects and portfolio content
+            </p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            {user && (
+              <div className="text-sm text-muted-foreground">
+                Signed in as {user.email}
+              </div>
+            )}
+            <Button variant="outline" onClick={handleSignOut}>
+              <LogOut className="mr-2 h-4 w-4" /> Sign Out
+            </Button>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -2,9 +2,12 @@
 import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Github } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { Link } from 'react-router-dom';
 
 const HomeIntro = () => {
   const [greeting, setGreeting] = useState('Hello');
+  const { user } = useAuth();
 
   useEffect(() => {
     const getTimeBasedGreeting = () => {
@@ -31,7 +34,7 @@ const HomeIntro = () => {
           "font-serif text-4xl md:text-5xl font-medium text-foreground",
           "tracking-tight leading-[1.15]"
         )}>
-          {greeting}
+          {greeting} {user ? user.email?.split('@')[0] : ''}
         </h2>
         
         <div className={cn(
@@ -65,6 +68,14 @@ const HomeIntro = () => {
             rel="noopener noreferrer"
           >Project Ariadne</a>?
         </p>
+        
+        {user && (
+          <p className="text-foreground/80">
+            <Link to="/admin" className="text-foreground hover:underline">
+              Admin Dashboard
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   );

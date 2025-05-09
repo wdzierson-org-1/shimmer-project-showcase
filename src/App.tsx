@@ -5,8 +5,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
+import Login from "./pages/Login";
 import AdminProjects from "./pages/AdminProjects"; 
 import AdminContent from "./pages/AdminContent";
 import AdminPrompts from "./pages/AdminPrompts";
@@ -60,18 +64,45 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/projects" element={<AdminProjects />} />
-            <Route path="/admin/project/:id" element={<ProjectEditor />} />
-            <Route path="/admin/content" element={<AdminContent />} />
-            <Route path="/admin/content/:id" element={<ContentEditor />} />
-            <Route path="/admin/prompts" element={<AdminPrompts />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <Admin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/projects" element={
+                <ProtectedRoute>
+                  <AdminProjects />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/project/:id" element={
+                <ProtectedRoute>
+                  <ProjectEditor />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/content" element={
+                <ProtectedRoute>
+                  <AdminContent />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/content/:id" element={
+                <ProtectedRoute>
+                  <ContentEditor />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/prompts" element={
+                <ProtectedRoute>
+                  <AdminPrompts />
+                </ProtectedRoute>
+              } />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
