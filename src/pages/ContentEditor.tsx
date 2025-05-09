@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import ContentForm from '@/components/content/ContentForm';
-import { fetchContentById, saveContentEntry } from '@/services/content/contentService';
+import { fetchContentById, saveContentEntry, ContentEntry } from '@/services/content/contentService';
 
 const ContentEditor = () => {
   const { id } = useParams<{ id: string }>();

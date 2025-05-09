@@ -21,54 +21,46 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if columns exist
-    const { data: columnsData, error: columnsError } = await supabase
-      .rpc('system.columns', { 
-        table_schema: 'public',
-        table_name: 'content_entries', 
+    // Instead of using system.columns which is causing errors,
+    // directly check if the columns exist by running a simple query
+    const { data: columnsData, error } = await supabase
+      .from('content_entries')
+      .select('image_url, file_url')
+      .limit(1);
+
+    if (error && error.message.includes('column "image_url" does not exist')) {
+      // Add the missing columns
+      const { error: alterError } = await supabase.rpc('system.exec', { 
+        sql: "ALTER TABLE public.content_entries ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT NULL;" 
       });
-
-    if (columnsError) {
-      throw new Error(`Failed to check columns: ${columnsError.message}`);
-    }
-
-    const columns = columnsData as { column_name: string }[];
-    const columnNames = columns.map(col => col.column_name);
-    
-    // Array to collect SQL statements
-    const statements = [];
-
-    // Add image_url column if it doesn't exist
-    if (!columnNames.includes('image_url')) {
-      statements.push("ALTER TABLE public.content_entries ADD COLUMN image_url TEXT DEFAULT NULL;");
-    }
-
-    // Add file_url column if it doesn't exist
-    if (!columnNames.includes('file_url')) {
-      statements.push("ALTER TABLE public.content_entries ADD COLUMN file_url TEXT DEFAULT NULL;");
-    }
-
-    // Execute SQL if there are statements to run
-    if (statements.length > 0) {
-      for (const sql of statements) {
-        const { error } = await supabase.rpc('system.exec', { sql });
-        if (error) {
-          throw new Error(`Failed to execute SQL: ${error.message}`);
-        }
+      
+      if (alterError) {
+        throw new Error(`Failed to add image_url column: ${alterError.message}`);
       }
+
+      const { error: alterError2 } = await supabase.rpc('system.exec', { 
+        sql: "ALTER TABLE public.content_entries ADD COLUMN IF NOT EXISTS file_url TEXT DEFAULT NULL;" 
+      });
+      
+      if (alterError2) {
+        throw new Error(`Failed to add file_url column: ${alterError2.message}`);
+      }
+
       return new Response(
         JSON.stringify({ 
           message: 'Schema updated successfully', 
-          changes: statements 
+          changes: ['Added image_url column', 'Added file_url column'] 
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    } else {
-      return new Response(
-        JSON.stringify({ message: 'No schema changes needed' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    } else if (error) {
+      throw error;
     }
+
+    return new Response(
+      JSON.stringify({ message: 'No schema changes needed' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   } catch (error) {
     console.error('Error in update-content-entries-schema function:', error);
     return new Response(
