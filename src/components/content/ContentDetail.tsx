@@ -4,6 +4,7 @@ import { ContentEntry } from '@/services/content/contentService';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ReactMarkdown from 'react-markdown';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { X } from 'lucide-react';
 
 interface ContentDetailProps {
   content: ContentEntry;
@@ -30,9 +31,16 @@ const ContentDetail = ({ content, onClose }: ContentDetailProps) => {
     <div className="flex flex-col h-full w-full bg-background">
       <header className="border-b p-6 flex justify-between items-center">
         <h1 className="text-2xl font-semibold">{content.title}</h1>
+        {/* Close button with no border */}
+        <button 
+          onClick={onClose}
+          className="rounded-full p-2 hover:bg-muted flex items-center justify-center focus:outline-none"
+        >
+          <X size={20} />
+        </button>
       </header>
       
-      <ScrollArea className="flex-1 p-6">
+      <ScrollArea className="flex-1 p-6 overflow-auto">
         <div className="prose prose-lg max-w-none">
           {/* Fix: ReactMarkdown doesn't accept className directly */}
           <div className="whitespace-pre-wrap">
