@@ -3,7 +3,6 @@ import React from 'react';
 import { ContentEntry } from '@/services/content/contentService';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ReactMarkdown from 'react-markdown';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Download, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card } from '@/components/ui/card';
@@ -44,15 +43,15 @@ const ContentDetail = ({ content, onClose }: ContentDetailProps) => {
         </button>
       </header>
       
-      {/* Layout with image on left (if exists) and content on right */}
-      <div className="flex-1 overflow-hidden">
+      {/* Main content area with proper scrolling */}
+      <div className="flex-1 min-h-0 overflow-hidden">
         <ScrollArea className="h-full">
           <div className="p-4 md:p-6">
             <div className={`flex flex-col ${!isMobile ? 'md:flex-row md:gap-6' : ''}`}>
               {/* Image section - on left for desktop, top for mobile */}
               {content.image_url && (
                 <div className={`${isMobile ? 'mb-4' : 'md:w-2/5 lg:w-1/3'} flex-shrink-0`}>
-                  <div className="sticky top-4">
+                  <div className={`${!isMobile && 'sticky top-4'}`}>
                     <img 
                       src={content.image_url} 
                       alt={content.title} 
@@ -70,7 +69,7 @@ const ContentDetail = ({ content, onClose }: ContentDetailProps) => {
                     <ReactMarkdown>{processContent(content.content)}</ReactMarkdown>
                   </div>
                 
-                  {/* Display link previews - improved for mobile */}
+                  {/* Display link previews - responsive grid */}
                   {urls.length > 0 && (
                     <div className="mt-6 space-y-3">
                       <h3 className="text-sm md:text-base font-medium mb-2">Links</h3>
