@@ -42,7 +42,7 @@ const HomeIntro = () => {
           "font-light max-w-prose space-y-4"
         )}>
           <p>
-            Let's chat. I built this AI version of my portfolio for fun. Ask it about my work or what I like to do, etc. It knows about my work and a little bit about me personally as well.
+            Let's chat. I built this AI version of my portfolio for fun. Ask it about my work or what I like to do, etc.
           </p>
           
           <p>
