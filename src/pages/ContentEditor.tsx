@@ -16,6 +16,8 @@ const ContentEditor = () => {
   const [content, setContent] = useState('');
   const [type, setType] = useState('skill');
   const [visible, setVisible] = useState(true);
+  const [imageUrl, setImageUrl] = useState('');
+  const [fileUrl, setFileUrl] = useState('');
   const [loading, setLoading] = useState(!isNew);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -32,6 +34,8 @@ const ContentEditor = () => {
           setContent(data.content);
           setType(data.type);
           setVisible(!!data.visible);
+          setImageUrl(data.image_url || '');
+          setFileUrl(data.file_url || '');
           setLoading(false);
         } else {
           toast.error('Content entry not found');
@@ -82,6 +86,8 @@ const ContentEditor = () => {
         content,
         type,
         visible,
+        image_url: imageUrl,
+        file_url: fileUrl,
         isNew
       });
       
@@ -135,6 +141,10 @@ const ContentEditor = () => {
               setType={setType}
               visible={visible}
               setVisible={setVisible}
+              imageUrl={imageUrl}
+              setImageUrl={setImageUrl}
+              fileUrl={fileUrl}
+              setFileUrl={setFileUrl}
               onCancel={handleCancel}
               onSubmit={handleSubmit}
               isSaving={isSaving}

@@ -11,6 +11,13 @@ interface ContentEntryListProps {
 }
 
 const ContentEntryList = ({ contentEntries, onSelect }: ContentEntryListProps) => {
+  // Function to extract the first URL from content
+  const extractFirstUrl = (text: string): string | null => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const urls = text.match(urlRegex);
+    return urls && urls.length > 0 ? urls[0] : null;
+  };
+
   return (
     <div className="space-y-4">
       {contentEntries.map((content) => (
@@ -23,6 +30,26 @@ const ContentEntryList = ({ contentEntries, onSelect }: ContentEntryListProps) =
                   {content.content.substring(0, 120)}
                   {content.content.length > 120 ? "..." : ""}
                 </p>
+                
+                {/* Display first link as a preview if exists */}
+                {extractFirstUrl(content.content) && (
+                  <div className="mt-2 border-l-4 border-muted pl-3 py-1">
+                    <p className="text-sm text-muted-foreground truncate">
+                      {extractFirstUrl(content.content)}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Show image thumbnail if one exists */}
+                {content.image_url && (
+                  <div className="mt-3">
+                    <img 
+                      src={content.image_url} 
+                      alt={content.title}
+                      className="h-16 w-auto object-cover rounded"
+                    />
+                  </div>
+                )}
               </div>
               <Button 
                 variant="ghost" 

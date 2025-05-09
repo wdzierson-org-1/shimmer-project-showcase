@@ -10,6 +10,8 @@ export interface ContentEntry {
   created_at?: string;
   updated_at?: string;
   visible?: boolean;
+  image_url?: string;
+  file_url?: string;
 }
 
 export async function fetchAllContent() {
@@ -57,6 +59,8 @@ export async function saveContentEntry({
   content,
   type,
   visible = true,
+  image_url,
+  file_url,
   isNew = false
 }: ContentEntry & { isNew?: boolean }) {
   try {
@@ -71,7 +75,9 @@ export async function saveContentEntry({
           title,
           content,
           type,
-          visible
+          visible,
+          image_url,
+          file_url
         })
         .select('id')
         .single();
@@ -93,7 +99,9 @@ export async function saveContentEntry({
           title,
           content,
           type,
-          visible
+          visible,
+          image_url,
+          file_url
         })
         .eq('id', contentId)
         .select()
