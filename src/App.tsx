@@ -35,6 +35,19 @@ const App = () => {
           console.log('Database setup complete:', data);
         }
         
+        // Update the content_entries schema
+        try {
+          const { data: schemaData, error: schemaError } = await supabase.functions.invoke('update-content-entries-schema');
+          
+          if (schemaError) {
+            console.error('Error updating content entries schema:', schemaError);
+          } else if (schemaData) {
+            console.log('Content entries schema update:', schemaData);
+          }
+        } catch (error) {
+          console.error('Error calling update-content-entries-schema function:', error);
+        }
+        
         // Silently check OpenAI API key without showing toasts
         try {
           const { data: keyData, error: keyError } = await supabase.functions.invoke('check-openai-key');
