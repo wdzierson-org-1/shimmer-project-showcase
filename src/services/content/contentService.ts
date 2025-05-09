@@ -1,4 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
+import { createEmbeddings } from '@/services/openai';
 
 // Define the structure of a content entry
 export interface ContentEntry {
@@ -61,7 +63,16 @@ export async function saveContentEntry({
   image_url,
   file_url,
   isNew = false
-}: ContentEntry & { isNew?: boolean }) {
+}: {
+  id?: string;
+  title: string;
+  content: string;
+  type: string;
+  visible?: boolean;
+  image_url?: string | null;
+  file_url?: string | null;
+  isNew?: boolean;
+}) {
   try {
     let contentId = id;
     let result;
