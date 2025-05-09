@@ -50,7 +50,7 @@ const HomeIntro = () => {
       
       <div className="space-y-4 mt-auto pt-12">
         <div>
-          <a href="https://github.com/wdzierson-org-1/shimmer-project-showcase" 
+          <a href="https://github.com/wdzierson/shimmer-project-showcase-pub" 
              className="flex items-center gap-2 text-foreground/80 hover:text-foreground">
             <Github size={18} />
             <span className="hover:underline">GitHub</span>
