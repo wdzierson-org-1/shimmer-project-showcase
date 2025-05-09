@@ -1,6 +1,58 @@
 
 import { getChatCompletion } from '@/services/openai';
 import { Project } from '@/components/project/ProjectCard';
+import { supabase } from '@/integrations/supabase/client';
+import { ContentEntry } from '@/services/content/contentService';
+
+/**
+ * Generates a response showing recent thoughts
+ */
+export const generateThoughtsResponse = async (): Promise<{
+  content: string;
+  contentEntries: ContentEntry[];
+  showContentEntries: boolean;
+}> => {
+  console.log('Fetching recent thoughts content...');
+  
+  // Get thoughts from the content_entries table
+  const { data: thoughtEntries, error } = await supabase
+    .from('content_entries')
+    .select('*')
+    .eq('type', 'thought')
+    .eq('visible', true)
+    .order('created_at', { ascending: false })
+    .limit(5);
+    
+  if (error) {
+    console.error('Error fetching thoughts:', error);
+    return {
+      content: "I seem to be having trouble retrieving my recent thoughts. Let me share something else with you instead.",
+      contentEntries: [],
+      showContentEntries: false
+    };
+  }
+  
+  if (!thoughtEntries || thoughtEntries.length === 0) {
+    return {
+      content: "I haven't added any specific thoughts yet, but I'm constantly exploring new ideas. Is there something specific you'd like to know about my work or interests?",
+      contentEntries: [],
+      showContentEntries: false
+    };
+  }
+  
+  console.log(`Found ${thoughtEntries.length} thought entries`);
+  
+  // Generate a numbered list of the thoughts as a teaser
+  const thoughtsList = thoughtEntries
+    .map((entry, index) => `${index + 1}) ${entry.title}`)
+    .join(', ');
+  
+  return {
+    content: `Lately, I've been thinking about: ${thoughtsList}. Feel free to click on any of these to read more:`,
+    contentEntries: thoughtEntries,
+    showContentEntries: true
+  };
+};
 
 /**
  * Generates a response using relevant content entries

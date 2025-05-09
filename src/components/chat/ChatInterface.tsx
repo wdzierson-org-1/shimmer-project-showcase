@@ -10,6 +10,8 @@ import { savePrompt } from '@/services/promptTrackingService';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import ContentDetail from '@/components/content/ContentDetail';
+import { ContentEntry } from '@/services/content/contentService';
 
 const ChatInterface = () => {
   const [message, setMessage] = useState('');
@@ -22,16 +24,18 @@ const ChatInterface = () => {
     }
   ]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedContent, setSelectedContent] = useState<ContentEntry | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [contentDialogOpen, setContentDialogOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const { toast } = useToast();
   
-  // Array of suggestion buttons that will fade in
+  // Array of suggestion buttons that will fade in - UPDATED with new suggestion
   const suggestions = [
     { text: "Show me recent work", delay: 0 },
     { text: "Briefly tell me about your work experience", delay: 300 },
-    { text: "Tell me about your interests", delay: 600 }
+    { text: "What's been on your mind lately?", delay: 600 }
   ];
 
   useEffect(() => {
@@ -127,6 +131,8 @@ const ChatInterface = () => {
           timestamp: new Date(),
           projects: response.projects,
           showProjects: response.showProjects,
+          contentEntries: response.contentEntries,
+          showContentEntries: response.showContentEntries,
         };
         
         setMessages((prev) => [...prev, botResponse]);
@@ -165,9 +171,19 @@ const ChatInterface = () => {
     setProjectDialogOpen(true);
   };
 
+  const handleContentSelect = (content: ContentEntry) => {
+    setSelectedContent(content);
+    setContentDialogOpen(true);
+  };
+
   const handleCloseProjectDetail = () => {
     setSelectedProject(null);
     setProjectDialogOpen(false);
+  };
+
+  const handleCloseContentDetail = () => {
+    setSelectedContent(null);
+    setContentDialogOpen(false);
   };
 
   return (
@@ -179,6 +195,7 @@ const ChatInterface = () => {
               messages={messages} 
               isLoading={isLoading} 
               onProjectSelect={handleProjectSelect}
+              onContentSelect={handleContentSelect}
               suggestions={showSuggestions ? suggestions : []}
               onSuggestionClick={handleSuggestionClick}
             />
@@ -197,6 +214,15 @@ const ChatInterface = () => {
         <DialogContent className="max-w-full w-full h-[90vh] p-0 rounded-lg">
           {selectedProject && (
             <ProjectDetail project={selectedProject} onClose={handleCloseProjectDetail} />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Content detail dialog */}
+      <Dialog open={contentDialogOpen} onOpenChange={setContentDialogOpen}>
+        <DialogContent className="max-w-full w-full h-[90vh] p-0 rounded-lg">
+          {selectedContent && (
+            <ContentDetail content={selectedContent} onClose={handleCloseContentDetail} />
           )}
         </DialogContent>
       </Dialog>

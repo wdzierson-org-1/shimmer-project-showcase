@@ -10,10 +10,10 @@ const Index = () => {
       <HomeHeader />
       
       <div className="container mx-auto flex flex-col lg:flex-row flex-1 overflow-hidden">
-        <div className="flex-none lg:w-[340px] pt-24 pb-12 flex flex-col h-full">
+        <div className="flex-none lg:w-[320px] pt-24 pb-12 flex flex-col h-full">
           <HomeIntro />
         </div>
-        {/* Increased the gap and reduced the intro width to make more space for the chat */}
+        {/* Increased spacing to accommodate content entry displays */}
         <div className="lg:ml-16 flex-1 min-w-0 pt-24 pb-0">
           <ChatInterface />
         </div>

@@ -6,13 +6,16 @@ import { Project } from '@/components/project/ProjectCard';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
+import ContentEntryList from '@/components/content/ContentEntryList';
+import { ContentEntry } from '@/services/content/contentService';
 
 interface MessageItemProps {
   message: Message;
   onProjectSelect: (project: Project) => void;
+  onContentSelect?: (content: ContentEntry) => void;
 }
 
-const MessageItem = ({ message, onProjectSelect }: MessageItemProps) => {
+const MessageItem = ({ message, onProjectSelect, onContentSelect }: MessageItemProps) => {
   // Format the timestamp
   const formattedTime = message.timestamp ? 
     format(new Date(message.timestamp), 'h:mm a') : '';
@@ -44,6 +47,12 @@ const MessageItem = ({ message, onProjectSelect }: MessageItemProps) => {
         {message.showProjects && message.projects && message.projects.length > 0 && (
           <div className="mt-6">
             <ProjectThumbnails projects={message.projects} onSelect={onProjectSelect} />
+          </div>
+        )}
+
+        {message.showContentEntries && message.contentEntries && message.contentEntries.length > 0 && (
+          <div className="mt-6">
+            <ContentEntryList contentEntries={message.contentEntries} onSelect={onContentSelect} />
           </div>
         )}
       </div>

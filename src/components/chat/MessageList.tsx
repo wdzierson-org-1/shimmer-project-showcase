@@ -5,6 +5,7 @@ import { Message } from '@/types/chat';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Sparkle, Lightbulb, MessageSquareQuote } from 'lucide-react';
+import { ContentEntry } from '@/services/content/contentService';
 
 interface SuggestionButton {
   text: string;
@@ -15,6 +16,7 @@ interface MessageListProps {
   messages: Message[];
   isLoading: boolean;
   onProjectSelect: (project: any) => void;
+  onContentSelect?: (content: ContentEntry) => void;
   suggestions?: SuggestionButton[];
   onSuggestionClick?: (suggestion: string) => void;
 }
@@ -23,6 +25,7 @@ const MessageList = ({
   messages,
   isLoading,
   onProjectSelect,
+  onContentSelect,
   suggestions = [],
   onSuggestionClick
 }: MessageListProps) => {
@@ -57,6 +60,7 @@ const MessageList = ({
             key={message.id}
             message={message}
             onProjectSelect={onProjectSelect}
+            onContentSelect={onContentSelect}
           />
         ))}
         

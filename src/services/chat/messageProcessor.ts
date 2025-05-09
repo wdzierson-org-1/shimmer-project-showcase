@@ -18,8 +18,11 @@ import {
 import { 
   generateContentBasedResponse, 
   generateProjectBasedResponse, 
-  generateFallbackResponse 
+  generateFallbackResponse,
+  generateThoughtsResponse
 } from './responses/contentResponses';
+import { supabase } from '@/integrations/supabase/client';
+import { ContentEntry } from '../content/contentService';
 
 /**
  * Processes user messages and returns appropriate responses with relevant projects
@@ -30,9 +33,18 @@ export const processUserMessage = async (
   content: string;
   projects?: Project[];
   showProjects?: boolean;
+  contentEntries?: ContentEntry[];
+  showContentEntries?: boolean;
   suggestions?: { text: string; delay: number }[];
 }> => {
   console.log('Processing user message:', userMessage);
+  
+  // Check for the "What's been on your mind lately?" query
+  if (userMessage.toLowerCase().includes("what's been on your mind lately") || 
+      userMessage.toLowerCase().includes("what's on your mind") ||
+      userMessage.toLowerCase().includes("on your mind lately")) {
+    return await generateThoughtsResponse();
+  }
   
   // Check for explicit requests to see projects/portfolio/work
   if (isShowProjectsQuery(userMessage)) {
