@@ -64,19 +64,17 @@ const ContentEntryList = ({ contentEntries, onSelect }: ContentEntryListProps) =
                     </div>
                   )}
                 </div>
-                {onSelect && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="ml-4 mt-1"
-                    onClick={() => {
-                      console.log('Read button clicked for:', content.title);
-                      onSelect(content);
-                    }}
-                  >
-                    Read <ArrowRight className="ml-1" size={16} />
-                  </Button>
-                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="ml-4 mt-1 flex-shrink-0"
+                  onClick={() => {
+                    console.log('Read button clicked for:', content.title);
+                    onSelect(content);
+                  }}
+                >
+                  Read <ArrowRight className="ml-1" size={16} />
+                </Button>
               </div>
             </CardContent>
           </Card>
