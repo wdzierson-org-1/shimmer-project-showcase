@@ -1,12 +1,11 @@
 
 import React from 'react';
 import { ContentEntry } from '@/services/content/contentService';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import ReactMarkdown from 'react-markdown';
 import { Download, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { layoutStyles, textStyles, spacing, combineStyles } from '@/lib/styles';
 
 interface ContentDetailProps {
   content: ContentEntry;
@@ -14,16 +13,11 @@ interface ContentDetailProps {
 }
 
 const ContentDetail = ({ content, onClose }: ContentDetailProps) => {
-  const isMobile = useIsMobile();
-  
-  // Function to process content and create link previews
   const processContent = (content: string) => {
-    // Ensure proper paragraph spacing
     const withProperSpacing = content.replace(/\n/g, '\n\n');
     return withProperSpacing;
   };
 
-  // Extract URLs from content to potentially display as link previews
   const extractUrls = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     return text.match(urlRegex) || [];
@@ -33,8 +27,7 @@ const ContentDetail = ({ content, onClose }: ContentDetailProps) => {
 
   return (
     <div className="h-full flex flex-col overflow-y-auto bg-background">
-      {/* Header with just the X to close - similar to ProjectDetail */}
-      <div className="sticky top-0 z-10 py-4 px-6 flex justify-end bg-background/40 backdrop-blur-sm">
+      <div className={combineStyles(layoutStyles.stickyHeader, spacing.content, "flex justify-end")}>
         <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-muted/60">
           <X size={20} />
         </Button>
@@ -42,11 +35,9 @@ const ContentDetail = ({ content, onClose }: ContentDetailProps) => {
       
       <div className="flex-grow px-6 pb-12">
         <div className="max-w-7xl mx-auto w-full">
-          {/* Title and header area */}
-          <h1 className="text-xl md:text-3xl font-semibold font-sans mb-6">{content.title}</h1>
+          <h1 className={combineStyles(textStyles.heading, "mb-6")}>{content.title}</h1>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left column - Image (if exists) */}
+          <div className={layoutStyles.gridResponsive}>
             {content.image_url && (
               <div className="space-y-6">
                 <img 
@@ -58,14 +49,12 @@ const ContentDetail = ({ content, onClose }: ContentDetailProps) => {
               </div>
             )}
 
-            {/* Right column - Content */}
             <div className={content.image_url ? '' : 'col-span-2'}>
               <div className="prose prose-sm md:prose-base lg:prose-lg max-w-none">
                 <div className="whitespace-pre-wrap">
                   <ReactMarkdown>{processContent(content.content)}</ReactMarkdown>
                 </div>
                 
-                {/* Display file attachment with download icon */}
                 {content.file_url && (
                   <div className="mt-6 border rounded-md p-3 md:p-4">
                     <a 
@@ -79,10 +68,9 @@ const ContentDetail = ({ content, onClose }: ContentDetailProps) => {
                   </div>
                 )}
                 
-                {/* Display link previews - responsive grid */}
                 {urls.length > 0 && (
                   <div className="mt-6 space-y-3">
-                    <h3 className="text-sm md:text-base font-medium mb-2">Links</h3>
+                    <h3 className={combineStyles(textStyles.body, "font-medium mb-2")}>Links</h3>
                     <div className="grid gap-3 md:grid-cols-2">
                       {urls.map((url, index) => (
                         <Card 
@@ -93,8 +81,8 @@ const ContentDetail = ({ content, onClose }: ContentDetailProps) => {
                           <div className="p-3 md:p-4">
                             <div className="flex items-start space-x-2">
                               <div className="flex-1 min-w-0">
-                                <h3 className="font-medium text-sm md:text-base truncate">{url}</h3>
-                                <p className="text-xs md:text-sm text-muted-foreground truncate mt-1">
+                                <h3 className={combineStyles(textStyles.body, "font-medium truncate")}>{url}</h3>
+                                <p className={combineStyles(textStyles.small, "truncate mt-1")}>
                                   {new URL(url).hostname}
                                 </p>
                               </div>
@@ -109,8 +97,7 @@ const ContentDetail = ({ content, onClose }: ContentDetailProps) => {
             </div>
           </div>
 
-          {/* Footer metadata */}
-          <div className="mt-8 pt-4 border-t text-xs md:text-sm text-muted-foreground">
+          <div className={combineStyles("mt-8 pt-4 border-t", textStyles.small)}>
             <div className="flex items-center justify-between">
               <span>Type: {content.type}</span>
               <span className="truncate pl-4">
