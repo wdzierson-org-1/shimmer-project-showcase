@@ -16,6 +16,14 @@ interface MessageItemProps {
 }
 
 const MessageItem = ({ message, onProjectSelect, onContentSelect }: MessageItemProps) => {
+  console.log('MessageItem rendered with:', {
+    messageId: message.id,
+    hasContentEntries: !!message.contentEntries,
+    showContentEntries: message.showContentEntries,
+    hasOnContentSelect: !!onContentSelect,
+    contentEntriesCount: message.contentEntries?.length || 0
+  });
+
   // Format the timestamp
   const formattedTime = message.timestamp ? 
     format(new Date(message.timestamp), 'h:mm a') : '';
@@ -52,7 +60,11 @@ const MessageItem = ({ message, onProjectSelect, onContentSelect }: MessageItemP
 
         {message.showContentEntries && message.contentEntries && message.contentEntries.length > 0 && (
           <div className="mt-6">
-            <ContentEntryList contentEntries={message.contentEntries} onSelect={onContentSelect} />
+            {onContentSelect ? (
+              <ContentEntryList contentEntries={message.contentEntries} onSelect={onContentSelect} />
+            ) : (
+              <div className="text-red-500 text-sm">Error: onContentSelect not provided</div>
+            )}
           </div>
         )}
       </div>
