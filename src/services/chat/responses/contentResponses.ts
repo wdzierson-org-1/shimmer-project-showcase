@@ -161,14 +161,74 @@ export const generateThoughtsResponse = async (): Promise<{
   console.log('Generating thoughts response - fetching recent thoughts');
   
   try {
-    // Fetch recent "thoughts" type content entries
-    const { data: thoughtsData, error } = await supabase
+    // First, let's check what types of content entries exist
+    const { data: allTypesData, error: typesError } = await supabase
+      .from('content_entries')
+      .select('type')
+      .eq('visible', true);
+      
+    if (typesError) {
+      console.error('Error fetching content types:', typesError);
+    } else {
+      console.log('Available content types:', [...new Set(allTypesData?.map(item => item.type) || [])]);
+    }
+    
+    // Try to fetch recent "thoughts" type content entries first
+    let { data: thoughtsData, error } = await supabase
       .from('content_entries')
       .select('*')
       .eq('type', 'thoughts')
       .eq('visible', true)
       .order('created_at', { ascending: false })
       .limit(5);
+      
+    console.log('Thoughts query result:', { data: thoughtsData, error });
+    
+    // If no "thoughts" found, try alternative type names
+    if (!thoughtsData || thoughtsData.length === 0) {
+      console.log('No "thoughts" found, trying alternative type names...');
+      
+      // Try "thought" (singular)
+      const { data: thoughtData, error: thoughtError } = await supabase
+        .from('content_entries')
+        .select('*')
+        .eq('type', 'thought')
+        .eq('visible', true)
+        .order('created_at', { ascending: false })
+        .limit(5);
+        
+      if (thoughtData && thoughtData.length > 0) {
+        thoughtsData = thoughtData;
+        console.log('Found content with type "thought":', thoughtData.length);
+      } else {
+        // Try "note" or "notes"
+        const { data: noteData, error: noteError } = await supabase
+          .from('content_entries')
+          .select('*')
+          .ilike('type', '%note%')
+          .eq('visible', true)
+          .order('created_at', { ascending: false })
+          .limit(5);
+          
+        if (noteData && noteData.length > 0) {
+          thoughtsData = noteData;
+          console.log('Found content with note-type:', noteData.length);
+        } else {
+          // If still no match, get the most recent content entries regardless of type
+          const { data: recentData, error: recentError } = await supabase
+            .from('content_entries')
+            .select('*')
+            .eq('visible', true)
+            .order('created_at', { ascending: false })
+            .limit(3);
+            
+          if (recentData && recentData.length > 0) {
+            thoughtsData = recentData;
+            console.log('Found recent content entries (any type):', recentData.length);
+          }
+        }
+      }
+    }
       
     if (error) {
       console.error('Error fetching thoughts:', error);
@@ -179,14 +239,14 @@ export const generateThoughtsResponse = async (): Promise<{
     }
     
     if (thoughtsData && thoughtsData.length > 0) {
-      console.log(`Found ${thoughtsData.length} recent thoughts`);
+      console.log(`Found ${thoughtsData.length} content entries for thoughts response`);
       return {
         content: "Here are some things that have been on my mind lately:",
         contentEntries: thoughtsData,
         showContentEntries: true
       };
     } else {
-      console.log('No thoughts found in database');
+      console.log('No content entries found in database');
       return {
         content: "I haven't posted any recent thoughts, but feel free to ask me about my work or projects!",
         showContentEntries: false
