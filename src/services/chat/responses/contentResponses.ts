@@ -1,177 +1,202 @@
 
-import { getChatCompletion } from '@/services/openai';
-import { Project } from '@/components/project/ProjectCard';
-import { supabase } from '@/integrations/supabase/client';
 import { ContentEntry } from '@/services/content/contentService';
+import { getChatCompletion } from '@/services/openai';
+import { supabase } from '@/integrations/supabase/client';
+import { fetchProjects } from '../projectFetcher';
+import { sortProjectsByYear } from './projectResponses';
 
 /**
- * Generates a response showing recent thoughts
- */
-export const generateThoughtsResponse = async (): Promise<{
-  content: string;
-  contentEntries: ContentEntry[];
-  showContentEntries: boolean;
-}> => {
-  console.log('Fetching recent thoughts content...');
-  
-  // Get thoughts from the content_entries table
-  const { data: thoughtEntries, error } = await supabase
-    .from('content_entries')
-    .select('*')
-    .eq('type', 'thought')
-    .eq('visible', true)
-    .order('created_at', { ascending: false })
-    .limit(5);
-    
-  if (error) {
-    console.error('Error fetching thoughts:', error);
-    return {
-      content: "I seem to be having trouble retrieving my recent thoughts. Let me share something else with you instead.",
-      contentEntries: [],
-      showContentEntries: false
-    };
-  }
-  
-  if (!thoughtEntries || thoughtEntries.length === 0) {
-    return {
-      content: "I haven't added any specific thoughts yet, but I'm constantly exploring new ideas. Is there something specific you'd like to know about my work or interests?",
-      contentEntries: [],
-      showContentEntries: false
-    };
-  }
-  
-  console.log(`Found ${thoughtEntries.length} thought entries`);
-  
-  // Generate a numbered list of the thoughts as a teaser
-  const thoughtsList = thoughtEntries
-    .map((entry, index) => `${index + 1}) ${entry.title}`)
-    .join(', ');
-  
-  return {
-    content: `Lately, I've been thinking about: ${thoughtsList}. Feel free to click on any of these to read more:`,
-    contentEntries: thoughtEntries,
-    showContentEntries: true
-  };
-};
-
-/**
- * Generates a response using relevant content entries
+ * Generates response based on content entries found
  */
 export const generateContentBasedResponse = async (
-  userMessage: string, 
-  contentEntries: any[],
-  hasAIQuery: boolean = false
+  userMessage: string,
+  contentEntries: ContentEntry[],
+  isAIQuery: boolean = false
 ): Promise<{
   content: string;
-  showProjects: boolean;
-  suggestions?: { text: string; delay: number }[];
+  contentEntries?: ContentEntry[];
+  showContentEntries?: boolean;
+  projects?: any[];
+  showProjects?: boolean;
 }> => {
-  console.log(`Found ${contentEntries.length} relevant content entries, prioritizing these`);
+  console.log('Generating content-based response for:', userMessage);
+  console.log('Content entries found:', contentEntries.length);
   
-  // Format the content entries into a context string
+  // If the user is asking about a specific project mentioned in content
+  if (userMessage.toLowerCase().includes('project ariadne') || 
+      userMessage.toLowerCase().includes('ariadne') ||
+      userMessage.toLowerCase().includes('more about it') ||
+      userMessage.toLowerCase().includes('tell me more') ||
+      userMessage.toLowerCase().includes('learn more')) {
+    
+    console.log('User asking about Project Ariadne specifically');
+    
+    // Try to find Project Ariadne in the projects database
+    const allProjects = await fetchProjects();
+    const ariadneProject = allProjects.find(project => 
+      project.title.toLowerCase().includes('ariadne')
+    );
+    
+    console.log('Found Ariadne project:', ariadneProject);
+    
+    if (ariadneProject) {
+      const aiResponse = await getChatCompletion({
+        messages: [
+          {
+            role: 'system',
+            content: `You are Will's portfolio assistant. The user is asking about Project Ariadne. Here's the project information: 
+            Title: ${ariadneProject.title}
+            Client: ${ariadneProject.client}
+            Description: ${ariadneProject.description}
+            Year: ${ariadneProject.year}
+            Involvement: ${ariadneProject.involvement || 'Not specified'}
+            Tags: ${ariadneProject.tags.join(', ')}
+            ${ariadneProject.liveUrl ? `Live URL: ${ariadneProject.liveUrl}` : ''}
+            
+            Provide detailed information about this project based on the data above. Be informative and engaging.`
+          },
+          {
+            role: 'user',
+            content: userMessage
+          }
+        ],
+        model: 'gpt-4o-mini'
+      });
+      
+      return {
+        content: aiResponse,
+        projects: [ariadneProject],
+        showProjects: true
+      };
+    }
+  }
+  
+  // Use relevant content entries to generate a response
   const context = contentEntries
     .map(entry => `[${entry.type}] ${entry.title}: ${entry.content}`)
     .join('\n\n');
     
-  // Use gpt-4o-mini for better performance with content entries
+  console.log('Generating AI response with context from content entries');
+  
   const aiResponse = await getChatCompletion({
     messages: [
       {
         role: 'system',
-        content: `You are a helpful portfolio assistant. Use the following information to answer the user's question concisely: ${context}`
+        content: `You are Will's portfolio assistant. Use the following information to answer the user's question concisely and helpfully: ${context}`
       },
       {
         role: 'user',
         content: userMessage
       }
     ],
-    model: 'gpt-4o-mini' // Using the optimized model
+    model: 'gpt-4o-mini'
   });
-  
-  // Determine if we should suggest showing projects as a follow-up
-  // This is especially useful for questions about experience in certain areas
-  let suggestions = [];
-  
-  if (hasAIQuery) {
-    suggestions.push({ 
-      text: "Show me AI-related projects", 
-      delay: 500 
-    });
-  } else if (userMessage.toLowerCase().includes('experience') && 
-    (userMessage.toLowerCase().includes('project') || userMessage.toLowerCase().includes('work'))) {
-    suggestions.push({ 
-      text: "Show me related projects", 
-      delay: 500 
-    });
-  }
   
   return {
     content: aiResponse,
-    showProjects: false,
-    suggestions: suggestions.length > 0 ? suggestions : undefined
+    contentEntries,
+    showContentEntries: true
   };
 };
 
 /**
- * Generates a response using semantically similar projects
+ * Generates response based on projects found
  */
 export const generateProjectBasedResponse = async (
-  userMessage: string, 
-  similarProjects: any[], 
-  projectsToDisplay: Project[]
+  userMessage: string,
+  projects: any[]
 ): Promise<{
   content: string;
-  projects: Project[];
+  projects: any[];
   showProjects: boolean;
 }> => {
-  console.log(`Found ${projectsToDisplay.length} similar projects without content entries`);
-  
-  // Use OpenAI to generate a response based on the relevant projects
-  const context = similarProjects
-    .filter(p => p.content) // Only include projects with content
-    .map(p => p.content)
+  const context = projects
+    .map(project => `Project: ${project.title} by ${project.client} - ${project.description}`)
     .join('\n\n');
     
-  console.log('Generating AI response with context from similar projects');
-  
-  let aiResponse;
-  if (context) {
-    aiResponse = await getChatCompletion({
-      messages: [
-        {
-          role: 'system',
-          content: `You are a helpful portfolio assistant. Use the following project information to answer the user's question concisely: ${context}`
-        },
-        {
-          role: 'user',
-          content: userMessage
-        }
-      ],
-      model: 'gpt-4o-mini'
-    });
-  } else {
-    aiResponse = "I found some projects that might be relevant to your question:";
-  }
+  const aiResponse = await getChatCompletion({
+    messages: [
+      {
+        role: 'system',
+        content: `You are Will's portfolio assistant. Use the following project information to answer the user's question: ${context}`
+      },
+      {
+        role: 'user',
+        content: userMessage
+      }
+    ],
+    model: 'gpt-4o-mini'
+  });
   
   return {
     content: aiResponse,
-    projects: projectsToDisplay,
+    projects: sortProjectsByYear(projects),
     showProjects: true
   };
 };
 
 /**
- * Generates a fallback response when no relevant content is found
+ * Generates fallback response when no matches found
  */
 export const generateFallbackResponse = (): {
   content: string;
   showProjects: boolean;
   suggestions: { text: string; delay: number }[];
 } => {
-  console.log('Query appears to be general knowledge, not showing projects');
   return {
-    content: "I don't have specific information about that. Is there something about my work or projects you'd like to know?",
+    content: "I don't have specific information about that. Would you like to see Will's portfolio or ask about his work instead?",
     showProjects: false,
-    suggestions: [{ text: "What kind of work do you do?", delay: 500 }]
+    suggestions: [{ text: "Show me your portfolio", delay: 500 }]
   };
+};
+
+/**
+ * Generates response for "What's been on your mind lately?" query
+ */
+export const generateThoughtsResponse = async (): Promise<{
+  content: string;
+  contentEntries?: ContentEntry[];
+  showContentEntries?: boolean;
+}> => {
+  console.log('Generating thoughts response - fetching recent thoughts');
+  
+  try {
+    // Fetch recent "thoughts" type content entries
+    const { data: thoughtsData, error } = await supabase
+      .from('content_entries')
+      .select('*')
+      .eq('type', 'thoughts')
+      .eq('visible', true)
+      .order('created_at', { ascending: false })
+      .limit(5);
+      
+    if (error) {
+      console.error('Error fetching thoughts:', error);
+      return {
+        content: "I'd love to share what's been on my mind, but I'm having trouble accessing that information right now.",
+        showContentEntries: false
+      };
+    }
+    
+    if (thoughtsData && thoughtsData.length > 0) {
+      console.log(`Found ${thoughtsData.length} recent thoughts`);
+      return {
+        content: "Here are some things that have been on my mind lately:",
+        contentEntries: thoughtsData,
+        showContentEntries: true
+      };
+    } else {
+      console.log('No thoughts found in database');
+      return {
+        content: "I haven't posted any recent thoughts, but feel free to ask me about my work or projects!",
+        showContentEntries: false
+      };
+    }
+  } catch (error) {
+    console.error('Error in generateThoughtsResponse:', error);
+    return {
+      content: "I'd love to share what's been on my mind, but I'm having trouble accessing that information right now.",
+      showContentEntries: false
+    };
+  }
 };

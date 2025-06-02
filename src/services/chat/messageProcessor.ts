@@ -7,7 +7,8 @@ import {
   isShowProjectsQuery, 
   isWorkRelatedQuery, 
   isAIQuery,
-  isAIExperienceQuery 
+  isAIExperienceQuery,
+  isSpecificProjectQuery
 } from './query/queryClassification';
 import { 
   handleAIProjectsQuery, 
@@ -46,6 +47,24 @@ export const processUserMessage = async (
     return await generateThoughtsResponse();
   }
   
+  // Check if user is asking about a specific project (like Project Ariadne)
+  if (isSpecificProjectQuery(userMessage)) {
+    console.log('Detected specific project query');
+    
+    // Try to find relevant content entries first
+    const contentEntries = await findRelevantContentEntries(userMessage);
+    
+    if (contentEntries && contentEntries.length > 0) {
+      return generateContentBasedResponse(userMessage, contentEntries);
+    }
+    
+    // If no content found, search projects directly
+    const semanticResults = await findRelevantProjects(userMessage);
+    if (semanticResults.projects && semanticResults.projects.length > 0) {
+      return generateProjectBasedResponse(userMessage, semanticResults.projects);
+    }
+  }
+  
   // Check for explicit requests to see projects/portfolio/work
   if (isShowProjectsQuery(userMessage)) {
     // Check if the query is specifically about AI
@@ -67,8 +86,7 @@ export const processUserMessage = async (
   const contentEntries = await findRelevantContentEntries(userMessage);
   
   if (contentEntries && contentEntries.length > 0) {
-    // If we have content matches, use them to generate a response without showing projects
-    // unless the content is specifically about projects
+    // If we have content matches, use them to generate a response
     return generateContentBasedResponse(
       userMessage, 
       contentEntries, 
