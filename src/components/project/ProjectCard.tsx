@@ -14,6 +14,7 @@ export interface Project {
   createdAt: string;
   year?: number;
   involvement?: string;
+  liveUrl?: string;
 }
 
 interface ProjectCardProps {

@@ -12,11 +12,7 @@ import ProjectInfoSections from '@/components/project/detail/ProjectInfoSections
 import ProjectDescription from '@/components/project/detail/ProjectDescription';
 
 interface ProjectDetailProps {
-  project: Project & {
-    year?: number;
-    involvement?: string;
-    liveUrl?: string;
-  };
+  project: Project;
   onClose: () => void;
 }
 
