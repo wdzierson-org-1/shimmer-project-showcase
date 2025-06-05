@@ -66,29 +66,29 @@ const ProjectDetail = () => {
           // Find primary image/media
           const primaryImage = imageData.find(img => img.is_primary);
           if (primaryImage) {
-            // Create media object for primary image
+            // Create media object for primary image - use video_thumbnail_url for videos
             const primaryMedia = {
               url: primaryImage.image_url,
               type: primaryImage.media_type || 'image',
-              // For videos, ALWAYS use video_thumbnail_url if available, for images use image_url
+              // Use video_thumbnail_url for videos, image_url for images
               thumbnailUrl: primaryImage.media_type === 'video' 
-                ? (primaryImage.video_thumbnail_url || primaryImage.image_url)
+                ? primaryImage.video_thumbnail_url
                 : primaryImage.image_url
             };
             primaryImageUrl = JSON.stringify(primaryMedia);
             console.log('Primary media object:', primaryMedia);
           }
             
-          // Get additional images/media (non-primary)
+          // Get additional images/media (non-primary) - use video_thumbnail_url for videos
           additionalImages = imageData
             .filter(img => !img.is_primary)
             .map(img => {
               const media = {
                 url: img.image_url,
                 type: img.media_type || 'image',
-                // For videos, ALWAYS use video_thumbnail_url if available, for images use image_url
+                // Use video_thumbnail_url for videos, image_url for images
                 thumbnailUrl: img.media_type === 'video' 
-                  ? (img.video_thumbnail_url || img.image_url)
+                  ? img.video_thumbnail_url
                   : img.image_url
               };
               console.log('Additional media object:', media);
