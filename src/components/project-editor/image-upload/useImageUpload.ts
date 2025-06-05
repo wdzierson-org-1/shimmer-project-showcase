@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +17,37 @@ export const useImageUpload = ({
   setAdditionalImages
 }: UseImageUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
+
+  // Helper function to extract file path from URL
+  const extractFilePathFromUrl = (url: string): string | null => {
+    try {
+      const urlObj = new URL(url);
+      const pathMatch = urlObj.pathname.match(/\/storage\/v1\/object\/public\/project_images\/(.+)$/);
+      return pathMatch ? pathMatch[1] : null;
+    } catch {
+      return null;
+    }
+  };
+
+  // Helper function to delete file from storage
+  const deleteFileFromStorage = async (filePath: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.storage
+        .from('project_images')
+        .remove([filePath]);
+        
+      if (error) {
+        console.error('Error deleting file from storage:', error);
+        return false;
+      }
+      
+      console.log('Successfully deleted file from storage:', filePath);
+      return true;
+    } catch (error) {
+      console.error('Error in deleteFileFromStorage:', error);
+      return false;
+    }
+  };
 
   // Function to generate video thumbnail with better error handling
   const generateVideoThumbnail = (file: File): Promise<string> => {
@@ -214,11 +246,48 @@ export const useImageUpload = ({
     }
   };
 
-  // Function to remove an additional image
-  const handleRemoveAdditionalImage = (index: number) => {
-    const newImages = [...additionalImages];
-    newImages.splice(index, 1);
-    setAdditionalImages(newImages);
+  // Function to remove an additional image - now properly deletes from storage
+  const handleRemoveAdditionalImage = async (index: number) => {
+    try {
+      const mediaString = additionalImages[index];
+      let mediaItem;
+      
+      try {
+        mediaItem = JSON.parse(mediaString);
+      } catch {
+        // Handle legacy URL format
+        mediaItem = { url: mediaString, type: 'image', thumbnailUrl: mediaString };
+      }
+      
+      console.log('Removing media item:', mediaItem);
+      
+      // Extract file paths for deletion
+      const mainFilePath = extractFilePathFromUrl(mediaItem.url);
+      const thumbnailFilePath = mediaItem.thumbnailUrl !== mediaItem.url 
+        ? extractFilePathFromUrl(mediaItem.thumbnailUrl) 
+        : null;
+      
+      // Delete main file from storage
+      if (mainFilePath) {
+        await deleteFileFromStorage(mainFilePath);
+      }
+      
+      // Delete thumbnail file from storage if it's different from main file
+      if (thumbnailFilePath) {
+        await deleteFileFromStorage(thumbnailFilePath);
+      }
+      
+      // Update local state
+      const newImages = [...additionalImages];
+      newImages.splice(index, 1);
+      setAdditionalImages(newImages);
+      
+      toast.success('Media removed successfully');
+      
+    } catch (error) {
+      console.error('Error removing media:', error);
+      toast.error('Failed to remove media');
+    }
   };
 
   // Function to make an additional image the primary image

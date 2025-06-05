@@ -26,13 +26,90 @@ const parseMediaItem = (mediaString: string): MediaItem => {
   }
 };
 
+// Helper function to extract file path from URL
+const extractFilePathFromUrl = (url: string): string | null => {
+  try {
+    const urlObj = new URL(url);
+    const pathMatch = urlObj.pathname.match(/\/storage\/v1\/object\/public\/project_images\/(.+)$/);
+    return pathMatch ? pathMatch[1] : null;
+  } catch {
+    return null;
+  }
+};
+
+// Helper function to delete file from storage
+const deleteFileFromStorage = async (filePath: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase.storage
+      .from('project_images')
+      .remove([filePath]);
+      
+    if (error) {
+      console.error('Error deleting file from storage:', error);
+      return false;
+    }
+    
+    console.log('Successfully deleted file from storage:', filePath);
+    return true;
+  } catch (error) {
+    console.error('Error in deleteFileFromStorage:', error);
+    return false;
+  }
+};
+
 export async function saveProjectImages(
   projectId: string, 
   primaryImage: string, 
   additionalImages: string[] = []
 ): Promise<boolean> {
   try {
-    // First, delete existing images
+    // Get existing images to clean up files that are no longer used
+    const { data: existingImages } = await supabase
+      .from('project_images')
+      .select('image_url, video_thumbnail_url')
+      .eq('project_id', projectId);
+    
+    // Collect all current image URLs (new primary + additional)
+    const currentImageUrls = new Set<string>();
+    
+    if (primaryImage) {
+      const primaryMedia = parseMediaItem(primaryImage);
+      currentImageUrls.add(primaryMedia.url);
+      if (primaryMedia.thumbnailUrl && primaryMedia.thumbnailUrl !== primaryMedia.url) {
+        currentImageUrls.add(primaryMedia.thumbnailUrl);
+      }
+    }
+    
+    additionalImages.forEach(mediaString => {
+      const media = parseMediaItem(mediaString);
+      currentImageUrls.add(media.url);
+      if (media.thumbnailUrl && media.thumbnailUrl !== media.url) {
+        currentImageUrls.add(media.thumbnailUrl);
+      }
+    });
+    
+    // Delete files that are no longer being used
+    if (existingImages) {
+      for (const existingImage of existingImages) {
+        // Check main image URL
+        if (existingImage.image_url && !currentImageUrls.has(existingImage.image_url)) {
+          const filePath = extractFilePathFromUrl(existingImage.image_url);
+          if (filePath) {
+            await deleteFileFromStorage(filePath);
+          }
+        }
+        
+        // Check thumbnail URL
+        if (existingImage.video_thumbnail_url && !currentImageUrls.has(existingImage.video_thumbnail_url)) {
+          const thumbnailPath = extractFilePathFromUrl(existingImage.video_thumbnail_url);
+          if (thumbnailPath) {
+            await deleteFileFromStorage(thumbnailPath);
+          }
+        }
+      }
+    }
+    
+    // Delete existing image records
     const { error: deleteImagesError } = await supabase
       .from('project_images')
       .delete()
