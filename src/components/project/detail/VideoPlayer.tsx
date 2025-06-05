@@ -25,6 +25,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     console.error('Failed to load video thumbnail:', thumbnailUrl);
     console.error('Image error event:', e);
+    console.error('Current target src:', e.currentTarget.src);
     setImageError(true);
   };
 
@@ -32,6 +33,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     console.log('Successfully loaded video thumbnail:', thumbnailUrl);
     setImageError(false);
   };
+
+  // Log the thumbnail URL for debugging
+  React.useEffect(() => {
+    console.log('VideoPlayer received thumbnailUrl:', thumbnailUrl);
+    console.log('VideoPlayer received videoUrl:', videoUrl);
+  }, [thumbnailUrl, videoUrl]);
 
   return (
     <div 
@@ -55,7 +62,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           <div className="text-center">
             <Play size={48} className="mx-auto mb-2 text-gray-400" />
             <p className="text-gray-500">Video thumbnail unavailable</p>
-            <p className="text-xs text-gray-400 mt-1">URL: {thumbnailUrl}</p>
+            <p className="text-xs text-gray-400 mt-1 break-all">URL: {thumbnailUrl}</p>
           </div>
         </div>
       )}

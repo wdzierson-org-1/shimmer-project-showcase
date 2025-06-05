@@ -57,7 +57,7 @@ export const generateVideoThumbnail = (file: File): Promise<string> => {
   });
 };
 
-// Function to upload thumbnail to Supabase
+// Function to upload thumbnail to Supabase with proper public URL generation
 export const uploadThumbnail = async (thumbnailDataUrl: string, fileName: string): Promise<string> => {
   try {
     // Convert data URL to blob
@@ -65,6 +65,8 @@ export const uploadThumbnail = async (thumbnailDataUrl: string, fileName: string
     const blob = await response.blob();
     
     const thumbnailFileName = `thumbnails/${fileName.split('.')[0]}_thumbnail.jpg`;
+    
+    console.log('Uploading thumbnail to path:', thumbnailFileName);
     
     const { error: uploadError } = await supabase.storage
       .from('project_images')
@@ -78,18 +80,27 @@ export const uploadThumbnail = async (thumbnailDataUrl: string, fileName: string
       throw uploadError;
     }
     
-    // Get the public URL - this should now work with the updated bucket permissions
+    // Get the public URL - ensure we're using the correct bucket
     const { data: publicUrlData } = supabase.storage
       .from('project_images')
       .getPublicUrl(thumbnailFileName);
       
-    console.log('Uploaded thumbnail to:', publicUrlData.publicUrl);
+    console.log('Generated thumbnail public URL:', publicUrlData.publicUrl);
     
-    // Add a cache buster to ensure the image loads fresh
-    const publicUrlWithCacheBuster = `${publicUrlData.publicUrl}?t=${Date.now()}`;
-    console.log('Thumbnail URL with cache buster:', publicUrlWithCacheBuster);
+    // Verify the URL is accessible by making a HEAD request
+    try {
+      const testResponse = await fetch(publicUrlData.publicUrl, { method: 'HEAD' });
+      console.log('Thumbnail URL accessibility test:', testResponse.status, testResponse.statusText);
+      
+      if (!testResponse.ok) {
+        console.warn('Thumbnail URL may not be accessible:', testResponse.status);
+      }
+    } catch (testError) {
+      console.warn('Could not test thumbnail URL accessibility:', testError);
+    }
     
-    return publicUrlWithCacheBuster;
+    // Return URL without cache buster for now to avoid potential CORS issues
+    return publicUrlData.publicUrl;
   } catch (error) {
     console.error('Error in uploadThumbnail:', error);
     throw error;

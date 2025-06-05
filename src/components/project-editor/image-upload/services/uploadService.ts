@@ -29,6 +29,8 @@ export const uploadFile = async (file: File): Promise<MediaItem | null> => {
     const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     const filePath = `${fileName}`;
     
+    console.log(`Uploading ${isVideo ? 'video' : 'image'} to path:`, filePath);
+    
     // Upload main file to Supabase Storage
     const { data, error } = await supabase.storage
       .from('project_images')
@@ -59,6 +61,22 @@ export const uploadFile = async (file: File): Promise<MediaItem | null> => {
         const thumbnailDataUrl = await generateVideoThumbnail(file);
         thumbnailUrl = await uploadThumbnail(thumbnailDataUrl, fileName);
         console.log('Successfully generated and uploaded thumbnail:', thumbnailUrl);
+        
+        // Additional verification that thumbnail exists
+        try {
+          const thumbnailCheck = await fetch(thumbnailUrl, { method: 'HEAD' });
+          if (thumbnailCheck.ok) {
+            console.log('Thumbnail is accessible:', thumbnailUrl);
+          } else {
+            console.error('Thumbnail is not accessible:', thumbnailCheck.status);
+            // Fall back to video URL if thumbnail is not accessible
+            thumbnailUrl = publicUrlData.publicUrl;
+          }
+        } catch (checkError) {
+          console.error('Error checking thumbnail accessibility:', checkError);
+          thumbnailUrl = publicUrlData.publicUrl;
+        }
+        
       } catch (error) {
         console.error('Error generating video thumbnail:', error);
         toast.warning('Video uploaded but thumbnail generation failed');
