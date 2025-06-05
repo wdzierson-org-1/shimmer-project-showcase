@@ -57,14 +57,15 @@ export const generateVideoThumbnail = (file: File): Promise<string> => {
   });
 };
 
-// Function to upload thumbnail to Supabase with proper public URL generation
+// Function to upload thumbnail to the same bucket as other images with thumbnail_ prefix
 export const uploadThumbnail = async (thumbnailDataUrl: string, fileName: string): Promise<string> => {
   try {
     // Convert data URL to blob
     const response = await fetch(thumbnailDataUrl);
     const blob = await response.blob();
     
-    const thumbnailFileName = `thumbnails/${fileName.split('.')[0]}_thumbnail.jpg`;
+    // Store thumbnail in the same bucket with thumbnail_ prefix
+    const thumbnailFileName = `thumbnail_${fileName.split('.')[0]}.jpg`;
     
     console.log('Uploading thumbnail to path:', thumbnailFileName);
     
@@ -80,7 +81,7 @@ export const uploadThumbnail = async (thumbnailDataUrl: string, fileName: string
       throw uploadError;
     }
     
-    // Get the public URL - ensure we're using the correct bucket
+    // Get the public URL - same bucket as other images
     const { data: publicUrlData } = supabase.storage
       .from('project_images')
       .getPublicUrl(thumbnailFileName);
@@ -99,7 +100,6 @@ export const uploadThumbnail = async (thumbnailDataUrl: string, fileName: string
       console.warn('Could not test thumbnail URL accessibility:', testError);
     }
     
-    // Return URL without cache buster for now to avoid potential CORS issues
     return publicUrlData.publicUrl;
   } catch (error) {
     console.error('Error in uploadThumbnail:', error);

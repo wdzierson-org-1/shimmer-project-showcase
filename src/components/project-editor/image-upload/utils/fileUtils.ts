@@ -32,6 +32,32 @@ export const deleteFileFromStorage = async (filePath: string): Promise<boolean> 
   }
 };
 
+// Helper function to delete thumbnail file when deleting a video
+export const deleteThumbnailFromStorage = async (videoFileName: string): Promise<boolean> => {
+  try {
+    // Extract the base filename without extension
+    const baseFileName = videoFileName.split('.')[0];
+    const thumbnailFileName = `thumbnail_${baseFileName}.jpg`;
+    
+    console.log('Attempting to delete thumbnail:', thumbnailFileName);
+    
+    const { error } = await supabase.storage
+      .from('project_images')
+      .remove([thumbnailFileName]);
+      
+    if (error) {
+      console.error('Error deleting thumbnail from storage:', error);
+      return false;
+    }
+    
+    console.log('Successfully deleted thumbnail from storage:', thumbnailFileName);
+    return true;
+  } catch (error) {
+    console.error('Error in deleteThumbnailFromStorage:', error);
+    return false;
+  }
+};
+
 // Helper function to validate file type and size
 export const validateFile = (file: File): { isValid: boolean; error?: string } => {
   const isVideo = file.type.startsWith('video/');
