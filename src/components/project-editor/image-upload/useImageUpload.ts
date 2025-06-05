@@ -83,24 +83,30 @@ export const useImageUpload = ({
       
       const thumbnailFileName = `thumbnails/${fileName.split('.')[0]}_thumbnail.jpg`;
       
-      const { error } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('project_images')
         .upload(thumbnailFileName, blob, {
           contentType: 'image/jpeg',
           upsert: true,
         });
         
-      if (error) {
-        console.error('Error uploading thumbnail:', error);
-        throw error;
+      if (uploadError) {
+        console.error('Error uploading thumbnail:', uploadError);
+        throw uploadError;
       }
       
+      // Get the public URL - this should now work with the updated bucket permissions
       const { data: publicUrlData } = supabase.storage
         .from('project_images')
         .getPublicUrl(thumbnailFileName);
         
       console.log('Uploaded thumbnail to:', publicUrlData.publicUrl);
-      return publicUrlData.publicUrl;
+      
+      // Add a cache buster to ensure the image loads fresh
+      const publicUrlWithCacheBuster = `${publicUrlData.publicUrl}?t=${Date.now()}`;
+      console.log('Thumbnail URL with cache buster:', publicUrlWithCacheBuster);
+      
+      return publicUrlWithCacheBuster;
     } catch (error) {
       console.error('Error in uploadThumbnail:', error);
       throw error;
@@ -170,7 +176,7 @@ export const useImageUpload = ({
           console.log('Generating thumbnail for video...');
           const thumbnailDataUrl = await generateVideoThumbnail(file);
           thumbnailUrl = await uploadThumbnail(thumbnailDataUrl, fileName);
-          console.log('Successfully generated and uploaded thumbnail');
+          console.log('Successfully generated and uploaded thumbnail:', thumbnailUrl);
         } catch (error) {
           console.error('Error generating video thumbnail:', error);
           toast.warning('Video uploaded but thumbnail generation failed');

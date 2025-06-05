@@ -22,9 +22,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     window.open(videoUrl, '_blank');
   };
 
-  const handleImageError = () => {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     console.error('Failed to load video thumbnail:', thumbnailUrl);
+    console.error('Image error event:', e);
     setImageError(true);
+  };
+
+  const handleImageLoad = () => {
+    console.log('Successfully loaded video thumbnail:', thumbnailUrl);
+    setImageError(false);
   };
 
   return (
@@ -41,12 +47,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           alt={`${title} - Video thumbnail`} 
           className="w-full h-auto object-cover rounded-md"
           onError={handleImageError}
+          onLoad={handleImageLoad}
+          crossOrigin="anonymous"
         />
       ) : (
         <div className="w-full h-64 bg-gray-200 rounded-md flex items-center justify-center">
           <div className="text-center">
             <Play size={48} className="mx-auto mb-2 text-gray-400" />
             <p className="text-gray-500">Video thumbnail unavailable</p>
+            <p className="text-xs text-gray-400 mt-1">URL: {thumbnailUrl}</p>
           </div>
         </div>
       )}
