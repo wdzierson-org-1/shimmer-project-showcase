@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log("search-content function called");
+  console.log("Enhanced search-content function called");
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -17,8 +17,9 @@ serve(async (req) => {
   }
 
   try {
-    const { embedding, threshold = 0.3, limit = 5 } = await req.json();
-    console.log('Received request to search for similar content entries');
+    const { embedding, threshold = 0.35, limit = 5 } = await req.json();
+    console.log('Received request to search for similar content entries with enhanced parameters');
+    console.log('Threshold:', threshold, 'Limit:', limit);
 
     if (!embedding) {
       console.error('Embedding vector is required');
@@ -42,16 +43,16 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Executing similarity search with threshold:', threshold, 'and limit:', limit);
+    console.log('Executing enhanced similarity search with threshold:', threshold, 'and limit:', limit);
     
     // Convert embedding to proper format if needed
     const embeddingValue = Array.isArray(embedding) ? embedding : JSON.parse(embedding);
     
-    // Execute the similarity search using the database function
+    // Execute the similarity search using the database function with enhanced filtering
     const { data: similarEntries, error } = await supabase.rpc('match_content_by_query', {
       query_embedding: embeddingValue,
       match_threshold: threshold,
-      match_count: limit
+      match_count: limit * 2 // Get more results to enable better filtering
     });
 
     if (error) {
@@ -59,14 +60,33 @@ serve(async (req) => {
       throw new Error(`Database error: ${error.message}`);
     }
 
-    console.log('Found similar content entries:', similarEntries?.length || 0);
+    if (!similarEntries || similarEntries.length === 0) {
+      console.log('No content entries found above threshold');
+      return new Response(
+        JSON.stringify({ entries: [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Found similar content entries:', similarEntries.length);
+    
+    // Enhanced filtering and scoring
+    const filteredEntries = similarEntries
+      .filter(entry => entry.similarity >= threshold) // Ensure threshold compliance
+      .sort((a, b) => b.similarity - a.similarity) // Sort by similarity descending
+      .slice(0, limit); // Apply final limit
+    
+    // Log similarity scores for debugging
+    filteredEntries.forEach((entry, index) => {
+      console.log(`Entry ${index + 1}: similarity = ${entry.similarity.toFixed(3)}`);
+    });
     
     return new Response(
-      JSON.stringify({ entries: similarEntries || [] }),
+      JSON.stringify({ entries: filteredEntries }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error in search-content function:', error);
+    console.error('Error in enhanced search-content function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

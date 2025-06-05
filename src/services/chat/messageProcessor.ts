@@ -2,7 +2,7 @@
 import { Project } from '@/components/project/ProjectCard';
 import { extractKeywords } from './extractKeywords';
 import { searchProjectsByKeywords } from './projectFetcher';
-import { findRelevantProjects, findRelevantContentEntries } from './semanticSearch';
+import { findRelevantProjects } from './semanticSearch';
 import { 
   isShowProjectsQuery, 
   isWorkRelatedQuery, 
@@ -22,11 +22,14 @@ import {
   generateFallbackResponse,
   generateThoughtsResponse
 } from './responses/contentResponses';
-import { supabase } from '@/integrations/supabase/client';
 import { ContentEntry } from '../content/contentService';
 
+// Import enhanced services
+import { findRelevantContentEntriesEnhanced, analyzeQuery } from './search/enhancedContentSearch';
+import { generateFocusedResponse, assessContentRelevance } from './responses/enhancedResponseGenerator';
+
 /**
- * Processes user messages and returns appropriate responses with relevant projects
+ * Processes user messages with enhanced RAG pipeline
  */
 export const processUserMessage = async (
   userMessage: string
@@ -38,7 +41,7 @@ export const processUserMessage = async (
   showContentEntries?: boolean;
   suggestions?: { text: string; delay: number }[];
 }> => {
-  console.log('Processing user message:', userMessage);
+  console.log('Processing user message with enhanced pipeline:', userMessage);
   
   // Check for the "What's been on your mind lately?" query
   if (userMessage.toLowerCase().includes("what's been on your mind lately") || 
@@ -47,14 +50,32 @@ export const processUserMessage = async (
     return await generateThoughtsResponse();
   }
   
+  // Analyze the query to determine search strategy
+  const queryAnalysis = analyzeQuery(userMessage);
+  console.log('Query analysis:', queryAnalysis);
+  
   // Check if user is asking about a specific project (like Project Ariadne)
   if (isSpecificProjectQuery(userMessage)) {
     console.log('Detected specific project query');
     
-    // Try to find relevant content entries first
-    const contentEntries = await findRelevantContentEntries(userMessage);
+    // Use enhanced search for project-related queries
+    const contentEntries = await findRelevantContentEntriesEnhanced(userMessage, {
+      threshold: 0.35,
+      limit: 2,
+      prioritizeTypes: ['project', 'thoughts', 'research'],
+      requireMinScore: true
+    });
     
     if (contentEntries && contentEntries.length > 0) {
+      // Assess relevance and generate focused response
+      const relevanceAssessment = assessContentRelevance(userMessage, contentEntries);
+      
+      if (relevanceAssessment.isHighlyRelevant) {
+        console.log('High relevance detected, generating focused response');
+        return await generateFocusedResponse(userMessage, contentEntries);
+      }
+      
+      // Fallback to traditional content-based response for lower relevance
       return generateContentBasedResponse(userMessage, contentEntries);
     }
     
@@ -81,12 +102,30 @@ export const processUserMessage = async (
     return handleAIProjectsQuery(userMessage);
   }
   
-  // Try to use RAG to find relevant content entries first
-  console.log('Searching for relevant content entries first...');
-  const contentEntries = await findRelevantContentEntries(userMessage);
+  // Use enhanced content search for all other queries
+  console.log('Using enhanced content search for general query...');
+  
+  const searchOptions = {
+    threshold: queryAnalysis.searchStrategy === 'focused' ? 0.4 : 0.3,
+    limit: queryAnalysis.searchStrategy === 'focused' ? 2 : 3,
+    prioritizeTypes: queryAnalysis.suggestedTypes,
+    requireMinScore: queryAnalysis.isSpecific
+  };
+  
+  const contentEntries = await findRelevantContentEntriesEnhanced(userMessage, searchOptions);
   
   if (contentEntries && contentEntries.length > 0) {
-    // If we have content matches, use them to generate a response
+    console.log(`Found ${contentEntries.length} relevant content entries`);
+    
+    // Assess content relevance
+    const relevanceAssessment = assessContentRelevance(userMessage, contentEntries);
+    
+    if (relevanceAssessment.isHighlyRelevant || queryAnalysis.isSpecific) {
+      console.log('Generating focused response due to high relevance or specific query');
+      return await generateFocusedResponse(userMessage, contentEntries);
+    }
+    
+    // Use traditional response for broader queries
     return generateContentBasedResponse(
       userMessage, 
       contentEntries, 

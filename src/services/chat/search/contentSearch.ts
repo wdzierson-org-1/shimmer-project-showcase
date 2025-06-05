@@ -1,12 +1,29 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { findRelevantContentEntriesEnhanced } from './enhancedContentSearch';
 
 /**
  * Finds content entries that are semantically relevant to the user's message
+ * Now uses the enhanced search by default
  */
 export const findRelevantContentEntries = async (userMessage: string) => {
+  console.log('Using enhanced content search pipeline...');
+  
+  // Use enhanced search with moderate settings as default
+  return await findRelevantContentEntriesEnhanced(userMessage, {
+    threshold: 0.35,
+    limit: 3,
+    prioritizeTypes: ['thoughts', 'project', 'research'],
+    requireMinScore: false // Less strict for general use
+  });
+};
+
+/**
+ * Legacy function - kept for backward compatibility but now uses enhanced search
+ */
+export const findRelevantContentEntriesLegacy = async (userMessage: string) => {
   try {
-    console.log('Searching for relevant content entries...');
+    console.log('Searching for relevant content entries (legacy)...');
     
     // Generate embedding for the query
     const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embeddings', {
