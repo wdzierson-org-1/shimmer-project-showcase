@@ -22,6 +22,10 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
 }) => {
   // Helper function to parse media item
   const parseMediaItem = (mediaString: string): MediaItem => {
+    if (!mediaString) {
+      return { url: '', type: 'image', thumbnailUrl: '' };
+    }
+    
     try {
       const parsed = JSON.parse(mediaString);
       return {
@@ -43,19 +47,19 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
   const mainMedia = mainImageUrl ? parseMediaItem(mainImageUrl) : null;
   
   // Parse additional media items
-  const additionalMedia = additionalImages?.map(parseMediaItem) || [];
+  const additionalMedia = additionalImages?.map(parseMediaItem).filter(media => media.url) || [];
   
   const hasAdditionalMedia = additionalMedia.length > 0;
   
   const renderMediaItem = (media: MediaItem, index?: number) => {
     const key = index !== undefined ? `additional-media-${index}` : 'main-media';
     
-    if (media.type === 'video') {
+    if (media.type === 'video' && media.thumbnailUrl) {
       return (
         <VideoPlayer
           key={key}
           videoUrl={media.url}
-          thumbnailUrl={media.thumbnailUrl || media.url}
+          thumbnailUrl={media.thumbnailUrl}
           title={title}
         />
       );
@@ -67,6 +71,9 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
         src={media.url} 
         alt={index !== undefined ? `${title} - ${index + 1}` : title} 
         className="w-full h-auto object-cover rounded-md"
+        onError={(e) => {
+          console.error('Failed to load image:', media.url);
+        }}
       />
     );
   };
@@ -75,7 +82,7 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
     <ScrollArea className="h-[calc(100vh-200px)]">
       <div className="space-y-4">
         {/* Main media */}
-        {mainMedia && (
+        {mainMedia && mainMedia.url && (
           <div>
             {renderMediaItem(mainMedia)}
           </div>

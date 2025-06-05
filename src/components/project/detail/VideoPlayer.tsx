@@ -16,9 +16,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   className = "" 
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const handleVideoClick = () => {
     window.open(videoUrl, '_blank');
+  };
+
+  const handleImageError = () => {
+    console.error('Failed to load video thumbnail:', thumbnailUrl);
+    setImageError(true);
   };
 
   return (
@@ -29,11 +35,21 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       onClick={handleVideoClick}
     >
       {/* Video thumbnail */}
-      <img 
-        src={thumbnailUrl} 
-        alt={`${title} - Video thumbnail`} 
-        className="w-full h-auto object-cover rounded-md"
-      />
+      {!imageError ? (
+        <img 
+          src={thumbnailUrl} 
+          alt={`${title} - Video thumbnail`} 
+          className="w-full h-auto object-cover rounded-md"
+          onError={handleImageError}
+        />
+      ) : (
+        <div className="w-full h-64 bg-gray-200 rounded-md flex items-center justify-center">
+          <div className="text-center">
+            <Play size={48} className="mx-auto mb-2 text-gray-400" />
+            <p className="text-gray-500">Video thumbnail unavailable</p>
+          </div>
+        </div>
+      )}
       
       {/* Play button overlay */}
       <div className="absolute inset-0 flex items-center justify-center">
@@ -54,6 +70,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           </div>
         </div>
       )}
+      
+      {/* Video type indicator */}
+      <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+        Video
+      </div>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '@/components/layout/Header';
@@ -61,6 +62,8 @@ const ProjectDetail = () => {
         let additionalImages: string[] = [];
           
         if (imageData && imageData.length > 0) {
+          console.log('Fetched image data:', imageData);
+          
           // Find primary image/media
           const primaryImage = imageData.find(img => img.is_primary);
           if (primaryImage) {
@@ -71,6 +74,7 @@ const ProjectDetail = () => {
               thumbnailUrl: primaryImage.video_thumbnail_url || primaryImage.image_url
             };
             primaryImageUrl = JSON.stringify(primaryMedia);
+            console.log('Primary media object:', primaryMedia);
           }
             
           // Get additional images/media (non-primary)
@@ -82,6 +86,7 @@ const ProjectDetail = () => {
                 type: img.media_type || 'image',
                 thumbnailUrl: img.video_thumbnail_url || img.image_url
               };
+              console.log('Additional media object:', media);
               return JSON.stringify(media);
             });
         }
@@ -108,6 +113,7 @@ const ProjectDetail = () => {
           involvement: projectData.involvement
         };
         
+        console.log('Complete project object:', completeProject);
         setProject(completeProject);
         setLoading(false);
       } catch (err) {
