@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -87,21 +86,44 @@ export const useProjectData = () => {
         // Fetch images
         const { data: imageData } = await supabase
           .from('project_images')
-          .select('image_url, is_primary, display_order')
+          .select('image_url, is_primary, display_order, media_type, video_thumbnail_url')
           .eq('project_id', id)
           .order('display_order', { ascending: true });
           
         if (imageData && imageData.length > 0) {
+          console.log('Fetched image data for editing:', imageData);
+          
           // Find primary image
           const primaryImage = imageData.find(img => img.is_primary);
           if (primaryImage) {
-            setImageUrl(primaryImage.image_url);
+            // Create media object for primary image
+            const primaryMedia = {
+              url: primaryImage.image_url,
+              type: primaryImage.media_type || 'image',
+              // For videos, use video_thumbnail_url if available, otherwise fallback to image_url
+              thumbnailUrl: primaryImage.media_type === 'video' && primaryImage.video_thumbnail_url 
+                ? primaryImage.video_thumbnail_url 
+                : primaryImage.image_url
+            };
+            setImageUrl(JSON.stringify(primaryMedia));
+            console.log('Primary media object for editing:', primaryMedia);
           }
           
           // Get additional images (non-primary)
           const additionalImgs = imageData
             .filter(img => !img.is_primary)
-            .map(img => img.image_url);
+            .map(img => {
+              const media = {
+                url: img.image_url,
+                type: img.media_type || 'image',
+                // For videos, use video_thumbnail_url if available, otherwise fallback to image_url
+                thumbnailUrl: img.media_type === 'video' && img.video_thumbnail_url 
+                  ? img.video_thumbnail_url 
+                  : img.image_url
+              };
+              console.log('Additional media object for editing:', media);
+              return JSON.stringify(media);
+            });
             
           setAdditionalImages(additionalImgs);
         }
