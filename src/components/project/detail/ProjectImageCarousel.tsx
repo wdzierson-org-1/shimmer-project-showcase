@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import VideoPlayer from './VideoPlayer';
 
 interface MediaItem {
   url: string;
@@ -57,19 +56,30 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
     console.log(`ProjectImageCarousel rendering ${key}:`, media);
     
     if (media.type === 'video') {
-      // For videos, use the VideoPlayer component with proper thumbnail
+      // Embed the video directly
       return (
-        <VideoPlayer
+        <video 
           key={key}
-          videoUrl={media.url}
-          thumbnailUrl={media.thumbnailUrl || media.url}
-          title={title}
-        />
+          src={media.url} 
+          className="w-full h-auto object-cover rounded-md"
+          controls
+          autoPlay
+          muted
+          loop
+          onError={(e) => {
+            console.error('Failed to load video:', media.url);
+            console.error('Video error event:', e);
+          }}
+          onLoadedData={() => {
+            console.log('Successfully loaded video:', media.url);
+          }}
+        >
+          Your browser does not support the video tag.
+        </video>
       );
     }
     
     // For images, use the thumbnailUrl if available, otherwise use url
-    // This ensures we always display the correct image/thumbnail
     const displayUrl = media.thumbnailUrl || media.url;
     
     console.log(`Using display URL for ${key}:`, displayUrl);
