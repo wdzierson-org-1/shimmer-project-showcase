@@ -57,30 +57,31 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
     console.log(`ProjectImageCarousel rendering ${key}:`, media);
     
     if (media.type === 'video') {
-      // For videos, always ensure we have a proper thumbnail URL
-      const thumbnailUrl = media.thumbnailUrl && media.thumbnailUrl !== media.url ? media.thumbnailUrl : media.url;
-      
+      // For videos, use the VideoPlayer component with proper thumbnail
       return (
         <VideoPlayer
           key={key}
           videoUrl={media.url}
-          thumbnailUrl={thumbnailUrl}
+          thumbnailUrl={media.thumbnailUrl || media.url}
           title={title}
         />
       );
     }
     
+    // For images, use the URL directly (could be thumbnailUrl or url, both should be the same for images)
+    const imageSrc = media.type === 'image' ? media.url : (media.thumbnailUrl || media.url);
+    
     return (
       <img 
         key={key}
-        src={media.url} 
+        src={imageSrc} 
         alt={index !== undefined ? `${title} - ${index + 1}` : title} 
         className="w-full h-auto object-cover rounded-md"
         onError={(e) => {
-          console.error('Failed to load image:', media.url);
+          console.error('Failed to load image:', imageSrc);
         }}
         onLoad={() => {
-          console.log('Successfully loaded image:', media.url);
+          console.log('Successfully loaded image:', imageSrc);
         }}
       />
     );
