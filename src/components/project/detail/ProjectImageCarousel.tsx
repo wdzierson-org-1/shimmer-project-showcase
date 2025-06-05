@@ -68,20 +68,24 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
       );
     }
     
-    // For images, use the URL directly (could be thumbnailUrl or url, both should be the same for images)
-    const imageSrc = media.type === 'image' ? media.url : (media.thumbnailUrl || media.url);
+    // For images, use the thumbnailUrl if available, otherwise use url
+    // This ensures we always display the correct image/thumbnail
+    const displayUrl = media.thumbnailUrl || media.url;
+    
+    console.log(`Using display URL for ${key}:`, displayUrl);
     
     return (
       <img 
         key={key}
-        src={imageSrc} 
+        src={displayUrl} 
         alt={index !== undefined ? `${title} - ${index + 1}` : title} 
         className="w-full h-auto object-cover rounded-md"
         onError={(e) => {
-          console.error('Failed to load image:', imageSrc);
+          console.error('Failed to load image:', displayUrl);
+          console.error('Media object was:', media);
         }}
         onLoad={() => {
-          console.log('Successfully loaded image:', imageSrc);
+          console.log('Successfully loaded image:', displayUrl);
         }}
       />
     );
