@@ -35,21 +35,31 @@ const PrimaryImage = ({ imageUrl, onRemove }: PrimaryImageProps) => {
   };
 
   const media = parseMediaItem(imageUrl);
+  
+  // For videos, always use thumbnailUrl, never the video URL directly
+  const displayUrl = media.type === 'video' && media.thumbnailUrl ? media.thumbnailUrl : media.url;
+
+  console.log('PrimaryImage media object:', media);
+  console.log('PrimaryImage display URL:', displayUrl);
 
   return (
     <div>
       <div className="text-sm text-muted-foreground mb-2">Primary Image</div>
       <div className="relative group">
         <img 
-          src={media.thumbnailUrl} 
+          src={displayUrl} 
           alt="Primary media" 
           className="w-full h-64 object-cover rounded-md"
           onError={(e) => {
-            console.error('Failed to load primary image:', media.thumbnailUrl);
-            // Try fallback to main URL
-            if (e.currentTarget.src !== media.url) {
+            console.error('Failed to load primary image:', displayUrl);
+            console.error('Media object:', media);
+            // Only try fallback if we haven't already tried the main URL and it's not a video
+            if (media.type !== 'video' && e.currentTarget.src !== media.url) {
               e.currentTarget.src = media.url;
             }
+          }}
+          onLoad={() => {
+            console.log('Successfully loaded primary image:', displayUrl);
           }}
         />
         {media.type === 'video' && (

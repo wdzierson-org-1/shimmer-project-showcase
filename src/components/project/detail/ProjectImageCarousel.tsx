@@ -54,12 +54,17 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
   const renderMediaItem = (media: MediaItem, index?: number) => {
     const key = index !== undefined ? `additional-media-${index}` : 'main-media';
     
-    if (media.type === 'video' && media.thumbnailUrl) {
+    console.log(`ProjectImageCarousel rendering ${key}:`, media);
+    
+    if (media.type === 'video') {
+      // For videos, always ensure we have a proper thumbnail URL
+      const thumbnailUrl = media.thumbnailUrl && media.thumbnailUrl !== media.url ? media.thumbnailUrl : media.url;
+      
       return (
         <VideoPlayer
           key={key}
           videoUrl={media.url}
-          thumbnailUrl={media.thumbnailUrl}
+          thumbnailUrl={thumbnailUrl}
           title={title}
         />
       );
@@ -73,6 +78,9 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
         className="w-full h-auto object-cover rounded-md"
         onError={(e) => {
           console.error('Failed to load image:', media.url);
+        }}
+        onLoad={() => {
+          console.log('Successfully loaded image:', media.url);
         }}
       />
     );
