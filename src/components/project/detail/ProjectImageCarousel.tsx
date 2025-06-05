@@ -1,6 +1,8 @@
 
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { ExternalLink } from 'lucide-react';
 
 interface MediaItem {
   url: string;
@@ -33,10 +35,11 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
         thumbnailUrl: parsed.thumbnailUrl || parsed.url || mediaString
       };
     } catch {
-      // Fallback for legacy image URLs
+      // Fallback for legacy image URLs - check file extension for video
+      const isVideo = mediaString.toLowerCase().match(/\.(mp4|mov|avi|webm)$/);
       return {
         url: mediaString,
-        type: 'image',
+        type: isVideo ? 'video' : 'image',
         thumbnailUrl: mediaString
       };
     }
@@ -48,6 +51,10 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
   // Parse additional media items
   const additionalMedia = additionalImages?.map(parseMediaItem).filter(media => media.url) || [];
   
+  // Find all video files
+  const allMedia = [mainMedia, ...additionalMedia].filter(Boolean) as MediaItem[];
+  const videoFiles = allMedia.filter(media => media.type === 'video' || media.url.toLowerCase().match(/\.(mp4|mov|avi|webm)$/));
+  
   const hasAdditionalMedia = additionalMedia.length > 0;
   
   const renderMediaItem = (media: MediaItem, index?: number) => {
@@ -55,31 +62,7 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
     
     console.log(`ProjectImageCarousel rendering ${key}:`, media);
     
-    if (media.type === 'video') {
-      // Embed the video directly
-      return (
-        <video 
-          key={key}
-          src={media.url} 
-          className="w-full h-auto object-cover rounded-md"
-          controls
-          autoPlay
-          muted
-          loop
-          onError={(e) => {
-            console.error('Failed to load video:', media.url);
-            console.error('Video error event:', e);
-          }}
-          onLoadedData={() => {
-            console.log('Successfully loaded video:', media.url);
-          }}
-        >
-          Your browser does not support the video tag.
-        </video>
-      );
-    }
-    
-    // For images, use the thumbnailUrl if available, otherwise use url
+    // Always render as image for now, videos will be linked separately
     const displayUrl = media.thumbnailUrl || media.url;
     
     console.log(`Using display URL for ${key}:`, displayUrl);
@@ -111,8 +94,27 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
           </div>
         )}
         
-        {/* Additional media */}
-        {hasAdditionalMedia && additionalMedia.map((media, index) => (
+        {/* Video links */}
+        {videoFiles.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-gray-700">Videos:</h4>
+            {videoFiles.map((video, index) => (
+              <Button
+                key={`video-link-${index}`}
+                variant="outline"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => window.open(video.url, '_blank')}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View Video {index + 1}
+              </Button>
+            ))}
+          </div>
+        )}
+        
+        {/* Additional media (images only) */}
+        {hasAdditionalMedia && additionalMedia.filter(media => media.type === 'image' && !media.url.toLowerCase().match(/\.(mp4|mov|avi|webm)$/)).map((media, index) => (
           <div key={`additional-media-${index}`} className="pt-4">
             {renderMediaItem(media, index)}
           </div>
