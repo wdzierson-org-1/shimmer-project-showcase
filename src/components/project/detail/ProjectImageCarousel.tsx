@@ -2,7 +2,7 @@
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Play } from 'lucide-react';
 
 interface MediaItem {
   url: string;
@@ -62,10 +62,44 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
     
     console.log(`ProjectImageCarousel rendering ${key}:`, media);
     
-    // Always render as image for now, videos will be linked separately
+    // For videos, show thumbnail with play button overlay
+    if (media.type === 'video' || media.url.toLowerCase().match(/\.(mp4|mov|avi|webm)$/)) {
+      const displayUrl = media.thumbnailUrl || media.url;
+      
+      console.log(`Using thumbnail URL for video ${key}:`, displayUrl);
+      
+      return (
+        <div key={key} className="relative cursor-pointer" onClick={() => window.open(media.url, '_blank')}>
+          <img 
+            src={displayUrl} 
+            alt={index !== undefined ? `${title} - Video ${index + 1}` : `${title} - Video`} 
+            className="w-full h-auto object-cover rounded-md"
+            onError={(e) => {
+              console.error('Failed to load video thumbnail:', displayUrl);
+              console.error('Media object was:', media);
+            }}
+            onLoad={() => {
+              console.log('Successfully loaded video thumbnail:', displayUrl);
+            }}
+          />
+          {/* Play button overlay */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-black bg-opacity-50 rounded-full p-4 transition-transform hover:scale-110">
+              <Play size={32} className="text-white fill-white" />
+            </div>
+          </div>
+          {/* Video indicator */}
+          <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+            Video
+          </div>
+        </div>
+      );
+    }
+    
+    // For images, use the thumbnailUrl if available, otherwise use url
     const displayUrl = media.thumbnailUrl || media.url;
     
-    console.log(`Using display URL for ${key}:`, displayUrl);
+    console.log(`Using display URL for image ${key}:`, displayUrl);
     
     return (
       <img 
@@ -94,27 +128,8 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
           </div>
         )}
         
-        {/* Video links */}
-        {videoFiles.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">Videos:</h4>
-            {videoFiles.map((video, index) => (
-              <Button
-                key={`video-link-${index}`}
-                variant="outline"
-                size="sm"
-                className="w-full justify-start"
-                onClick={() => window.open(video.url, '_blank')}
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                View Video {index + 1}
-              </Button>
-            ))}
-          </div>
-        )}
-        
-        {/* Additional media (images only) */}
-        {hasAdditionalMedia && additionalMedia.filter(media => media.type === 'image' && !media.url.toLowerCase().match(/\.(mp4|mov|avi|webm)$/)).map((media, index) => (
+        {/* Additional media */}
+        {hasAdditionalMedia && additionalMedia.map((media, index) => (
           <div key={`additional-media-${index}`} className="pt-4">
             {renderMediaItem(media, index)}
           </div>
