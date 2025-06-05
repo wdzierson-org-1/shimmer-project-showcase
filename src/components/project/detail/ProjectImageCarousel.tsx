@@ -67,6 +67,33 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
       const displayUrl = media.thumbnailUrl || media.url;
       
       console.log(`Using thumbnail URL for video ${key}:`, displayUrl);
+      console.log(`Video URL: ${media.url}`);
+      console.log(`Thumbnail URL: ${media.thumbnailUrl}`);
+      
+      // If thumbnailUrl is empty or undefined, show a placeholder
+      if (!media.thumbnailUrl || media.thumbnailUrl === media.url) {
+        return (
+          <div key={key} className="relative cursor-pointer bg-gray-200 rounded-md" onClick={() => window.open(media.url, '_blank')}>
+            <div className="w-full h-64 flex items-center justify-center">
+              <div className="text-center">
+                <Play size={48} className="mx-auto mb-2 text-gray-400" />
+                <p className="text-gray-500">Video thumbnail not available</p>
+                <p className="text-xs text-gray-400 mt-1">Click to play video</p>
+              </div>
+            </div>
+            {/* Play button overlay */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="bg-black bg-opacity-50 rounded-full p-4 transition-transform hover:scale-110">
+                <Play size={32} className="text-white fill-white" />
+              </div>
+            </div>
+            {/* Video indicator */}
+            <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+              Video
+            </div>
+          </div>
+        );
+      }
       
       return (
         <div key={key} className="relative cursor-pointer" onClick={() => window.open(media.url, '_blank')}>
@@ -77,11 +104,26 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
             onError={(e) => {
               console.error('Failed to load video thumbnail:', displayUrl);
               console.error('Media object was:', media);
+              console.error('Image error event:', e);
+              // Replace with placeholder on error
+              e.currentTarget.style.display = 'none';
+              const placeholder = e.currentTarget.parentElement?.querySelector('.thumbnail-placeholder');
+              if (placeholder) {
+                (placeholder as HTMLElement).style.display = 'flex';
+              }
             }}
             onLoad={() => {
               console.log('Successfully loaded video thumbnail:', displayUrl);
             }}
           />
+          {/* Placeholder that shows if image fails to load */}
+          <div className="thumbnail-placeholder w-full h-64 bg-gray-200 rounded-md items-center justify-center" style={{ display: 'none' }}>
+            <div className="text-center">
+              <Play size={48} className="mx-auto mb-2 text-gray-400" />
+              <p className="text-gray-500">Video thumbnail failed to load</p>
+              <p className="text-xs text-gray-400 mt-1 break-all px-2">URL: {displayUrl}</p>
+            </div>
+          </div>
           {/* Play button overlay */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-black bg-opacity-50 rounded-full p-4 transition-transform hover:scale-110">
