@@ -1,6 +1,13 @@
 
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import VideoPlayer from './VideoPlayer';
+
+interface MediaItem {
+  url: string;
+  type: 'image' | 'video';
+  thumbnailUrl?: string;
+}
 
 interface ProjectImageCarouselProps {
   mainImageUrl: string;
@@ -13,28 +20,71 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
   additionalImages, 
   title 
 }) => {
-  const hasAdditionalImages = additionalImages && additionalImages.length > 0;
+  // Helper function to parse media item
+  const parseMediaItem = (mediaString: string): MediaItem => {
+    try {
+      const parsed = JSON.parse(mediaString);
+      return {
+        url: parsed.url || mediaString,
+        type: parsed.type || 'image',
+        thumbnailUrl: parsed.thumbnailUrl || parsed.url || mediaString
+      };
+    } catch {
+      // Fallback for legacy image URLs
+      return {
+        url: mediaString,
+        type: 'image',
+        thumbnailUrl: mediaString
+      };
+    }
+  };
+
+  // Parse main media item
+  const mainMedia = mainImageUrl ? parseMediaItem(mainImageUrl) : null;
+  
+  // Parse additional media items
+  const additionalMedia = additionalImages?.map(parseMediaItem) || [];
+  
+  const hasAdditionalMedia = additionalMedia.length > 0;
+  
+  const renderMediaItem = (media: MediaItem, index?: number) => {
+    const key = index !== undefined ? `additional-media-${index}` : 'main-media';
+    
+    if (media.type === 'video') {
+      return (
+        <VideoPlayer
+          key={key}
+          videoUrl={media.url}
+          thumbnailUrl={media.thumbnailUrl || media.url}
+          title={title}
+        />
+      );
+    }
+    
+    return (
+      <img 
+        key={key}
+        src={media.url} 
+        alt={index !== undefined ? `${title} - ${index + 1}` : title} 
+        className="w-full h-auto object-cover rounded-md"
+      />
+    );
+  };
   
   return (
     <ScrollArea className="h-[calc(100vh-200px)]">
       <div className="space-y-4">
-        {/* Main image */}
-        <div>
-          <img 
-            src={mainImageUrl} 
-            alt={title} 
-            className="w-full h-auto object-cover rounded-md"
-          />
-        </div>
+        {/* Main media */}
+        {mainMedia && (
+          <div>
+            {renderMediaItem(mainMedia)}
+          </div>
+        )}
         
-        {/* Additional images */}
-        {hasAdditionalImages && additionalImages.map((imageUrl, index) => (
-          <div key={`additional-image-${index}`} className="pt-4">
-            <img 
-              src={imageUrl} 
-              alt={`${title} - ${index + 1}`} 
-              className="w-full h-auto object-cover rounded-md"
-            />
+        {/* Additional media */}
+        {hasAdditionalMedia && additionalMedia.map((media, index) => (
+          <div key={`additional-media-${index}`} className="pt-4">
+            {renderMediaItem(media, index)}
           </div>
         ))}
       </div>

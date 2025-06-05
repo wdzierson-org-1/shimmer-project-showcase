@@ -1,8 +1,7 @@
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Upload } from 'lucide-react';
+import { Upload, Loader2 } from 'lucide-react';
 
 interface ImageUploadButtonProps {
   onFileSelected: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -10,35 +9,40 @@ interface ImageUploadButtonProps {
 }
 
 const ImageUploadButton = ({ onFileSelected, isUploading }: ImageUploadButtonProps) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const handleUploadClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
   return (
-    <>
-      <Button 
-        type="button" 
-        variant="outline" 
-        size="sm" 
-        onClick={handleUploadClick}
-        disabled={isUploading}
-      >
-        <Upload className="h-4 w-4 mr-2" />
-        Upload Image
-      </Button>
-      <Input
-        ref={fileInputRef}
+    <div>
+      <input
         type="file"
+        id="file-upload"
         className="hidden"
-        accept="image/png,image/jpeg,image/webp"
         onChange={onFileSelected}
+        accept="image/*,video/*"
         disabled={isUploading}
       />
-    </>
+      <label htmlFor="file-upload">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          disabled={isUploading}
+          className="cursor-pointer"
+          asChild
+        >
+          <span>
+            {isUploading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                Add Media
+              </>
+            )}
+          </span>
+        </Button>
+      </label>
+    </div>
   );
 };
 

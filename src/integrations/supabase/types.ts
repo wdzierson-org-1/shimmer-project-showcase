@@ -117,7 +117,9 @@ export type Database = {
           id: string
           image_url: string
           is_primary: boolean | null
+          media_type: string | null
           project_id: string
+          video_thumbnail_url: string | null
         }
         Insert: {
           caption?: string | null
@@ -126,7 +128,9 @@ export type Database = {
           id?: string
           image_url: string
           is_primary?: boolean | null
+          media_type?: string | null
           project_id: string
+          video_thumbnail_url?: string | null
         }
         Update: {
           caption?: string | null
@@ -135,7 +139,9 @@ export type Database = {
           id?: string
           image_url?: string
           is_primary?: boolean | null
+          media_type?: string | null
           project_id?: string
+          video_thumbnail_url?: string | null
         }
         Relationships: [
           {

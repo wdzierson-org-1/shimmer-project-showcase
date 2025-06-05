@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '@/components/layout/Header';
@@ -51,10 +50,10 @@ const ProjectDetail = () => {
           return;
         }
         
-        // Fetch images
+        // Fetch images/media
         const { data: imageData } = await supabase
           .from('project_images')
-          .select('image_url, is_primary, display_order')
+          .select('image_url, is_primary, display_order, media_type, video_thumbnail_url')
           .eq('project_id', id)
           .order('display_order', { ascending: true });
           
@@ -62,16 +61,29 @@ const ProjectDetail = () => {
         let additionalImages: string[] = [];
           
         if (imageData && imageData.length > 0) {
-          // Find primary image
+          // Find primary image/media
           const primaryImage = imageData.find(img => img.is_primary);
           if (primaryImage) {
-            primaryImageUrl = primaryImage.image_url;
+            // Create media object for primary image
+            const primaryMedia = {
+              url: primaryImage.image_url,
+              type: primaryImage.media_type || 'image',
+              thumbnailUrl: primaryImage.video_thumbnail_url || primaryImage.image_url
+            };
+            primaryImageUrl = JSON.stringify(primaryMedia);
           }
             
-          // Get additional images (non-primary)
+          // Get additional images/media (non-primary)
           additionalImages = imageData
             .filter(img => !img.is_primary)
-            .map(img => img.image_url);
+            .map(img => {
+              const media = {
+                url: img.image_url,
+                type: img.media_type || 'image',
+                thumbnailUrl: img.video_thumbnail_url || img.image_url
+              };
+              return JSON.stringify(media);
+            });
         }
         
         // Fetch tags
