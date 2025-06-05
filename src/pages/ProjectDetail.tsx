@@ -70,9 +70,9 @@ const ProjectDetail = () => {
             const primaryMedia = {
               url: primaryImage.image_url,
               type: primaryImage.media_type || 'image',
-              // For videos, use video_thumbnail_url if available, otherwise fallback to image_url
-              thumbnailUrl: primaryImage.media_type === 'video' && primaryImage.video_thumbnail_url 
-                ? primaryImage.video_thumbnail_url 
+              // For videos, ALWAYS use video_thumbnail_url if available, for images use image_url
+              thumbnailUrl: primaryImage.media_type === 'video' 
+                ? (primaryImage.video_thumbnail_url || primaryImage.image_url)
                 : primaryImage.image_url
             };
             primaryImageUrl = JSON.stringify(primaryMedia);
@@ -86,9 +86,9 @@ const ProjectDetail = () => {
               const media = {
                 url: img.image_url,
                 type: img.media_type || 'image',
-                // For videos, use video_thumbnail_url if available, otherwise fallback to image_url
-                thumbnailUrl: img.media_type === 'video' && img.video_thumbnail_url 
-                  ? img.video_thumbnail_url 
+                // For videos, ALWAYS use video_thumbnail_url if available, for images use image_url
+                thumbnailUrl: img.media_type === 'video' 
+                  ? (img.video_thumbnail_url || img.image_url)
                   : img.image_url
               };
               console.log('Additional media object:', media);
