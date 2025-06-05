@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -118,12 +117,12 @@ export const useImageUpload = ({
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Check file size (50MB limit for videos, 5MB for images)
+    // Check file size (100MB limit for videos, 5MB for images)
     const isVideo = file.type.startsWith('video/');
-    const maxSize = isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
+    const maxSize = isVideo ? 100 * 1024 * 1024 : 5 * 1024 * 1024;
     
     if (file.size > maxSize) {
-      toast.error(`File size exceeds ${isVideo ? '50MB' : '5MB'} limit`);
+      toast.error(`File size exceeds ${isVideo ? '100MB' : '5MB'} limit`);
       return;
     }
     
