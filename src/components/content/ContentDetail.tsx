@@ -2,7 +2,7 @@
 import React from 'react';
 import { ContentEntry } from '@/services/content/contentService';
 import ReactMarkdown from 'react-markdown';
-import { Download, X } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { layoutStyles, textStyles, spacing, combineStyles } from '@/lib/styles';
@@ -27,13 +27,7 @@ const ContentDetail = ({ content, onClose }: ContentDetailProps) => {
 
   return (
     <div className="h-full flex flex-col overflow-y-auto bg-background">
-      <div className={combineStyles(layoutStyles.stickyHeader, spacing.content, "flex justify-end")}>
-        <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-muted/60">
-          <X size={20} />
-        </Button>
-      </div>
-      
-      <div className="flex-grow px-6 pb-12">
+      <div className="flex-grow px-6 pb-12 pt-6">
         <div className="max-w-7xl mx-auto w-full">
           <h1 className={combineStyles(textStyles.heading, "mb-6")}>{content.title}</h1>
           
