@@ -1,39 +1,20 @@
 
-import { useState } from 'react';
 import { ProjectDataState } from '@/types/projectData';
+import { useBasicProjectState } from './project-state/useBasicProjectState';
+import { useImageState } from './project-state/useImageState';
+import { useUrlState } from './project-state/useUrlState';
+import { useTagState } from './project-state/useTagState';
 
 export const useProjectDataState = (): ProjectDataState => {
-  const [title, setTitle] = useState('');
-  const [client, setClient] = useState('');
-  const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [additionalImages, setAdditionalImages] = useState<string[]>([]);
-  const [liveUrl, setLiveUrl] = useState('');
-  const [involvement, setInvolvement] = useState('');
-  const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [tags, setTags] = useState<string[]>([]);
-  const [newTag, setNewTag] = useState('');
+  const basicState = useBasicProjectState();
+  const imageState = useImageState();
+  const urlState = useUrlState();
+  const tagState = useTagState();
 
   return {
-    title,
-    setTitle,
-    client,
-    setClient,
-    description,
-    setDescription,
-    imageUrl,
-    setImageUrl,
-    additionalImages,
-    setAdditionalImages,
-    liveUrl,
-    setLiveUrl,
-    involvement,
-    setInvolvement,
-    year,
-    setYear,
-    tags,
-    setTags,
-    newTag,
-    setNewTag
+    ...basicState,
+    ...imageState,
+    ...urlState,
+    ...tagState
   };
 };
