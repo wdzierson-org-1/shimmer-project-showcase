@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import ChatBot from '@/components/chat/ChatBot';
+import ContextualChatBot from '@/components/chat/ContextualChatBot';
 import { ContentEntry, fetchContentById } from '@/services/content/contentService';
 import ContentDetail from '@/components/content/ContentDetail';
 import { ArrowLeft } from 'lucide-react';
@@ -97,7 +97,11 @@ const ContentDetailPage = () => {
       </main>
       
       <Footer />
-      <ChatBot />
+      <ContextualChatBot 
+        contextType="content"
+        contextTitle={content.title}
+        contextDescription={content.content.substring(0, 200) + '...'}
+      />
     </div>
   );
 };
