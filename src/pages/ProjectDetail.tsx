@@ -2,7 +2,7 @@
 import React from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import ChatBot from '@/components/chat/ChatBot';
+import ProjectChatBot from '@/components/chat/ProjectChatBot';
 import { useProjectDetail } from '@/hooks/useProjectDetail';
 import ProjectDetailLoading from '@/components/project/detail/ProjectDetailLoading';
 import ProjectDetailError from '@/components/project/detail/ProjectDetailError';
@@ -24,7 +24,10 @@ const ProjectDetail = () => {
       <Header />
       <ProjectDetailContent project={project} />
       <Footer />
-      <ChatBot />
+      <ProjectChatBot 
+        projectTitle={project.title}
+        projectDescription={project.description}
+      />
     </div>
   );
 };
