@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ChatBot from '@/components/chat/ChatBot';
 import { Project } from '@/components/project/ProjectCard';
 import { supabase } from '@/integrations/supabase/client';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Import our new components
 import ProjectHeader from '@/components/project/detail/ProjectHeader';
@@ -148,6 +150,11 @@ const ProjectDetail = () => {
       <div>
         <Header />
         <div className="container mx-auto pt-24 px-4 md:px-6">
+          <Button asChild variant="ghost" className="mb-4">
+            <Link to="/">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Chat
+            </Link>
+          </Button>
           <h1 className="text-2xl font-bold mt-8">{error || 'Project not found'}</h1>
         </div>
         <Footer />
@@ -157,10 +164,16 @@ const ProjectDetail = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <ProjectHeader title={project.title} />
+      <Header />
       
       <main className="flex-grow pt-24 px-4 md:px-6">
         <div className="container mx-auto">
+          <Button asChild variant="ghost" className="mb-6">
+            <Link to="/">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Chat
+            </Link>
+          </Button>
+          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-7xl mx-auto">
             <div>
               <ProjectImageCarousel 

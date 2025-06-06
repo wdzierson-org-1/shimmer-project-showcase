@@ -16,6 +16,8 @@ import AdminContent from "./pages/AdminContent";
 import AdminPrompts from "./pages/AdminPrompts";
 import ProjectEditor from "./pages/ProjectEditor";
 import ContentEditor from "./pages/ContentEditor";
+import ProjectDetail from "./pages/ProjectDetail";
+import ContentDetail from "./pages/ContentDetail";
 import NotFound from "./pages/NotFound";
 import { supabase } from "./integrations/supabase/client";
 
@@ -81,6 +83,8 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/project/:id" element={<ProjectDetail />} />
+              <Route path="/content/:id" element={<ContentDetail />} />
               <Route path="/login" element={<Login />} />
               <Route path="/admin" element={
                 <ProtectedRoute>

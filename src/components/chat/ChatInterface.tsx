@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -13,6 +14,7 @@ import { useDialogState } from '@/hooks/useDialogState';
 
 const ChatInterface = () => {
   const [message, setMessage] = useState('');
+  const navigate = useNavigate();
   const { messages, isLoading, processMessage } = useChatMessages();
   const { suggestions, hideSuggestions } = useChatSuggestions(messages);
   const {
@@ -41,6 +43,15 @@ const ChatInterface = () => {
     await processMessage(suggestionText);
   };
 
+  // Enhanced handlers that navigate to dedicated pages
+  const handleProjectSelectWithNavigation = (project: any) => {
+    navigate(`/project/${project.id}`);
+  };
+
+  const handleContentSelectWithNavigation = (content: any) => {
+    navigate(`/content/${content.id}`);
+  };
+
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-background">
       <div className="flex flex-col h-full">
@@ -49,8 +60,8 @@ const ChatInterface = () => {
             <MessageList 
               messages={messages} 
               isLoading={isLoading} 
-              onProjectSelect={handleProjectSelect}
-              onContentSelect={handleContentSelect}
+              onProjectSelect={handleProjectSelectWithNavigation}
+              onContentSelect={handleContentSelectWithNavigation}
               suggestions={suggestions}
               onSuggestionClick={handleSuggestionClick}
             />
@@ -73,7 +84,6 @@ const ChatInterface = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Content detail dialog */}
       <Dialog open={contentDialogOpen} onOpenChange={handleCloseContentDetail}>
         <DialogContent className="max-w-full w-full h-[90vh] p-0 rounded-lg">
           {selectedContent && (
