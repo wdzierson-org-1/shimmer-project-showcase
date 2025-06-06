@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { MessageCircle, X, Send } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { getChatCompletion } from '@/services/openai';
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   id: string;
@@ -113,9 +113,9 @@ const ProjectChatBot: React.FC<ProjectChatBotProps> = ({ projectTitle, projectDe
         {isOpen ? <X /> : <MessageCircle />}
       </Button>
       
-      {/* Chat window - moved 20px to the left */}
+      {/* Chat window - moved 40px to the left (20px more than before) */}
       <div
-        className={`fixed bottom-0 right-5 w-full sm:w-96 bg-background border rounded-t-lg shadow-lg transition-transform duration-300 ease-in-out ${
+        className={`fixed bottom-0 right-10 w-full sm:w-96 bg-background border rounded-t-lg shadow-lg transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
         } z-40`}
       >
@@ -137,7 +137,13 @@ const ProjectChatBot: React.FC<ProjectChatBotProps> = ({ projectTitle, projectDe
                     : 'bg-muted'
                 } rounded-lg p-3`}
               >
-                <p className="text-sm">{msg.content}</p>
+                {msg.sender === 'user' ? (
+                  <p className="text-sm">{msg.content}</p>
+                ) : (
+                  <div className="text-sm prose prose-sm max-w-none prose-headings:text-sm prose-p:text-sm prose-p:leading-relaxed prose-pre:text-xs">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  </div>
+                )}
                 <span className="text-xs opacity-70 mt-1 block">
                   {msg.timestamp.toLocaleTimeString([], {
                     hour: '2-digit',
