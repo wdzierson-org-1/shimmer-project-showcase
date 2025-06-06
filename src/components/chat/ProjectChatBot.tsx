@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { MessageCircle, X, Send } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { getChatCompletion } from '@/services/openai';
 
 interface Message {
   id: string;
@@ -28,13 +29,13 @@ const ProjectChatBot: React.FC<ProjectChatBotProps> = ({ projectTitle, projectDe
       timestamp: new Date(),
     },
   ]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!message.trim()) return;
+    if (!message.trim() || isLoading) return;
     
-    // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       content: message,
@@ -44,18 +45,61 @@ const ProjectChatBot: React.FC<ProjectChatBotProps> = ({ projectTitle, projectDe
     
     setMessages((prev) => [...prev, userMessage]);
     setMessage('');
+    setIsLoading(true);
     
-    // Simulate bot response focused on the current project
-    setTimeout(() => {
+    try {
+      // Create context about the current project
+      const projectContext = `
+        Project Title: ${projectTitle}
+        ${projectDescription ? `Project Description: ${projectDescription}` : ''}
+        
+        You are answering questions specifically about this project. Focus your response on this project only.
+        If the user asks about other projects or unrelated topics, politely redirect them back to this specific project.
+      `;
+      
+      const aiResponse = await getChatCompletion({
+        messages: [
+          {
+            role: 'system',
+            content: projectContext
+          },
+          {
+            role: 'user',
+            content: message
+          }
+        ],
+        model: 'gpt-4o-mini'
+      });
+      
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: `I understand you're asking about "${projectTitle}". ${projectDescription ? `Based on the project description: "${projectDescription.substring(0, 100)}..."` : ''} This is a focused chat for this specific project. What particular aspect would you like to know more about?`,
+        content: aiResponse,
         sender: 'bot',
         timestamp: new Date(),
       };
       
       setMessages((prev) => [...prev, botMessage]);
-    }, 1000);
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "I'm sorry, I encountered an error while processing your question. Please try again.",
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+      
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e as any);
+    }
   };
 
   return (
@@ -69,9 +113,9 @@ const ProjectChatBot: React.FC<ProjectChatBotProps> = ({ projectTitle, projectDe
         {isOpen ? <X /> : <MessageCircle />}
       </Button>
       
-      {/* Chat window */}
+      {/* Chat window - moved 20px to the left */}
       <div
-        className={`fixed bottom-0 right-0 w-full sm:w-96 bg-background border rounded-t-lg shadow-lg transition-transform duration-300 ease-in-out ${
+        className={`fixed bottom-0 right-5 w-full sm:w-96 bg-background border rounded-t-lg shadow-lg transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
         } z-40`}
       >
@@ -102,6 +146,11 @@ const ProjectChatBot: React.FC<ProjectChatBotProps> = ({ projectTitle, projectDe
                 </span>
               </div>
             ))}
+            {isLoading && (
+              <div className="bg-muted rounded-lg p-3 max-w-[85%]">
+                <p className="text-sm">Thinking...</p>
+              </div>
+            )}
           </div>
         </ScrollArea>
         
@@ -109,11 +158,13 @@ const ProjectChatBot: React.FC<ProjectChatBotProps> = ({ projectTitle, projectDe
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder={`Ask about ${projectTitle}...`}
             className="resize-none"
             rows={1}
+            disabled={isLoading}
           />
-          <Button type="submit" size="icon">
+          <Button type="submit" size="icon" disabled={isLoading || !message.trim()}>
             <Send size={18} />
           </Button>
         </form>
