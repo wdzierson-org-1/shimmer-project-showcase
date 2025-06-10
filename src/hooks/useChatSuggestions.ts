@@ -16,7 +16,7 @@ export const useChatSuggestions = (messages: Message[]) => {
       if (messages.length === 1) {
         setShowSuggestions(true);
       }
-    }, 5000);
+    }, 4000); // Reduced from 5000ms to 4000ms
 
     return () => clearTimeout(timer);
   }, [messages]);
