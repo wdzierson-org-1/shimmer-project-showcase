@@ -29,7 +29,7 @@ import { findRelevantContentEntriesEnhanced, analyzeQuery } from './search/enhan
 import { generateFocusedResponse, assessContentRelevance } from './responses/enhancedResponseGenerator';
 
 /**
- * Processes user messages with enhanced RAG pipeline
+ * Processes user messages with enhanced RAG pipeline and improved affirmative response handling
  */
 export const processUserMessage = async (
   userMessage: string
@@ -48,6 +48,19 @@ export const processUserMessage = async (
       userMessage.toLowerCase().includes("what's on your mind") ||
       userMessage.toLowerCase().includes("on your mind lately")) {
     return await generateThoughtsResponse();
+  }
+  
+  // PRIORITY: Check for explicit requests to see projects/portfolio/work (including "yes" responses)
+  if (isShowProjectsQuery(userMessage)) {
+    console.log('Detected portfolio/projects request (including affirmative response)');
+    
+    // Check if the query is specifically about AI
+    if (isAIQuery(userMessage)) {
+      return handleAIProjectsQuery(userMessage);
+    }
+    
+    // General portfolio query - this should handle "yes" responses to portfolio suggestions
+    return handlePortfolioQuery();
   }
   
   // Analyze the query to determine search strategy
@@ -86,17 +99,6 @@ export const processUserMessage = async (
     }
   }
   
-  // Check for explicit requests to see projects/portfolio/work
-  if (isShowProjectsQuery(userMessage)) {
-    // Check if the query is specifically about AI
-    if (isAIQuery(userMessage)) {
-      return handleAIProjectsQuery(userMessage);
-    }
-    
-    // General portfolio query
-    return handlePortfolioQuery();
-  }
-  
   // Check if this is a direct query about AI experience
   if (isAIExperienceQuery(userMessage)) {
     return handleAIProjectsQuery(userMessage);
@@ -106,7 +108,7 @@ export const processUserMessage = async (
   console.log('Using enhanced content search for general query...');
   
   const searchOptions = {
-    threshold: queryAnalysis.searchStrategy === 'focused' ? 0.4 : 0.3,
+    threshold: queryAnalysis.searchStrategy === 'focused' ? 0.4 : 0.25, // Lowered threshold
     limit: queryAnalysis.searchStrategy === 'focused' ? 2 : 3,
     prioritizeTypes: queryAnalysis.suggestedTypes,
     requireMinScore: queryAnalysis.isSpecific
@@ -140,7 +142,7 @@ export const processUserMessage = async (
   // Check if the semantic search returned actual relevant projects (not fallback)
   if (semanticResults.projects && 
       semanticResults.projects.length > 0 && 
-      semanticResults.relevanceScore > 0.3) {
+      semanticResults.relevanceScore > 0.25) { // Lowered threshold
     console.log('Found relevant projects via semantic search with good relevance score');
     semanticResults.projects = sortProjectsByYear(semanticResults.projects);
     return {

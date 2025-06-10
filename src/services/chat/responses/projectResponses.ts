@@ -62,14 +62,14 @@ export const handleAIProjectsQuery = async (userMessage: string): Promise<{
 };
 
 /**
- * Handles responses for generic portfolio/project queries
+ * Handles responses for generic portfolio/project queries - IMPROVED for affirmative responses
  */
 export const handlePortfolioQuery = async (): Promise<{
   content: string;
   projects: Project[];
   showProjects: boolean;
 }> => {
-  console.log('User is asking to see projects, fetching all projects');
+  console.log('User is asking to see projects (including affirmative responses), fetching all projects');
   const projects = await fetchProjects();
   const sortedProjects = sortProjectsByYear(projects);
   console.log(`Fetched ${sortedProjects.length} projects for display`);
