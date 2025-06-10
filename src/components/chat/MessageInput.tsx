@@ -55,7 +55,7 @@ const MessageInput = ({ message, setMessage, handleSubmit, isLoading }: MessageI
           <ArrowRight size={20} />
         </div>
       </div>
-      <p className="text-xs text-muted-foreground px-1">
+      <p className="text-xs text-muted-foreground text-center px-1">
         This is experimental AI. It may (and likely will) make mistakes.
       </p>
     </form>
