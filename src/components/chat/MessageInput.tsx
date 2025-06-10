@@ -27,9 +27,6 @@ const MessageInput = ({ message, setMessage, handleSubmit, isLoading }: MessageI
       onSubmit={handleSubmit} 
       className="sticky bottom-0 py-6 px-4 border-t border-gray-300 flex flex-col gap-2 bg-background shadow-md"
     >
-      <div className="text-center text-sm text-muted-foreground mb-2">
-        This is an experimental UI. It will make mistakes.
-      </div>
       <div className="flex gap-4 items-end">
         <div className="relative flex-1">
           <Textarea
@@ -59,6 +56,9 @@ const MessageInput = ({ message, setMessage, handleSubmit, isLoading }: MessageI
             <ArrowRight size={20} />
           </div>
         </div>
+      </div>
+      <div className="text-center text-xs text-muted-foreground">
+        This is an experimental UI. It will make mistakes.
       </div>
     </form>
   );
