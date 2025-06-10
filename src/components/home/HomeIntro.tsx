@@ -56,7 +56,7 @@ const HomeIntro = () => {
           <a href="https://github.com/wdzierson/shimmer-project-showcase-pub" 
              className="flex items-center gap-2 text-foreground/80 hover:text-foreground">
             <Github size={18} />
-            <span className="hover:underline">GitHub</span>
+            <span className="hover:underline">I'm open source: GitHub</span>
           </a>
         </div>
         
