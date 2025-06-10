@@ -25,7 +25,7 @@ const MessageInput = ({ message, setMessage, handleSubmit, isLoading }: MessageI
   return (
     <form 
       onSubmit={handleSubmit} 
-      className="sticky bottom-0 py-6 px-4 border-t border-gray-300 flex gap-4 items-end bg-background shadow-md"
+      className="sticky bottom-0 py-6 px-4 border-t border-gray-300 flex flex-col gap-2 bg-background shadow-md"
     >
       <div className="relative flex-1">
         <Textarea
@@ -55,6 +55,9 @@ const MessageInput = ({ message, setMessage, handleSubmit, isLoading }: MessageI
           <ArrowRight size={20} />
         </div>
       </div>
+      <p className="text-xs text-muted-foreground px-1">
+        This is experimental AI. It may (and likely will) make mistakes.
+      </p>
     </form>
   );
 };
