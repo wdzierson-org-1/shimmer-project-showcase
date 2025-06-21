@@ -26,12 +26,24 @@ const ChatInterface = () => {
     processMessage(suggestionText);
   };
 
+  const handleProjectSelect = (project: any) => {
+    // Navigate to project detail page
+    window.location.href = `/project/${project.id}`;
+  };
+
+  const handleContentSelect = (content: any) => {
+    // Navigate to content detail page
+    window.location.href = `/content/${content.id}`;
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-hidden">
         <MessageList 
           messages={messages} 
           isLoading={isLoading}
+          onProjectSelect={handleProjectSelect}
+          onContentSelect={handleContentSelect}
           suggestions={suggestions}
           onSuggestionClick={handleSuggestionClick}
         />
