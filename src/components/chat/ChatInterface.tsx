@@ -1,96 +1,48 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import ProjectDetail from '@/components/project/ProjectDetail';
-import ContentDetail from '@/components/content/ContentDetail';
-
 import { useChatMessages } from '@/hooks/useChatMessages';
 import { useChatSuggestions } from '@/hooks/useChatSuggestions';
-import { useDialogState } from '@/hooks/useDialogState';
 
 const ChatInterface = () => {
   const [message, setMessage] = useState('');
-  const navigate = useNavigate();
-  const { messages, isLoading, processMessage } = useChatMessages();
+  const { messages, isLoading, processMessage, clearConversation } = useChatMessages();
   const { suggestions, hideSuggestions } = useChatSuggestions(messages);
-  const {
-    selectedProject,
-    selectedContent,
-    projectDialogOpen,
-    contentDialogOpen,
-    handleProjectSelect,
-    handleContentSelect,
-    handleCloseProjectDetail,
-    handleCloseContentDetail,
-  } = useDialogState();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!message.trim()) return;
+    if (!message.trim() || isLoading) return;
     
     hideSuggestions();
-    await processMessage(message);
+    const messageToProcess = message.trim();
     setMessage('');
+    await processMessage(messageToProcess);
   };
 
-  const handleSuggestionClick = async (suggestionText: string) => {
+  const handleSuggestionClick = (suggestionText: string) => {
+    setMessage(suggestionText);
     hideSuggestions();
-    await processMessage(suggestionText);
-  };
-
-  // Enhanced handlers that navigate to dedicated pages
-  const handleProjectSelectWithNavigation = (project: any) => {
-    navigate(`/project/${project.id}`);
-  };
-
-  const handleContentSelectWithNavigation = (content: any) => {
-    navigate(`/content/${content.id}`);
+    processMessage(suggestionText);
   };
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-background">
-      <div className="flex flex-col h-full">
-        <div className="flex-grow overflow-hidden relative">
-          <ScrollArea className="h-full pr-4">
-            <MessageList 
-              messages={messages} 
-              isLoading={isLoading} 
-              onProjectSelect={handleProjectSelectWithNavigation}
-              onContentSelect={handleContentSelectWithNavigation}
-              suggestions={suggestions}
-              onSuggestionClick={handleSuggestionClick}
-            />
-          </ScrollArea>
-        </div>
-        <MessageInput 
-          message={message}
-          setMessage={setMessage}
-          handleSubmit={handleSubmit}
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-hidden">
+        <MessageList 
+          messages={messages} 
           isLoading={isLoading}
+          suggestions={suggestions}
+          onSuggestionClick={handleSuggestionClick}
         />
       </div>
-      
-      {/* Full-screen project detail dialog */}
-      <Dialog open={projectDialogOpen} onOpenChange={handleCloseProjectDetail}>
-        <DialogContent className="max-w-full w-full h-[90vh] p-0 rounded-lg">
-          {selectedProject && (
-            <ProjectDetail project={selectedProject} onClose={handleCloseProjectDetail} />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={contentDialogOpen} onOpenChange={handleCloseContentDetail}>
-        <DialogContent className="max-w-full w-full h-[90vh] p-0 rounded-lg">
-          {selectedContent && (
-            <ContentDetail content={selectedContent} onClose={handleCloseContentDetail} />
-          )}
-        </DialogContent>
-      </Dialog>
+      <MessageInput
+        message={message}
+        setMessage={setMessage}
+        handleSubmit={handleSubmit}
+        isLoading={isLoading}
+        onClearConversation={clearConversation}
+      />
     </div>
   );
 };
