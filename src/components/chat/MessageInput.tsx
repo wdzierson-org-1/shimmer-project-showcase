@@ -49,7 +49,7 @@ const MessageInput = ({ message, setMessage, handleSubmit, isLoading, onClearCon
     <>
       <form 
         onSubmit={handleSubmit} 
-        className="sticky bottom-0 py-6 px-4 border-t border-gray-300 flex flex-col gap-2 bg-background shadow-md"
+        className="sticky bottom-0 py-6 px-4 border-t border-gray-300 flex flex-col gap-2 bg-background"
       >
         <div className="relative flex-1">
           <Textarea
@@ -59,7 +59,7 @@ const MessageInput = ({ message, setMessage, handleSubmit, isLoading, onClearCon
             placeholder="Ask something..."
             className={cn(
               "resize-none min-h-[24px] max-h-32 text-lg bg-white w-full rounded-md",
-              "focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none p-3 shadow-sm font-light pr-12"
+              "focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none p-3 font-light pr-12"
             )}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
@@ -80,15 +80,17 @@ const MessageInput = ({ message, setMessage, handleSubmit, isLoading, onClearCon
           </div>
         </div>
         <div className="text-xs text-muted-foreground text-center px-1">
-          <p>This is experimental AI. It may (and likely will) make mistakes.</p>
+          <p className="inline">This is experimental AI. It may (and likely will) make mistakes.</p>
           {onClearConversation && (
-            <button
-              type="button"
-              onClick={handleClearClick}
-              className="text-muted-foreground hover:text-foreground underline mt-1"
-            >
-              Clear conversation history
-            </button>
+            <span className="inline ml-2">
+              <button
+                type="button"
+                onClick={handleClearClick}
+                className="text-muted-foreground hover:text-foreground underline"
+              >
+                Reset chat
+              </button>
+            </span>
           )}
         </div>
       </form>
