@@ -10,9 +10,10 @@ interface MessageInputProps {
   setMessage: (message: string) => void;
   handleSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
+  onClearConversation?: () => void;
 }
 
-const MessageInput = ({ message, setMessage, handleSubmit, isLoading }: MessageInputProps) => {
+const MessageInput = ({ message, setMessage, handleSubmit, isLoading, onClearConversation }: MessageInputProps) => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Focus input field when the component mounts
@@ -55,9 +56,18 @@ const MessageInput = ({ message, setMessage, handleSubmit, isLoading }: MessageI
           <ArrowRight size={20} />
         </div>
       </div>
-      <p className="text-xs text-muted-foreground text-center px-1">
-        This is experimental AI. It may (and likely will) make mistakes.
-      </p>
+      <div className="flex justify-between items-center text-xs text-muted-foreground px-1">
+        <span>This is experimental AI. It may (and likely will) make mistakes.</span>
+        {onClearConversation && (
+          <button
+            type="button"
+            onClick={onClearConversation}
+            className="text-muted-foreground hover:text-foreground underline"
+          >
+            Clear conversation history
+          </button>
+        )}
+      </div>
     </form>
   );
 };
