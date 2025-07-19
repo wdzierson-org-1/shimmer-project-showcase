@@ -16,7 +16,7 @@ const ImageUploadButton = ({ onFileSelected, isUploading }: ImageUploadButtonPro
         id="file-upload"
         className="hidden"
         onChange={onFileSelected}
-        accept="image/*,video/*"
+        accept="image/*,video/*,application/pdf"
         disabled={isUploading}
       />
       <label htmlFor="file-upload">
