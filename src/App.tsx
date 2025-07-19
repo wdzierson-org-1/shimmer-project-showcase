@@ -10,6 +10,8 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 import Index from "./pages/Index";
+import AllProjects from "./pages/AllProjects";
+import AllEntries from "./pages/AllEntries";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import AdminProjects from "./pages/AdminProjects"; 
@@ -84,6 +86,8 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/projects" element={<AllProjects />} />
+              <Route path="/entries" element={<AllEntries />} />
               <Route path="/project/:id" element={<ProjectDetail />} />
               <Route path="/content/:id" element={<ContentDetail />} />
               <Route path="/login" element={<Login />} />
