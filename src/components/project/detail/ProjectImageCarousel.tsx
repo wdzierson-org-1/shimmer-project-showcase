@@ -1,12 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Play } from 'lucide-react';
+import { ExternalLink, Play, FileText } from 'lucide-react';
+import PdfViewer from '@/components/ui/pdf-viewer';
 
 interface MediaItem {
   url: string;
-  type: 'image' | 'video';
+  type: 'image' | 'video' | 'pdf';
   thumbnailUrl?: string;
 }
 
@@ -21,6 +22,8 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
   additionalImages, 
   title 
 }) => {
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+  const [currentPdf, setCurrentPdf] = useState<{ url: string; title: string } | null>(null);
   // Helper function to parse media item
   const parseMediaItem = (mediaString: string): MediaItem => {
     if (!mediaString) {
@@ -35,11 +38,12 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
         thumbnailUrl: parsed.thumbnailUrl || parsed.url || mediaString
       };
     } catch {
-      // Fallback for legacy image URLs - check file extension for video
+      // Fallback for legacy URLs - check file extension
       const isVideo = mediaString.toLowerCase().match(/\.(mp4|mov|avi|webm)$/);
+      const isPdf = mediaString.toLowerCase().match(/\.pdf$/);
       return {
         url: mediaString,
-        type: isVideo ? 'video' : 'image',
+        type: isVideo ? 'video' : isPdf ? 'pdf' : 'image',
         thumbnailUrl: mediaString
       };
     }
@@ -51,9 +55,15 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
   // Parse additional media items
   const additionalMedia = additionalImages?.map(parseMediaItem).filter(media => media.url) || [];
   
-  // Find all video files
+  // Find all video and PDF files
   const allMedia = [mainMedia, ...additionalMedia].filter(Boolean) as MediaItem[];
   const videoFiles = allMedia.filter(media => media.type === 'video' || media.url.toLowerCase().match(/\.(mp4|mov|avi|webm)$/));
+  const pdfFiles = allMedia.filter(media => media.type === 'pdf' || media.url.toLowerCase().match(/\.pdf$/));
+
+  const handlePdfClick = (url: string, pdfTitle: string) => {
+    setCurrentPdf({ url, title: pdfTitle });
+    setPdfViewerOpen(true);
+  };
   
   const hasAdditionalMedia = additionalMedia.length > 0;
   
@@ -61,6 +71,29 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
     const key = index !== undefined ? `additional-media-${index}` : 'main-media';
     
     console.log(`ProjectImageCarousel rendering ${key}:`, media);
+    
+    // For PDFs, show document icon and open in modal
+    if (media.type === 'pdf' || media.url.toLowerCase().match(/\.pdf$/)) {
+      return (
+        <div 
+          key={key} 
+          className="relative cursor-pointer bg-gray-100 rounded-md border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors" 
+          onClick={() => handlePdfClick(media.url, `${title} - Document ${index !== undefined ? index + 1 : ''}`)}
+        >
+          <div className="w-full h-64 flex items-center justify-center">
+            <div className="text-center">
+              <FileText size={48} className="mx-auto mb-2 text-gray-600" />
+              <p className="text-gray-700 font-medium">PDF Document</p>
+              <p className="text-xs text-gray-500 mt-1">Click to view</p>
+            </div>
+          </div>
+          {/* PDF indicator */}
+          <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
+            PDF
+          </div>
+        </div>
+      );
+    }
     
     // For videos, show thumbnail with play button overlay
     if (media.type === 'video' || media.url.toLowerCase().match(/\.(mp4|mov|avi|webm)$/)) {
@@ -177,6 +210,19 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
           </div>
         ))}
       </div>
+      
+      {/* PDF Viewer Modal */}
+      {currentPdf && (
+        <PdfViewer
+          isOpen={pdfViewerOpen}
+          onClose={() => {
+            setPdfViewerOpen(false);
+            setCurrentPdf(null);
+          }}
+          pdfUrl={currentPdf.url}
+          title={currentPdf.title}
+        />
+      )}
     </ScrollArea>
   );
 };

@@ -6,7 +6,7 @@ import { generateVideoThumbnail, uploadThumbnail } from '../utils/videoUtils';
 
 interface MediaItem {
   url: string;
-  type: 'image' | 'video';
+  type: 'image' | 'video' | 'pdf';
   thumbnailUrl: string;
 }
 
@@ -20,16 +20,17 @@ export const uploadFile = async (file: File): Promise<MediaItem | null> => {
   }
   
   const isVideo = file.type.startsWith('video/');
+  const isPdf = file.type === 'application/pdf';
   
   try {
-    toast.info(`Uploading ${isVideo ? 'video' : 'image'}...`);
+    toast.info(`Uploading ${isVideo ? 'video' : isPdf ? 'PDF' : 'image'}...`);
     
     // Generate a unique filename
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     const filePath = `${fileName}`;
     
-    console.log(`Uploading ${isVideo ? 'video' : 'image'} to path:`, filePath);
+    console.log(`Uploading ${isVideo ? 'video' : isPdf ? 'PDF' : 'image'} to path:`, filePath);
     
     // Upload main file to Supabase Storage
     const { data, error } = await supabase.storage
@@ -41,7 +42,7 @@ export const uploadFile = async (file: File): Promise<MediaItem | null> => {
       
     if (error) {
       console.error('Error uploading file:', error);
-      toast.error(`Failed to upload ${isVideo ? 'video' : 'image'}`);
+      toast.error(`Failed to upload ${isVideo ? 'video' : isPdf ? 'PDF' : 'image'}`);
       return null;
     }
     
@@ -88,18 +89,18 @@ export const uploadFile = async (file: File): Promise<MediaItem | null> => {
     // Create media object
     const mediaItem: MediaItem = {
       url: publicUrlData.publicUrl,
-      type: isVideo ? 'video' : 'image',
+      type: isVideo ? 'video' : isPdf ? 'pdf' : 'image',
       thumbnailUrl: thumbnailUrl || publicUrlData.publicUrl
     };
     
     console.log('Created media item:', mediaItem);
-    toast.success(`${isVideo ? 'Video' : 'Image'} uploaded successfully`);
+    toast.success(`${isVideo ? 'Video' : isPdf ? 'PDF' : 'Image'} uploaded successfully`);
     
     return mediaItem;
     
   } catch (error) {
     console.error('Error in upload process:', error);
-    toast.error(`Failed to process ${isVideo ? 'video' : 'image'}`);
+    toast.error(`Failed to process ${isVideo ? 'video' : isPdf ? 'PDF' : 'image'}`);
     return null;
   }
 };
