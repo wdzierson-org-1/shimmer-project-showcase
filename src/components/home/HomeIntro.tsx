@@ -42,7 +42,7 @@ const HomeIntro = () => {
           "font-light max-w-prose space-y-4"
         )}>
           <p>
-            Let's chat. I built this AI version of my portfolio for fun. Ask it about my work or what I like to do, etc. With that in mind, it's an assistant. It’s not meant to be a “copy” of me. It knows stuff about stuff, but its main purpose is to help you explore.
+            Let's chat. I built this AI version of my portfolio for fun. Ask it about my work or what I like to do, etc.
           </p>
           
           <p>
