@@ -48,6 +48,10 @@ const HomeIntro = () => {
           <p>
             I am a designer and technologist, having always sat at the intersection of both. I love to design, and I also love to build.
           </p>
+
+          <p>
+           If you're feeling especially intrepid, you're welcome to give my <a href="https://os.dzierson.com/">AI-enabled webOS</a> a try. It's free, but you need to sign up to create a user. It's a work in progress.
+          </p>
         </div>
       </div>
       
