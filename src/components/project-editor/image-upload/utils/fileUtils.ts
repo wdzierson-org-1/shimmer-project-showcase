@@ -58,19 +58,8 @@ export const deleteThumbnailFromStorage = async (videoFileName: string): Promise
   }
 };
 
-// Helper function to validate file type and size
+// Helper function to validate file type
 export const validateFile = (file: File): { isValid: boolean; error?: string } => {
-  const isVideo = file.type.startsWith('video/');
-  const isPdf = file.type === 'application/pdf';
-  const maxSize = isVideo ? 100 * 1024 * 1024 : isPdf ? 50 * 1024 * 1024 : 5 * 1024 * 1024; // 100MB for videos, 50MB for PDFs, 5MB for images
-  
-  if (file.size > maxSize) {
-    return {
-      isValid: false,
-      error: `File size exceeds ${isVideo ? '100MB' : isPdf ? '50MB' : '5MB'} limit`
-    };
-  }
-  
   const allowedTypes = [
     'image/jpeg', 'image/png', 'image/webp',
     'video/mp4', 'video/webm', 'video/quicktime',
