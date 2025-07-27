@@ -25,6 +25,7 @@ const PublicContentList = () => {
           .from('content_entries')
           .select('id, title, content, type, image_url, created_at')
           .eq('visible', true)
+          .eq('type', 'thought')
           .order('created_at', { ascending: false });
         
         if (error) {
