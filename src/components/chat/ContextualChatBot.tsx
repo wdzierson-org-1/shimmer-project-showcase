@@ -118,15 +118,15 @@ const ContextualChatBot: React.FC<ContextualChatBotProps> = ({
       {/* Chat toggle button */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-4 right-4 rounded-full w-12 h-12 p-0 shadow-lg z-50"
+        className="fixed bottom-4 right-4 sm:right-4 rounded-full w-12 h-12 p-0 shadow-lg z-50"
         aria-label={`Toggle ${contextType} chat`}
       >
         {isOpen ? <X /> : <MessageCircle />}
       </Button>
       
-      {/* Chat window - moved 40px to the left (20px more than before) */}
+      {/* Chat window - adjusted for mobile positioning */}
       <div
-        className={`fixed bottom-0 right-10 w-full sm:w-96 bg-background border rounded-t-lg shadow-lg transition-transform duration-300 ease-in-out ${
+        className={`fixed bottom-0 right-2 sm:right-10 w-full sm:w-96 bg-background border rounded-t-lg shadow-lg transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-y-0' : 'translate-y-full'
         } z-40`}
       >
