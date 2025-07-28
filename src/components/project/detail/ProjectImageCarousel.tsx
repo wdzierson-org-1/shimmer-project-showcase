@@ -4,6 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, Play, FileText } from 'lucide-react';
 import PdfViewer from '@/components/ui/pdf-viewer';
+import ImageLightbox from './ImageLightbox';
 
 interface MediaItem {
   url: string;
@@ -24,6 +25,8 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
 }) => {
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [currentPdf, setCurrentPdf] = useState<{ url: string; title: string } | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [currentImage, setCurrentImage] = useState<{ url: string; alt: string } | null>(null);
   // Helper function to parse media item
   const parseMediaItem = (mediaString: string): MediaItem => {
     if (!mediaString) {
@@ -63,6 +66,11 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
   const handlePdfClick = (url: string, pdfTitle: string) => {
     setCurrentPdf({ url, title: pdfTitle });
     setPdfViewerOpen(true);
+  };
+
+  const handleImageClick = (url: string, alt: string) => {
+    setCurrentImage({ url, alt });
+    setLightboxOpen(true);
   };
   
   const hasAdditionalMedia = additionalMedia.length > 0;
@@ -176,12 +184,15 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
     
     console.log(`Using display URL for image ${key}:`, displayUrl);
     
+    const altText = index !== undefined ? `${title} - ${index + 1}` : title;
+    
     return (
       <img 
         key={key}
         src={displayUrl} 
-        alt={index !== undefined ? `${title} - ${index + 1}` : title} 
-        className="w-full h-auto object-cover rounded-md"
+        alt={altText} 
+        className="w-full h-auto object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity"
+        onClick={() => handleImageClick(media.url, altText)}
         onError={(e) => {
           console.error('Failed to load image:', displayUrl);
           console.error('Media object was:', media);
@@ -193,23 +204,28 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
     );
   };
   
+  // Check if there are any images to determine if we should show the scrollbar
+  const hasImages = (mainMedia && mainMedia.url) || hasAdditionalMedia;
+  
   return (
-    <ScrollArea className="h-[calc(100vh-200px)]">
-      <div className="space-y-4">
-        {/* Main media */}
-        {mainMedia && mainMedia.url && (
-          <div>
-            {renderMediaItem(mainMedia)}
-          </div>
-        )}
-        
-        {/* Additional media */}
-        {hasAdditionalMedia && additionalMedia.map((media, index) => (
-          <div key={`additional-media-${index}`} className="pt-4">
-            {renderMediaItem(media, index)}
-          </div>
-        ))}
-      </div>
+    <div className="h-[calc(100vh-12rem)]">
+      <ScrollArea className={`h-full ${hasImages ? 'overflow-y-scroll' : ''}`}>
+        <div className="space-y-4 pr-2">
+          {/* Main media */}
+          {mainMedia && mainMedia.url && (
+            <div>
+              {renderMediaItem(mainMedia)}
+            </div>
+          )}
+          
+          {/* Additional media */}
+          {hasAdditionalMedia && additionalMedia.map((media, index) => (
+            <div key={`additional-media-${index}`} className="pt-4">
+              {renderMediaItem(media, index)}
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
       
       {/* PDF Viewer Modal */}
       {currentPdf && (
@@ -223,7 +239,20 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
           title={currentPdf.title}
         />
       )}
-    </ScrollArea>
+      
+      {/* Image Lightbox */}
+      {currentImage && (
+        <ImageLightbox
+          isOpen={lightboxOpen}
+          onClose={() => {
+            setLightboxOpen(false);
+            setCurrentImage(null);
+          }}
+          imageUrl={currentImage.url}
+          alt={currentImage.alt}
+        />
+      )}
+    </div>
   );
 };
 

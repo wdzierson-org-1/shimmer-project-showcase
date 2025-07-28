@@ -29,8 +29,8 @@ const ProjectDetailContent: React.FC<ProjectDetailContentProps> = ({ project }) 
           </Link>
         </Button>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-7xl mx-auto">
-          <div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-7xl mx-auto min-h-[calc(100vh-12rem)]">
+          <div className="min-h-full">
             <ProjectImageCarousel 
               mainImageUrl={project.imageUrl} 
               additionalImages={project.additionalImages}
