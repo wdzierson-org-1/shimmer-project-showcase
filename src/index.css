@@ -144,3 +144,43 @@
   opacity: 0;
   animation: fadeIn 0.5s ease-out forwards;
 }
+
+/* Enhanced prose styling for markdown content */
+@layer components {
+  .prose {
+    @apply text-foreground;
+  }
+  
+  .prose h2 {
+    @apply border-none;
+  }
+  
+  .prose h3 {
+    @apply border-none;
+  }
+  
+  .prose blockquote {
+    @apply text-muted-foreground bg-muted/30 rounded-md px-4 py-2;
+    border-left: 4px solid hsl(var(--border));
+  }
+  
+  .prose strong {
+    @apply text-foreground font-semibold;
+  }
+  
+  .prose code {
+    @apply bg-muted px-2 py-1 rounded text-sm;
+  }
+  
+  .prose pre {
+    @apply bg-muted p-4 rounded-lg overflow-x-auto;
+  }
+  
+  .prose ul, .prose ol {
+    @apply space-y-2;
+  }
+  
+  .prose li {
+    @apply text-foreground;
+  }
+}

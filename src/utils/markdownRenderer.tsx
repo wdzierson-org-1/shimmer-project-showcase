@@ -24,7 +24,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
   return (
     <div 
-      className={`prose prose-gray max-w-none ${className}`}
+      className={`prose prose-gray max-w-none prose-headings:font-serif prose-headings:font-medium prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-p:mb-4 prose-blockquote:border-l-4 prose-blockquote:border-border prose-blockquote:pl-6 prose-blockquote:my-6 prose-blockquote:italic prose-ul:mb-4 prose-ol:mb-4 ${className}`}
       dangerouslySetInnerHTML={{ __html: htmlContent }}
     />
   );
