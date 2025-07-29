@@ -1,6 +1,6 @@
 
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
+import MarkdownRenderer from '@/utils/markdownRenderer';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
 
@@ -17,20 +17,18 @@ const ProjectDescription: React.FC<ProjectDescriptionProps> = ({
 }) => {
   return (
     <div className="space-y-8">
-      <div className="prose max-w-none text-lg">
-        <ReactMarkdown>
-          {description}
-        </ReactMarkdown>
-      </div>
+      <MarkdownRenderer 
+        content={description}
+        className="text-lg"
+      />
 
       {involvement && (
         <div>
           <h3 className="text-lg font-medium mb-3">My Involvement</h3>
-          <div className="text-muted-foreground prose max-w-none">
-            <ReactMarkdown>
-              {involvement}
-            </ReactMarkdown>
-          </div>
+          <MarkdownRenderer 
+            content={involvement}
+            className="text-muted-foreground"
+          />
         </div>
       )}
       

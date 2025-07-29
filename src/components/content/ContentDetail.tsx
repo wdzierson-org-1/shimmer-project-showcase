@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ContentEntry } from '@/services/content/contentService';
-import ReactMarkdown from 'react-markdown';
+import MarkdownRenderer from '@/utils/markdownRenderer';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -44,50 +44,49 @@ const ContentDetail = ({ content, onClose }: ContentDetailProps) => {
             )}
 
             <div className={content.image_url ? '' : 'col-span-2'}>
-              <div className="prose prose-sm md:prose-base lg:prose-lg max-w-none">
-                <div className="whitespace-pre-wrap">
-                  <ReactMarkdown>{processContent(content.content)}</ReactMarkdown>
+              <MarkdownRenderer 
+                content={processContent(content.content)}
+                className="prose-sm md:prose-base lg:prose-lg whitespace-pre-wrap"
+              />
+                
+              {content.file_url && (
+                <div className="mt-6 border rounded-md p-3 md:p-4">
+                  <a 
+                    href={content.file_url} 
+                    download 
+                    className="flex items-center text-primary hover:underline text-sm md:text-base group"
+                  >
+                    <Download size={18} className="mr-2 group-hover:text-primary" />
+                    Download attached file
+                  </a>
                 </div>
-                
-                {content.file_url && (
-                  <div className="mt-6 border rounded-md p-3 md:p-4">
-                    <a 
-                      href={content.file_url} 
-                      download 
-                      className="flex items-center text-primary hover:underline text-sm md:text-base group"
-                    >
-                      <Download size={18} className="mr-2 group-hover:text-primary" />
-                      Download attached file
-                    </a>
-                  </div>
-                )}
-                
-                {urls.length > 0 && (
-                  <div className="mt-6 space-y-3">
-                    <h3 className={combineStyles(textStyles.body, "font-medium mb-2")}>Links</h3>
-                    <div className="grid gap-3 md:grid-cols-2">
-                      {urls.map((url, index) => (
-                        <Card 
-                          key={index} 
-                          className="hover:border-primary/50 transition-colors cursor-pointer"
-                          onClick={() => window.open(url, '_blank')}
-                        >
-                          <div className="p-3 md:p-4">
-                            <div className="flex items-start space-x-2">
-                              <div className="flex-1 min-w-0">
-                                <h3 className={combineStyles(textStyles.body, "font-medium truncate")}>{url}</h3>
-                                <p className={combineStyles(textStyles.small, "truncate mt-1")}>
-                                  {new URL(url).hostname}
-                                </p>
-                              </div>
+              )}
+              
+              {urls.length > 0 && (
+                <div className="mt-6 space-y-3">
+                  <h3 className={combineStyles(textStyles.body, "font-medium mb-2")}>Links</h3>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {urls.map((url, index) => (
+                      <Card 
+                        key={index} 
+                        className="hover:border-primary/50 transition-colors cursor-pointer"
+                        onClick={() => window.open(url, '_blank')}
+                      >
+                        <div className="p-3 md:p-4">
+                          <div className="flex items-start space-x-2">
+                            <div className="flex-1 min-w-0">
+                              <h3 className={combineStyles(textStyles.body, "font-medium truncate")}>{url}</h3>
+                              <p className={combineStyles(textStyles.small, "truncate mt-1")}>
+                                {new URL(url).hostname}
+                              </p>
                             </div>
                           </div>
-                        </Card>
-                      ))}
-                    </div>
+                        </div>
+                      </Card>
+                    ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
 
