@@ -208,8 +208,8 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
   const hasImages = (mainMedia && mainMedia.url) || hasAdditionalMedia;
   
   return (
-    <div className="h-[calc(100vh-12rem)]">
-      <ScrollArea className={`h-full ${hasImages ? 'overflow-y-scroll' : ''}`}>
+    <div className="max-h-[80vh] min-h-[400px]">
+      <ScrollArea className="h-full">
         <div className="space-y-4 pr-2">
           {/* Main media */}
           {mainMedia && mainMedia.url && (
@@ -224,6 +224,15 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
               {renderMediaItem(media, index)}
             </div>
           ))}
+          
+          {/* Scroll indicator for additional media */}
+          {hasAdditionalMedia && (
+            <div className="flex justify-center py-2">
+              <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                {additionalMedia.length + 1} media items • Scroll to see more
+              </div>
+            </div>
+          )}
         </div>
       </ScrollArea>
       
