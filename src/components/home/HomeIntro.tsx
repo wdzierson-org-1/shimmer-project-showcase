@@ -31,14 +31,14 @@ const HomeIntro = () => {
     <div className="lg:sticky lg:top-24 flex flex-col justify-between h-full">
       <div className="space-y-6">
         <h2 className={cn(
-          "font-serif text-4xl md:text-5xl font-medium text-white",
+          "font-serif text-4xl md:text-5xl font-medium text-foreground",
           "tracking-tight leading-[1.15]"
         )}>
           {greeting} {user ? user.email?.split('@')[0] : ''}
         </h2>
         
         <div className={cn(
-          "text-lg text-white/90 leading-relaxed",
+          "text-lg text-foreground/80 leading-relaxed",
           "font-light max-w-prose space-y-4"
         )}>
           <p>
@@ -58,24 +58,24 @@ const HomeIntro = () => {
       <div className="space-y-4 mt-auto pt-12">
         <div>
           <a href="https://github.com/wdzierson/shimmer-project-showcase-pub" 
-             className="flex items-center gap-2 text-white/80 hover:text-white">
+             className="flex items-center gap-2 text-foreground/80 hover:text-foreground">
             <Github size={18} />
             <span className="hover:underline">I'm open source: GitHub</span>
           </a>
         </div>
         
-        <p className="text-white/80">
+        <p className="text-foreground/80">
           Looking for <a 
             href="https://projectariadne.info" 
-            className="text-white hover:underline"
+            className="text-foreground hover:underline"
             target="_blank" 
             rel="noopener noreferrer"
           >Project Ariadne</a>?
         </p>
         
         {user && (
-          <p className="text-white/80">
-            <Link to="/admin" className="text-white hover:underline">
+          <p className="text-foreground/80">
+            <Link to="/admin" className="text-foreground hover:underline">
               Admin Dashboard
             </Link>
           </p>
