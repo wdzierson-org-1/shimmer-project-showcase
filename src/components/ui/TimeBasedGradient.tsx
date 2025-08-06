@@ -13,17 +13,17 @@ const TimeBasedGradient: React.FC<TimeBasedGradientProps> = ({ children, classNa
       const hour = new Date().getHours();
       
       if (hour >= 6 && hour < 12) {
-        // Morning: Orange to Pink (sunrise vibes)
-        setGradientClass('bg-gradient-to-r from-orange-500 via-amber-400 to-pink-400');
+        // Morning: Light orange to off-white
+        setGradientClass('bg-gradient-to-r from-orange-200/50 to-orange-50/50');
       } else if (hour >= 12 && hour < 17) {
-        // Afternoon: Blue to Teal (bright daylight)
-        setGradientClass('bg-gradient-to-r from-blue-500 via-cyan-400 to-teal-500');
+        // Afternoon: Light blue to off-white
+        setGradientClass('bg-gradient-to-r from-blue-200/50 to-blue-50/50');
       } else if (hour >= 17 && hour < 20) {
-        // Evening: Orange to Purple (sunset)
-        setGradientClass('bg-gradient-to-r from-orange-600 via-pink-500 to-purple-600');
+        // Evening: Light orange to warm off-white
+        setGradientClass('bg-gradient-to-r from-orange-300/50 to-amber-50/50');
       } else {
-        // Night: Deep Blue to Purple (night sky)
-        setGradientClass('bg-gradient-to-r from-slate-800 via-blue-900 to-purple-900');
+        // Night: Light purple to off-white
+        setGradientClass('bg-gradient-to-r from-purple-200/50 to-slate-50/50');
       }
     };
 
