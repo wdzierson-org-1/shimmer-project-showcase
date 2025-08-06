@@ -49,7 +49,7 @@ const MessageInput = ({ message, setMessage, handleSubmit, isLoading, onClearCon
     <>
       <form 
         onSubmit={handleSubmit} 
-        className="sticky bottom-0 py-6 px-4 border-t border-gray-300 flex flex-col gap-2 bg-background"
+        className="sticky bottom-0 py-6 px-4 border-t border-gray-300 flex flex-col gap-2 bg-transparent"
       >
         <div className="relative flex-1">
           <Textarea
@@ -58,8 +58,8 @@ const MessageInput = ({ message, setMessage, handleSubmit, isLoading, onClearCon
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Ask something..."
             className={cn(
-              "resize-none min-h-[24px] max-h-32 text-lg bg-white w-full rounded-md",
-              "focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none p-3 font-light pr-12"
+              "resize-none min-h-[24px] max-h-32 text-lg bg-transparent backdrop-blur-sm border-white/20 w-full rounded-md text-white placeholder:text-white/60",
+              "focus-visible:ring-1 focus-visible:ring-white/50 focus-visible:outline-none p-3 font-light pr-12"
             )}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
@@ -75,18 +75,18 @@ const MessageInput = ({ message, setMessage, handleSubmit, isLoading, onClearCon
               target.style.height = target.scrollHeight + 'px';
             }}
           />
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60">
             <ArrowRight size={20} />
           </div>
         </div>
-        <div className="text-xs text-muted-foreground text-center px-1">
+        <div className="text-xs text-white/60 text-center px-1">
           <p className="inline">This is experimental AI. It may (and likely will) make mistakes.</p>
           {onClearConversation && (
             <span className="inline ml-2">
               <button
                 type="button"
                 onClick={handleClearClick}
-                className="text-muted-foreground hover:text-foreground underline"
+                className="text-white/60 hover:text-white underline"
               >
                 Reset chat
               </button>
