@@ -19,7 +19,7 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				sans: ['Inter', 'sans-serif'],
+				sans: ['PP Mori', 'Inter', 'sans-serif'],
 				mono: ['IBM Plex Mono', 'monospace'],
 				serif: ['PP Editorial New', 'Fabric Serif', 'Playfair Display', 'serif'],
 			},
