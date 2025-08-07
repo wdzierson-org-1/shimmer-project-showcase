@@ -21,7 +21,7 @@ export default {
 			fontFamily: {
 				sans: ['Inter', 'sans-serif'],
 				mono: ['IBM Plex Mono', 'monospace'],
-				serif: ['Fabric Serif', 'Playfair Display', 'serif'],
+				serif: ['PP Editorial New', 'Fabric Serif', 'Playfair Display', 'serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
