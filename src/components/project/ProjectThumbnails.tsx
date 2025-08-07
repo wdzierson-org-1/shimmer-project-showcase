@@ -32,7 +32,7 @@ const ProjectThumbnails: React.FC<ProjectThumbnailsProps> = ({ projects, onSelec
             />
           </div>
           <div className="p-3">
-            <h3 className="text-base font-medium text-foreground font-serif">{project.title}</h3>
+            <h3 className="text-base text-foreground font-serif" style={{ fontWeight: 200 }}>{project.title}</h3>
             <p className="text-xs text-muted-foreground mt-1">{project.client}</p>
             <div className="flex flex-wrap gap-1 mt-2">
               {project.tags.slice(0, 3).map((tag) => (

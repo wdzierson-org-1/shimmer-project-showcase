@@ -19,7 +19,7 @@ export const layoutStyles = {
 
 // Common text styles
 export const textStyles = {
-  heading: "font-serif text-xl md:text-3xl font-semibold",
+  heading: "font-serif text-xl md:text-3xl",
   subheading: "text-lg font-medium text-muted-foreground",
   body: "text-sm md:text-base",
   small: "text-xs md:text-sm text-muted-foreground",

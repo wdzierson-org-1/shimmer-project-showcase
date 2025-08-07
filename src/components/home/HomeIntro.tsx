@@ -31,9 +31,10 @@ const HomeIntro = () => {
     <div className="lg:sticky lg:top-24 flex flex-col justify-between h-full">
       <div className="space-y-6">
         <h2 className={cn(
-          "font-serif text-4xl md:text-5xl font-medium text-foreground",
+          "font-serif text-4xl md:text-5xl text-foreground",
           "tracking-tight leading-[1.15]"
-        )}>
+        )}
+        style={{ fontWeight: 200 }}>
           {greeting} {user ? user.email?.split('@')[0] : ''}
         </h2>
         
