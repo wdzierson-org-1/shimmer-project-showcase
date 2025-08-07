@@ -17,6 +17,46 @@ export async function saveContentEntry({
   isNew = false
 }: SaveContentParams): Promise<ContentEntry | null> {
   try {
+    // Enhanced input validation
+    const { validateProjectTitle, validateAndSanitizeHTML, validateURL, RateLimiter } = await import('@/utils/inputValidation');
+
+    // Rate limiting
+    const rateLimitKey = `content_save_${Date.now().toString().slice(0, -3)}`; // Per minute
+    if (!RateLimiter.isAllowed(rateLimitKey, 5, 60000)) {
+      throw new Error('Too many content save requests. Please wait a moment.');
+    }
+
+    // Validate title
+    const titleValidation = validateProjectTitle(title);
+    if (!titleValidation.isValid) {
+      throw new Error(`Title error: ${titleValidation.error}`);
+    }
+
+    // Validate and sanitize content
+    const contentValidation = validateAndSanitizeHTML(content);
+    if (!contentValidation.isValid) {
+      throw new Error(`Content error: ${contentValidation.error}`);
+    }
+
+    // Validate URLs if provided
+    if (image_url) {
+      const imageUrlValidation = validateURL(image_url);
+      if (!imageUrlValidation.isValid) {
+        throw new Error(`Image URL error: ${imageUrlValidation.error}`);
+      }
+    }
+
+    if (file_url) {
+      const fileUrlValidation = validateURL(file_url);
+      if (!fileUrlValidation.isValid) {
+        throw new Error(`File URL error: ${fileUrlValidation.error}`);
+      }
+    }
+
+    // Use sanitized values
+    const sanitizedTitle = titleValidation.sanitizedValue!;
+    const sanitizedContent = contentValidation.sanitizedValue!;
+
     let contentId = id;
     let result: ContentEntry | null = null;
 
@@ -25,8 +65,8 @@ export async function saveContentEntry({
       const { data, error } = await supabase
         .from('content_entries')
         .insert({
-          title,
-          content,
+          title: sanitizedTitle,
+          content: sanitizedContent,
           type,
           visible,
           image_url,
@@ -49,8 +89,8 @@ export async function saveContentEntry({
       const { data, error } = await supabase
         .from('content_entries')
         .update({
-          title,
-          content,
+          title: sanitizedTitle,
+          content: sanitizedContent,
           type,
           visible,
           image_url,
@@ -69,9 +109,9 @@ export async function saveContentEntry({
       console.log('Updated content entry:', contentId);
     }
 
-    // Generate embeddings for the content
+    // Generate embeddings for the content with sanitized data
     if (contentId) {
-      await saveContentEmbeddings(contentId, title, content, type);
+      await saveContentEmbeddings(contentId, sanitizedTitle, sanitizedContent, type);
     }
 
     return result;
