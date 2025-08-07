@@ -24,10 +24,18 @@ export const useChatMessages = () => {
     const savedMessages = SecureStorage.getItem<Message[]>(CHAT_STORAGE_KEY);
     if (savedMessages && Array.isArray(savedMessages)) {
       try {
-        // Convert timestamp strings back to Date objects
+        // Convert timestamp strings back to Date objects and preserve all message properties
         const messagesWithDates = savedMessages.map((msg: any) => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp)
+          id: msg.id,
+          content: msg.content,
+          sender: msg.sender,
+          timestamp: new Date(msg.timestamp),
+          // Preserve bot message properties
+          projects: msg.projects || undefined,
+          showProjects: msg.showProjects || undefined,
+          contentEntries: msg.contentEntries || undefined,
+          showContentEntries: msg.showContentEntries || undefined,
+          suggestions: msg.suggestions || undefined,
         }));
         setMessages(messagesWithDates);
       } catch (error) {
