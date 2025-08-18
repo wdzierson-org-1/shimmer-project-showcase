@@ -64,6 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const checkAdminStatus = async (userId: string) => {
+    console.log('Checking admin status for user:', userId);
     try {
       const { data } = await supabase
         .from('profiles')
@@ -71,7 +72,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', userId)
         .maybeSingle();
       
-      setIsAdmin(data?.role === 'admin');
+      console.log('Admin check result:', data);
+      const isUserAdmin = data?.role === 'admin';
+      console.log('Setting isAdmin to:', isUserAdmin);
+      setIsAdmin(isUserAdmin);
     } catch (error) {
       console.error('Error checking admin status:', error);
       setIsAdmin(false);
