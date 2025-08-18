@@ -17,9 +17,6 @@ const Header = () => {
           <Button asChild variant="outline" size="sm">
             <Link to="/entries">All Entries</Link>
           </Button>
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/auth">Admin</Link>
-          </Button>
         </div>
       </div>
     </header>
