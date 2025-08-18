@@ -19,10 +19,9 @@ const Auth = () => {
   const from = location.state?.from?.pathname || (isAdmin ? '/admin/dashboard' : '/admin');
 
   useEffect(() => {
+    // Only redirect if user is admin, otherwise let them see the login form
     if (user && isAdmin) {
       navigate('/admin/dashboard', { replace: true });
-    } else if (user && !isAdmin) {
-      navigate('/', { replace: true });
     }
   }, [user, isAdmin, navigate]);
 
