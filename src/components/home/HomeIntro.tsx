@@ -74,13 +74,6 @@ const HomeIntro = () => {
           >Project Ariadne</a>?
         </p>
         
-        {user && (
-          <p className="text-foreground/80">
-            <Link to="/admin" className="text-foreground hover:underline">
-              Admin Dashboard
-            </Link>
-          </p>
-        )}
       </div>
     </div>
   );

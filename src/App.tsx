@@ -93,11 +93,7 @@ const App = () => {
               <Route path="/content/:id" element={<ContentDetail />} />
               <Route path="/login" element={<Auth />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/admin" element={
-                <ProtectedRoute requireAdmin={true}>
-                  <Admin />
-                </ProtectedRoute>
-              } />
+              <Route path="/admin" element={<Auth />} />
               <Route path="/admin/projects" element={
                 <ProtectedRoute requireAdmin={true}>
                   <AdminProjects />
