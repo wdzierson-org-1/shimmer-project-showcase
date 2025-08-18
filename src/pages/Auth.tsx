@@ -39,7 +39,12 @@ const Auth = () => {
         toast.error(error.message || 'Failed to sign in');
       } else {
         toast.success('Successfully signed in!');
-        // Navigation will be handled by useEffect when isAdmin updates
+        // Small delay to let auth state update, then redirect if admin
+        setTimeout(() => {
+          if (isAdmin) {
+            navigate('/admin/dashboard', { replace: true });
+          }
+        }, 100);
       }
     } catch (error) {
       toast.error('An unexpected error occurred');
