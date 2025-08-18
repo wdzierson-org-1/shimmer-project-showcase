@@ -8,6 +8,7 @@ type AuthContextType = {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any | null }>;
   signOut: () => Promise<void>;
 };
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   loading: true,
+  isAdmin: false,
   signIn: async () => ({ error: null }),
   signOut: async () => {},
 });
@@ -26,6 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener first
@@ -34,6 +37,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Check admin status when user changes
+        if (session?.user) {
+          setTimeout(() => {
+            checkAdminStatus(session.user.id);
+          }, 0);
+        } else {
+          setIsAdmin(false);
+        }
       }
     );
 
@@ -42,10 +54,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      if (session?.user) {
+        checkAdminStatus(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkAdminStatus = async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      setIsAdmin(data?.role === 'admin');
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      setIsAdmin(false);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -64,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     user,
     loading,
+    isAdmin,
     signIn,
     signOut,
   };

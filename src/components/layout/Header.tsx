@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const Header = () => {
   return (
@@ -9,6 +10,17 @@ const Header = () => {
         <Link to="/" className="text-2xl tracking-tight font-serif" style={{ fontWeight: 200 }}>
           Will Dzierson / Portfolio
         </Link>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link to="/projects">All Projects</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/entries">All Entries</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/auth">Admin</Link>
+          </Button>
+        </div>
       </div>
     </header>
   );

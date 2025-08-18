@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Newspaper, FolderOpen, MessageSquare, LogOut } from 'lucide-react';
+import { ArrowLeft, Newspaper, FolderOpen, MessageSquare, LogOut, Users } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
@@ -47,7 +47,7 @@ const Admin = () => {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -89,6 +89,21 @@ const Admin = () => {
             <CardContent>
               <Button asChild className="w-full">
                 <Link to="/admin/prompts">View Prompts</Link>
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Users className="mr-2 h-5 w-5" />
+                Users
+              </CardTitle>
+              <CardDescription>Manage user accounts and permissions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full">
+                <Link to="/admin/users">Manage Users</Link>
               </Button>
             </CardContent>
           </Card>

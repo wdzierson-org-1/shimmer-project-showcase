@@ -13,10 +13,11 @@ import Index from "./pages/Index";
 import AllProjects from "./pages/AllProjects";
 import AllEntries from "./pages/AllEntries";
 import Admin from "./pages/Admin";
-import Login from "./pages/Login";
+import Auth from "./pages/Auth";
 import AdminProjects from "./pages/AdminProjects"; 
 import AdminContent from "./pages/AdminContent";
 import AdminPrompts from "./pages/AdminPrompts";
+import AdminUsers from "./pages/AdminUsers";
 import ProjectEditor from "./pages/ProjectEditor";
 import ContentEditor from "./pages/ContentEditor";
 import ProjectDetail from "./pages/ProjectDetail";
@@ -90,35 +91,41 @@ const App = () => {
               <Route path="/entries" element={<AllEntries />} />
               <Route path="/project/:id" element={<ProjectDetail />} />
               <Route path="/content/:id" element={<ContentDetail />} />
-              <Route path="/login" element={<Login />} />
+              <Route path="/login" element={<Auth />} />
+              <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={
-                <ProtectedRoute>
+                <ProtectedRoute requireAdmin={true}>
                   <Admin />
                 </ProtectedRoute>
               } />
               <Route path="/admin/projects" element={
-                <ProtectedRoute>
+                <ProtectedRoute requireAdmin={true}>
                   <AdminProjects />
                 </ProtectedRoute>
               } />
               <Route path="/admin/project/:id" element={
-                <ProtectedRoute>
+                <ProtectedRoute requireAdmin={true}>
                   <ProjectEditor />
                 </ProtectedRoute>
               } />
               <Route path="/admin/content" element={
-                <ProtectedRoute>
+                <ProtectedRoute requireAdmin={true}>
                   <AdminContent />
                 </ProtectedRoute>
               } />
               <Route path="/admin/content/:id" element={
-                <ProtectedRoute>
+                <ProtectedRoute requireAdmin={true}>
                   <ContentEditor />
                 </ProtectedRoute>
               } />
               <Route path="/admin/prompts" element={
-                <ProtectedRoute>
+                <ProtectedRoute requireAdmin={true}>
                   <AdminPrompts />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/users" element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminUsers />
                 </ProtectedRoute>
               } />
               <Route path="*" element={<NotFound />} />
