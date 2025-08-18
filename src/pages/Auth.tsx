@@ -12,17 +12,19 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { user, signIn } = useAuth();
+  const { user, signIn, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/admin';
+  const from = location.state?.from?.pathname || (isAdmin ? '/admin/dashboard' : '/admin');
 
   useEffect(() => {
-    if (user) {
-      navigate(from, { replace: true });
+    if (user && isAdmin) {
+      navigate('/admin/dashboard', { replace: true });
+    } else if (user && !isAdmin) {
+      navigate('/', { replace: true });
     }
-  }, [user, navigate, from]);
+  }, [user, isAdmin, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +40,7 @@ const Auth = () => {
         toast.error(error.message || 'Failed to sign in');
       } else {
         toast.success('Successfully signed in!');
-        navigate(from, { replace: true });
+        // Navigation will be handled by useEffect when isAdmin updates
       }
     } catch (error) {
       toast.error('An unexpected error occurred');
@@ -57,7 +59,7 @@ const Auth = () => {
     setLoading(true);
     try {
       const { supabase } = await import('@/integrations/supabase/client');
-      const redirectUrl = `${window.location.origin}/admin`;
+      const redirectUrl = `${window.location.origin}/admin/dashboard`;
       
       const { error } = await supabase.auth.signUp({
         email,
