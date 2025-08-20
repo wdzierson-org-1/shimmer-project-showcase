@@ -65,15 +65,6 @@ const HomeIntro = () => {
           </a>
         </div>
         
-        <p className="text-foreground/80">
-          Looking for <a 
-            href="https://projectariadne.info" 
-            className="text-foreground hover:underline"
-            target="_blank" 
-            rel="noopener noreferrer"
-          >Project Ariadne</a>?
-        </p>
-        
       </div>
     </div>
   );
