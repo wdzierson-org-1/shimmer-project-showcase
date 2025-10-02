@@ -9,6 +9,7 @@ export const fetchProjects = async (projectIds?: string[]): Promise<Project[]> =
   try {
     console.log('Fetching projects', projectIds ? `with IDs: ${projectIds.join(', ')}` : 'all projects');
     
+    // Don't filter by visible here - let RLS handle it (admins see all, others see only visible)
     let query = supabase
       .from('projects')
       .select(`
@@ -24,8 +25,7 @@ export const fetchProjects = async (projectIds?: string[]): Promise<Project[]> =
         project_tags (
           tags (name)
         )
-      `)
-      .eq('visible', true);
+      `);
       
     // If specific projectIds are provided, filter by them
     if (projectIds && projectIds.length > 0) {

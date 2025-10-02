@@ -72,11 +72,11 @@ export const findRelevantContentEntriesEnhanced = async (
     
     if (contentIds.length === 0) return [];
     
+    // Don't filter by visible here - let RLS handle it (admins see all, others see only visible)
     const { data: contentEntries, error: contentError } = await supabase
       .from('content_entries')
       .select('*')
-      .in('id', contentIds)
-      .eq('visible', true);
+      .in('id', contentIds);
       
     if (contentError) {
       console.error('Error fetching content entries:', contentError);
