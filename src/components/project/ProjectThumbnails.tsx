@@ -25,6 +25,7 @@ const ProjectThumbnails: React.FC<ProjectThumbnailsProps> = ({ projects, onSelec
             <img 
               src={project.imageUrl} 
               alt={project.title} 
+              loading="lazy"
               className={cn(
                 "h-full w-full object-cover",
                 "transition-transform duration-700 group-hover:scale-105"

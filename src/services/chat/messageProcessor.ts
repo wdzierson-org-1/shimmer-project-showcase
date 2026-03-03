@@ -41,8 +41,6 @@ export const processUserMessage = async (
   showContentEntries?: boolean;
   suggestions?: { text: string; delay: number }[];
 }> => {
-  console.log('Processing user message with enhanced pipeline:', userMessage);
-  
   // Check for the "What's been on your mind lately?" query
   if (userMessage.toLowerCase().includes("what's been on your mind lately") || 
       userMessage.toLowerCase().includes("what's on your mind") ||
@@ -52,8 +50,6 @@ export const processUserMessage = async (
   
   // PRIORITY: Check for explicit requests to see projects/portfolio/work (including "yes" responses)
   if (isShowProjectsQuery(userMessage)) {
-    console.log('Detected portfolio/projects request (including affirmative response)');
-    
     // Check if the query is specifically about AI
     if (isAIQuery(userMessage)) {
       return handleAIProjectsQuery(userMessage);
@@ -65,12 +61,9 @@ export const processUserMessage = async (
   
   // Analyze the query to determine search strategy
   const queryAnalysis = analyzeQuery(userMessage);
-  console.log('Query analysis:', queryAnalysis);
-  
+
   // Check if user is asking about a specific project (like Project Ariadne)
   if (isSpecificProjectQuery(userMessage)) {
-    console.log('Detected specific project query');
-    
     // Use enhanced search for project-related queries
     const contentEntries = await findRelevantContentEntriesEnhanced(userMessage, {
       threshold: 0.35,
@@ -84,7 +77,6 @@ export const processUserMessage = async (
       const relevanceAssessment = assessContentRelevance(userMessage, contentEntries);
       
       if (relevanceAssessment.isHighlyRelevant) {
-        console.log('High relevance detected, generating focused response');
         return await generateFocusedResponse(userMessage, contentEntries);
       }
       
@@ -105,8 +97,6 @@ export const processUserMessage = async (
   }
   
   // Use enhanced content search for all other queries
-  console.log('Using enhanced content search for general query...');
-  
   const searchOptions = {
     threshold: queryAnalysis.searchStrategy === 'focused' ? 0.4 : 0.25, // Lowered threshold
     limit: queryAnalysis.searchStrategy === 'focused' ? 2 : 3,
@@ -117,13 +107,10 @@ export const processUserMessage = async (
   const contentEntries = await findRelevantContentEntriesEnhanced(userMessage, searchOptions);
   
   if (contentEntries && contentEntries.length > 0) {
-    console.log(`Found ${contentEntries.length} relevant content entries`);
-    
     // Assess content relevance
     const relevanceAssessment = assessContentRelevance(userMessage, contentEntries);
     
     if (relevanceAssessment.isHighlyRelevant || queryAnalysis.isSpecific) {
-      console.log('Generating focused response due to high relevance or specific query');
       return await generateFocusedResponse(userMessage, contentEntries);
     }
     
@@ -136,14 +123,12 @@ export const processUserMessage = async (
   }
   
   // If no content entries found, try to find relevant projects
-  console.log('No relevant content entries found, searching for projects...');
   const semanticResults = await findRelevantProjects(userMessage);
   
   // Check if the semantic search returned actual relevant projects (not fallback)
   if (semanticResults.projects && 
       semanticResults.projects.length > 0 && 
       semanticResults.relevanceScore > 0.25) { // Lowered threshold
-    console.log('Found relevant projects via semantic search with good relevance score');
     semanticResults.projects = sortProjectsByYear(semanticResults.projects);
     return {
       content: semanticResults.content,
@@ -158,7 +143,6 @@ export const processUserMessage = async (
     // Try direct keyword search for projects
     const keywordMatchedProjects = await searchProjectsByKeywords(potentialKeywords);
     if (keywordMatchedProjects.length > 0) {
-      console.log(`Found ${keywordMatchedProjects.length} projects matching keywords`);
       const sortedProjects = sortProjectsByYear(keywordMatchedProjects);
       return {
         content: `I found some projects related to "${potentialKeywords.join(', ')}" that might interest you:`,

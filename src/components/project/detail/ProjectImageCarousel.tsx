@@ -78,8 +78,6 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
   const renderMediaItem = (media: MediaItem, index?: number) => {
     const key = index !== undefined ? `additional-media-${index}` : 'main-media';
     
-    console.log(`ProjectImageCarousel rendering ${key}:`, media);
-    
     // For PDFs, show document icon and open in modal
     if (media.type === 'pdf' || media.url.toLowerCase().match(/\.pdf$/)) {
       return (
@@ -106,10 +104,6 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
     // For videos, show thumbnail with play button overlay
     if (media.type === 'video' || media.url.toLowerCase().match(/\.(mp4|mov|avi|webm)$/)) {
       const displayUrl = media.thumbnailUrl || media.url;
-      
-      console.log(`Using thumbnail URL for video ${key}:`, displayUrl);
-      console.log(`Video URL: ${media.url}`);
-      console.log(`Thumbnail URL: ${media.thumbnailUrl}`);
       
       // If thumbnailUrl is empty or undefined, show a placeholder
       if (!media.thumbnailUrl || media.thumbnailUrl === media.url) {
@@ -142,19 +136,14 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
             src={displayUrl} 
             alt={index !== undefined ? `${title} - Video ${index + 1}` : `${title} - Video`} 
             className="w-full h-auto object-cover rounded-md"
+            loading="lazy"
             onError={(e) => {
-              console.error('Failed to load video thumbnail:', displayUrl);
-              console.error('Media object was:', media);
-              console.error('Image error event:', e);
               // Replace with placeholder on error
               e.currentTarget.style.display = 'none';
               const placeholder = e.currentTarget.parentElement?.querySelector('.thumbnail-placeholder');
               if (placeholder) {
                 (placeholder as HTMLElement).style.display = 'flex';
               }
-            }}
-            onLoad={() => {
-              console.log('Successfully loaded video thumbnail:', displayUrl);
             }}
           />
           {/* Placeholder that shows if image fails to load */}
@@ -182,8 +171,6 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
     // For images, use the thumbnailUrl if available, otherwise use url
     const displayUrl = media.thumbnailUrl || media.url;
     
-    console.log(`Using display URL for image ${key}:`, displayUrl);
-    
     const altText = index !== undefined ? `${title} - ${index + 1}` : title;
     
     return (
@@ -192,14 +179,9 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
         src={displayUrl} 
         alt={altText} 
         className="w-full h-auto object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity"
+        loading="lazy"
         onClick={() => handleImageClick(media.url, altText)}
-        onError={(e) => {
-          console.error('Failed to load image:', displayUrl);
-          console.error('Media object was:', media);
-        }}
-        onLoad={() => {
-          console.log('Successfully loaded image:', displayUrl);
-        }}
+        onError={() => {}}
       />
     );
   };

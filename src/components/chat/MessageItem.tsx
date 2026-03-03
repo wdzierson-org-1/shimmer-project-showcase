@@ -16,14 +16,6 @@ interface MessageItemProps {
 }
 
 const MessageItem = ({ message, onProjectSelect, onContentSelect }: MessageItemProps) => {
-  console.log('MessageItem rendered with:', {
-    messageId: message.id,
-    hasContentEntries: !!message.contentEntries,
-    showContentEntries: message.showContentEntries,
-    hasOnContentSelect: !!onContentSelect,
-    contentEntriesCount: message.contentEntries?.length || 0
-  });
-
   // Format the timestamp
   const formattedTime = message.timestamp ? 
     format(new Date(message.timestamp), 'h:mm a') : '';

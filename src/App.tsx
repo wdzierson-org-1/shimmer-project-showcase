@@ -10,6 +10,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 import Index from "./pages/Index";
+import CommandPalette from "./components/command-palette/CommandPalette";
 import AllProjects from "./pages/AllProjects";
 import AllEntries from "./pages/AllEntries";
 import Admin from "./pages/Admin";
@@ -85,6 +86,7 @@ const App = () => {
         <Sonner />
         <AuthProvider>
           <BrowserRouter>
+            <CommandPalette />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/projects" element={<AllProjects />} />

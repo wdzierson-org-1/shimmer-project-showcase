@@ -25,7 +25,7 @@ const ProjectDetailContent: React.FC<ProjectDetailContentProps> = ({ project }) 
       <div className="container mx-auto">
         <Button asChild variant="ghost" className="mb-6">
           <Link to="/">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Chat
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
           </Link>
         </Button>
         

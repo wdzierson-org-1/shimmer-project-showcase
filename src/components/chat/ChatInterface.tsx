@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import { useChatMessages } from '@/hooks/useChatMessages';
@@ -7,6 +8,7 @@ import { useChatSuggestions } from '@/hooks/useChatSuggestions';
 
 const ChatInterface = () => {
   const [message, setMessage] = useState('');
+  const navigate = useNavigate();
   const { messages, isLoading, processMessage, clearConversation } = useChatMessages();
   const { suggestions, hideSuggestions } = useChatSuggestions(messages);
 
@@ -27,13 +29,11 @@ const ChatInterface = () => {
   };
 
   const handleProjectSelect = (project: any) => {
-    // Navigate to project detail page
-    window.location.href = `/project/${project.id}`;
+    navigate(`/project/${project.id}`);
   };
 
   const handleContentSelect = (content: any) => {
-    // Navigate to content detail page
-    window.location.href = `/content/${content.id}`;
+    navigate(`/content/${content.id}`);
   };
 
   return (

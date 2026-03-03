@@ -249,6 +249,54 @@
   animation: fadeIn 0.5s ease-out forwards;
 }
 
+/* No-underline utility for links */
+.no-underline,
+.no-underline:hover {
+  text-decoration: none !important;
+}
+
+/* Hero ambient animations */
+@keyframes heroFloat1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(3%, -2%) scale(1.05); }
+  66% { transform: translate(-2%, 3%) scale(0.97); }
+}
+
+@keyframes heroFloat2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-3%, 2%) scale(1.04); }
+}
+
+/* Grainy blob shape */
+.hero-blob {
+  border-radius: 62% 38% 46% 54% / 60% 44% 56% 40%;
+  animation: blobMorph 12s ease-in-out infinite;
+}
+
+@keyframes blobMorph {
+  0%, 100% { border-radius: 62% 38% 46% 54% / 60% 44% 56% 40%; }
+  25% { border-radius: 45% 55% 62% 38% / 53% 41% 59% 47%; }
+  50% { border-radius: 55% 45% 38% 62% / 42% 58% 48% 52%; }
+  75% { border-radius: 38% 62% 55% 45% / 58% 47% 41% 59%; }
+}
+
+/* Terminal cursor blink */
+.terminal-cursor {
+  animation: cursorBlink 1s step-end infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* CSS film grain */
+.hero-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
 /* Enhanced prose styling for markdown content */
 @layer components {
   .prose {

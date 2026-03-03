@@ -115,12 +115,5 @@ export default {
 	plugins: [
 		require("tailwindcss-animate"),
 		require("@tailwindcss/typography"),
-		function({ addBase }) {
-			addBase({
-				'a': {
-					'text-decoration': 'underline',
-				},
-			})
-		}
 	],
 } satisfies Config;
