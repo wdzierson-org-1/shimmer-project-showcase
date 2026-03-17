@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import Hero, { AmbientStrip } from '@/components/home/Hero';
+import Header from '@/components/layout/Header';
+import Hero from '@/components/home/Hero';
 import FeaturedProject from '@/components/home/FeaturedProject';
 import AboutSection from '@/components/home/AboutSection';
 import FooterAmbient from '@/components/home/FooterAmbient';
@@ -80,7 +81,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      <AmbientStrip />
+      <Header />
       <Hero />
 
       <div className="relative z-10 bg-background">
