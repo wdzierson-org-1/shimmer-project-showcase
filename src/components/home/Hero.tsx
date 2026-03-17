@@ -1,17 +1,14 @@
-import { motion } from 'framer-motion';
 import IslandGame from './IslandGame';
 
 const Hero = () => {
   return (
-    <div className="relative w-full" style={{ height: 'clamp(420px, 60vh, 600px)' }}>
-      <motion.div
-        className="absolute inset-0"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-      >
+    <div
+      className="relative w-full overflow-hidden"
+      style={{ height: 'clamp(420px, 60vh, 600px)', background: '#7ab8f5' }}
+    >
+      <div className="absolute inset-0">
         <IslandGame />
-      </motion.div>
+      </div>
     </div>
   );
 };
