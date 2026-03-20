@@ -1,8 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/integrations/supabase/client';
-import type { VillaBook as VillaBookData } from '@/lib/villaBooks';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { VillaBook as VillaBookData, CaveBook } from '@/lib/villaBooks';
+import { X, ChevronLeft, ChevronRight, ExternalLink, Loader2 } from 'lucide-react';
 
 interface ProjectPage {
   type: 'project';
@@ -13,6 +13,7 @@ interface ProjectPage {
   year: number;
   tags: string[];
   images: string[];
+  liveurl: string | null;
 }
 
 interface IntroPage {
@@ -31,9 +32,8 @@ const VillaBook = ({ villa, onClose }: VillaBookProps) => {
   const [pages, setPages] = useState<Page[]>([{ type: 'intro', content: villa.intro }]);
   const [currentPage, setCurrentPage] = useState(0);
   const [visible, setVisible] = useState(false);
-  const [imageIdx, setImageIdx] = useState(0);
+  const [mediaIdx, setMediaIdx] = useState(0);
 
-  // Animate in
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 20);
     return () => clearTimeout(t);
@@ -41,144 +41,200 @@ const VillaBook = ({ villa, onClose }: VillaBookProps) => {
 
   const handleClose = useCallback(() => {
     setVisible(false);
-    setTimeout(onClose, 350);
+    setTimeout(onClose, 300);
   }, [onClose]);
 
-  // Keyboard nav
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') handleClose();
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') setCurrentPage(p => Math.min(p + 1, pages.length - 1));
-      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   setCurrentPage(p => Math.max(p - 1, 0));
+      if (e.key === 'ArrowRight') setCurrentPage(p => Math.min(p + 1, pages.length - 1));
+      if (e.key === 'ArrowLeft')  setCurrentPage(p => Math.max(p - 1, 0));
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [handleClose, pages.length]);
 
-  // Reset image index when page changes
-  useEffect(() => { setImageIdx(0); }, [currentPage]);
+  useEffect(() => { setMediaIdx(0); }, [currentPage]);
 
-  // Fetch projects from Supabase for this villa
   useEffect(() => {
-    if (!villa.clientMatch) return;
+    if (!villa.clientMatch || villa.clientMatch.length === 0) return;
 
-    supabase
-      .from('projects')
-      .select(`
-        id, title, description, involvement, year,
-        project_images (image_url, is_primary, display_order),
-        project_tags (tags (name))
-      `)
-      .ilike('client', `%${villa.clientMatch}%`)
-      .eq('visible', true)
-      .order('year', { ascending: true })
-      .then(({ data, error }) => {
-        if (error || !data) return;
-        const projectPages: ProjectPage[] = data.map((p: any) => ({
-          type: 'project',
-          id: p.id,
-          title: p.title,
-          description: p.description,
-          involvement: p.involvement,
-          year: p.year,
-          tags: p.project_tags?.map((pt: any) => pt.tags?.name).filter(Boolean) ?? [],
-          images: (p.project_images ?? [])
-            .sort((a: any, b: any) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0) || (a.display_order ?? 99) - (b.display_order ?? 99))
-            .map((img: any) => img.image_url)
-            .filter(Boolean),
-        }));
-        setPages([{ type: 'intro', content: villa.intro }, ...projectPages]);
-      });
+    const matchPatterns = Array.isArray(villa.clientMatch) ? villa.clientMatch : [villa.clientMatch];
+
+    Promise.all(
+      matchPatterns.map(pattern =>
+        supabase
+          .from('projects')
+          .select(`id, title, description, involvement, year, liveurl,
+            project_images (image_url, is_primary, display_order),
+            project_tags (tags (name))`)
+          .ilike('client', `%${pattern}%`)
+          .eq('visible', true)
+          .order('year', { ascending: true })
+      )
+    ).then(results => {
+      const seen = new Set<string>();
+      const projectPages: ProjectPage[] = [];
+      for (const { data, error } of results) {
+        if (error || !data) continue;
+        for (const p of data as any[]) {
+          if (seen.has(p.id)) continue;
+          seen.add(p.id);
+          projectPages.push({
+            type: 'project',
+            id: p.id,
+            title: p.title,
+            description: p.description,
+            involvement: p.involvement,
+            year: p.year,
+            liveurl: p.liveurl ?? null,
+            tags: p.project_tags?.map((pt: any) => pt.tags?.name).filter(Boolean) ?? [],
+            images: (p.project_images ?? [])
+              .sort((a: any, b: any) =>
+                (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0) ||
+                (a.display_order ?? 99) - (b.display_order ?? 99))
+              .map((img: any) => img.image_url)
+              .filter(Boolean),
+          });
+        }
+      }
+      projectPages.sort((a, b) => a.year - b.year);
+      setPages([{ type: 'intro', content: villa.intro }, ...projectPages]);
+    });
   }, [villa]);
 
+  // Prefetch adjacent page images
+  useEffect(() => {
+    for (const idx of [currentPage - 1, currentPage + 1]) {
+      const p = pages[idx];
+      if (!p || p.type !== 'project') continue;
+      for (const url of (p as ProjectPage).images) {
+        if (!isVideo(url)) {
+          const img = new Image();
+          img.src = url;
+        }
+      }
+    }
+  }, [currentPage, pages]);
+
   const page = pages[currentPage];
-  const accentColor = villa.color;
+  const accent = villa.color;
+  const isIntro = page.type === 'intro';
+  const projectPage = isIntro ? null : (page as ProjectPage);
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center transition-all duration-350 ${visible ? 'opacity-100' : 'opacity-0'}`}
-      style={{ background: 'rgba(10,8,20,0.88)', backdropFilter: 'blur(12px)' }}
+      className={`fixed inset-0 z-[100] overflow-y-auto transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
+      style={{ background: 'rgba(8,6,18,0.92)', backdropFilter: 'blur(16px)' }}
+      onClick={e => { if (e.target === e.currentTarget) handleClose(); }}
     >
-      {/* Book container */}
-      <div
-        className={`relative w-full max-w-3xl mx-4 transition-transform duration-350 ${visible ? 'translate-y-0' : 'translate-y-8'}`}
-      >
-        {/* Close button */}
-        <button
-          onClick={handleClose}
-          className="absolute -top-10 right-0 text-white/40 hover:text-white/80 transition-colors"
-          aria-label="Close"
+      <div className="min-h-full flex items-center justify-center py-8 px-4 sm:py-12">
+        <div
+          className={`relative w-full max-w-4xl transition-transform duration-300 ${visible ? 'translate-y-0' : 'translate-y-6'}`}
         >
-          <X size={22} />
-        </button>
+          {/* Close */}
+          <button
+            onClick={handleClose}
+            className="absolute -top-10 right-0 flex items-center gap-1.5 text-white/30 hover:text-white/65 transition-colors text-xs font-sans tracking-widest uppercase"
+          >
+            <X size={13} /> Close
+          </button>
 
-        {/* Book */}
-        <div className="bg-[#faf6ee] rounded-2xl shadow-2xl overflow-hidden">
-          {/* Book spine accent */}
-          <div className="h-1.5 w-full" style={{ background: accentColor }} />
+          {/* Book */}
+          <div className="bg-[#faf6ee] rounded-2xl shadow-2xl overflow-hidden">
+            {/* Spine */}
+            <div className="h-1 w-full" style={{ background: accent }} />
 
-          <div className="p-8 md:p-12 min-h-[520px] flex flex-col">
             {/* Header */}
-            <div className="flex items-start justify-between mb-8">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.22em] font-sans text-black/30 mb-1">
-                  {currentPage === 0 ? 'Introduction' : `Project ${currentPage} of ${pages.length - 1}`}
-                </p>
-                <h2 className="font-serif text-3xl font-light tracking-tight text-black/85">
-                  {currentPage === 0 ? villa.company : (page as ProjectPage).title}
-                </h2>
-                <p className="mt-1 text-sm font-sans text-black/40">
-                  {villa.role} · {villa.years}
-                </p>
-              </div>
-              {/* Page indicator dots */}
-              <div className="flex gap-1.5 mt-1">
-                {pages.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentPage(i)}
-                    className="w-1.5 h-1.5 rounded-full transition-all duration-200"
-                    style={{ background: i === currentPage ? accentColor : 'rgba(0,0,0,0.15)' }}
-                  />
-                ))}
+            <div className="px-6 sm:px-8 pt-6 pb-4 border-b border-black/6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[9px] uppercase tracking-[0.25em] font-sans mb-1.5"
+                     style={{ color: accent }}>
+                    {isIntro
+                      ? `${villa.role}  ·  ${villa.years}`
+                      : `Project ${currentPage} of ${pages.length - 1}`}
+                  </p>
+                  <h2 className="font-serif text-[1.6rem] sm:text-[1.8rem] leading-tight font-light tracking-tight text-black/85 truncate">
+                    {isIntro ? villa.company : projectPage!.title}
+                  </h2>
+                </div>
+
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  {!isIntro && projectPage?.liveurl && (
+                    <a
+                      href={projectPage.liveurl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-[10px] font-sans tracking-wide hover:underline transition-colors"
+                      style={{ color: accent }}
+                    >
+                      View full project <ExternalLink size={10} />
+                    </a>
+                  )}
+                  <div className="flex gap-1.5">
+                    {pages.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i)}
+                        className="rounded-full transition-all duration-200 focus:outline-none"
+                        style={{
+                          width: i === currentPage ? '20px' : '6px',
+                          height: '6px',
+                          background: i === currentPage ? accent : 'rgba(0,0,0,0.15)',
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Page content */}
-            <div className="flex-1 overflow-y-auto">
-              {page.type === 'intro' ? (
-                <div className="prose prose-sm max-w-none text-black/70 font-sans leading-relaxed">
+            {/* Content */}
+            <div className="px-6 sm:px-8 py-6 overflow-y-auto" style={{ maxHeight: '65vh' }}>
+              {isIntro ? (
+                <div className="prose prose-sm max-w-none prose-headings:font-serif prose-headings:font-light prose-headings:tracking-tight prose-p:text-black/65 prose-p:leading-relaxed prose-h1:text-2xl prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-2">
                   <ReactMarkdown>{page.content}</ReactMarkdown>
                 </div>
               ) : (
                 <ProjectPageContent
-                  page={page}
-                  imageIdx={imageIdx}
-                  setImageIdx={setImageIdx}
-                  accentColor={accentColor}
+                  page={projectPage!}
+                  mediaIdx={mediaIdx}
+                  setMediaIdx={setMediaIdx}
+                  accent={accent}
                 />
               )}
             </div>
 
-            {/* Navigation */}
-            <div className="flex items-center justify-between mt-8 pt-4 border-t border-black/8">
-              <button
-                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-                disabled={currentPage === 0}
-                className="flex items-center gap-1.5 text-xs font-sans uppercase tracking-widest text-black/35 hover:text-black/70 disabled:opacity-20 transition-colors"
-              >
-                <ChevronLeft size={14} /> Previous
-              </button>
-              <span className="text-[10px] font-mono text-black/25">
-                {currentPage + 1} / {pages.length}
-              </span>
-              <button
-                onClick={() => setCurrentPage(p => Math.min(pages.length - 1, p + 1))}
-                disabled={currentPage === pages.length - 1}
-                className="flex items-center gap-1.5 text-xs font-sans uppercase tracking-widest text-black/35 hover:text-black/70 disabled:opacity-20 transition-colors"
-              >
-                Next <ChevronRight size={14} />
-              </button>
+            {/* Footer nav */}
+            <div className="px-6 sm:px-8 py-4 border-t border-black/6 bg-[#faf6ee]">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                  disabled={currentPage === 0}
+                  className="flex items-center gap-1.5 text-[11px] font-sans uppercase tracking-widest text-black/35 hover:text-black/70 disabled:opacity-20 transition-colors"
+                >
+                  <ChevronLeft size={13} /> Prev
+                </button>
+                <span className="text-[10px] font-mono text-black/20">
+                  {currentPage + 1} / {pages.length}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(pages.length - 1, p + 1))}
+                  disabled={currentPage === pages.length - 1}
+                  className="flex items-center gap-1.5 text-[11px] font-sans uppercase tracking-widest text-black/35 hover:text-black/70 disabled:opacity-20 transition-colors"
+                >
+                  Next <ChevronRight size={13} />
+                </button>
+              </div>
+              <div className="mt-3 pt-3 border-t border-black/5 text-center">
+                <a
+                  href="/projects"
+                  className="text-[10px] font-sans uppercase tracking-widest text-black/35 hover:text-black/60 transition-colors"
+                >
+                  View all projects <ExternalLink size={9} className="inline mb-0.5" />
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -187,86 +243,218 @@ const VillaBook = ({ villa, onClose }: VillaBookProps) => {
   );
 };
 
-// ─── Project page sub-component ───────────────────────────────────────────────
-const ProjectPageContent = ({
-  page,
-  imageIdx,
-  setImageIdx,
-  accentColor,
-}: {
-  page: ProjectPage;
-  imageIdx: number;
-  setImageIdx: (n: number) => void;
-  accentColor: string;
-}) => (
-  <div className="space-y-5">
-    {/* Images */}
-    {page.images.length > 0 && (
-      <div className="relative rounded-lg overflow-hidden bg-black/5" style={{ aspectRatio: '16/9' }}>
-        <img
-          src={page.images[imageIdx]}
-          alt={page.title}
-          className="w-full h-full object-cover"
-        />
-        {page.images.length > 1 && (
-          <>
-            <button
-              onClick={() => setImageIdx(Math.max(0, imageIdx - 1))}
-              disabled={imageIdx === 0}
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full p-1 disabled:opacity-20"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              onClick={() => setImageIdx(Math.min(page.images.length - 1, imageIdx + 1))}
-              disabled={imageIdx === page.images.length - 1}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full p-1 disabled:opacity-20"
-            >
-              <ChevronRight size={16} />
-            </button>
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-              {page.images.map((_, i) => (
-                <div
-                  key={i}
-                  className="w-1 h-1 rounded-full"
-                  style={{ background: i === imageIdx ? accentColor : 'rgba(255,255,255,0.5)' }}
-                />
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-    )}
+// ── Video/image detector ───────────────────────────────────────────────────────
+function isVideo(url: string) {
+  return /\.(mp4|webm|mov|ogg)(\?|$)/i.test(url);
+}
 
-    {/* Meta */}
-    <div className="flex items-center gap-3 flex-wrap">
-      {page.year && (
-        <span className="text-[10px] font-mono text-black/30">{page.year}</span>
+// ── Loading media components ────────────────────────────────────────────────────
+const MediaImage = ({ src, alt }: { src: string; alt: string }) => {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  return (
+    <div className="relative w-full h-full">
+      {!loaded && !error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/4">
+          <Loader2 size={24} className="animate-spin text-black/15" />
+        </div>
       )}
-      {page.tags.map(tag => (
-        <span
-          key={tag}
-          className="text-[10px] font-sans uppercase tracking-wide px-2 py-0.5 rounded-full border"
-          style={{ borderColor: `${accentColor}60`, color: accentColor }}
-        >
-          {tag}
-        </span>
-      ))}
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/4">
+          <span className="text-[11px] text-black/25 font-sans">Failed to load</span>
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`w-full h-full object-contain transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
+      />
     </div>
+  );
+};
 
-    {/* Description */}
-    <div className="prose prose-sm max-w-none text-black/65 font-sans leading-relaxed">
-      <ReactMarkdown>{page.description}</ReactMarkdown>
+const MediaVideo = ({ src }: { src: string }) => {
+  const [loaded, setLoaded] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  return (
+    <div className="relative w-full h-full">
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/4">
+          <Loader2 size={24} className="animate-spin text-black/15" />
+        </div>
+      )}
+      <video
+        ref={videoRef}
+        key={src}
+        src={src}
+        autoPlay muted loop playsInline
+        className={`w-full h-full object-contain transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        onLoadedData={() => setLoaded(true)}
+      />
     </div>
+  );
+};
 
-    {/* Involvement */}
-    {page.involvement && (
-      <div className="pt-2 border-t border-black/8">
-        <p className="text-[10px] uppercase tracking-widest text-black/30 mb-1 font-sans">My role</p>
-        <p className="text-sm text-black/55 font-sans leading-relaxed">{page.involvement}</p>
+// ── Project page sub-component ─────────────────────────────────────────────────
+const ProjectPageContent = ({
+  page, mediaIdx, setMediaIdx, accent,
+}: {
+  page: ProjectPage; mediaIdx: number; setMediaIdx: (n: number) => void; accent: string;
+}) => {
+  const media = page.images;
+  const currentSrc = media[mediaIdx];
+  const isVid = currentSrc ? isVideo(currentSrc) : false;
+
+  return (
+    <div className="space-y-5">
+      {/* Media carousel — large prominent display */}
+      {media.length > 0 && (
+        <div className="relative rounded-xl overflow-hidden bg-gradient-to-b from-black/[0.03] to-black/[0.06] border border-black/[0.04]"
+             style={{ minHeight: '280px', maxHeight: '480px', aspectRatio: '16/10' }}>
+          {isVid ? (
+            <MediaVideo key={currentSrc} src={currentSrc} />
+          ) : (
+            <MediaImage key={currentSrc} src={currentSrc} alt={page.title} />
+          )}
+
+          {media.length > 1 && (
+            <>
+              <button onClick={() => setMediaIdx(Math.max(0, mediaIdx - 1))} disabled={mediaIdx === 0}
+                className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-sm text-white rounded-full p-2 disabled:opacity-20 hover:bg-black/70 transition-colors shadow-lg">
+                <ChevronLeft size={16} />
+              </button>
+              <button onClick={() => setMediaIdx(Math.min(media.length - 1, mediaIdx + 1))} disabled={mediaIdx === media.length - 1}
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-sm text-white rounded-full p-2 disabled:opacity-20 hover:bg-black/70 transition-colors shadow-lg">
+                <ChevronRight size={16} />
+              </button>
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 bg-black/30 backdrop-blur-sm rounded-full px-3 py-1.5">
+                {media.map((src, i) => (
+                  <button key={i} onClick={() => setMediaIdx(i)}
+                    className="rounded-full transition-all duration-200 focus:outline-none"
+                    style={{
+                      background: i === mediaIdx ? '#fff' : 'rgba(255,255,255,0.4)',
+                      width: i === mediaIdx ? '16px' : '6px',
+                      height: '6px',
+                    }} />
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Video/image type badge */}
+          {isVid && (
+            <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm text-white/80 text-[9px] font-mono uppercase tracking-widest px-2 py-1 rounded">
+              Video
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Meta row */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {page.year > 0 && <span className="text-[10px] font-mono text-black/30">{page.year}</span>}
+        {page.tags.map(tag => (
+          <span key={tag}
+            className="text-[10px] font-sans uppercase tracking-wide px-2 py-0.5 rounded-full border"
+            style={{ borderColor: `${accent}55`, color: accent }}>
+            {tag}
+          </span>
+        ))}
       </div>
-    )}
-  </div>
-);
+
+      {/* Description */}
+      <div className="prose prose-sm max-w-none prose-p:text-black/65 prose-p:leading-relaxed prose-p:text-sm">
+        <ReactMarkdown>{page.description}</ReactMarkdown>
+      </div>
+
+      {/* Involvement */}
+      {page.involvement && (
+        <div className="pt-3 border-t border-black/6">
+          <p className="text-[9px] uppercase tracking-[0.22em] mb-1.5 font-sans" style={{ color: accent }}>
+            My role
+          </p>
+          <p className="text-sm text-black/55 font-sans leading-relaxed">{page.involvement}</p>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default VillaBook;
+
+// ── Cave Book Overlay (easter egg) ────────────────────────────────────────────
+export const CaveBookOverlay = ({ cave, onClose }: { cave: CaveBook; onClose: () => void }) => {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 20);
+    return () => clearTimeout(t);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setVisible(false);
+    setTimeout(onClose, 300);
+  }, [onClose]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleClose]);
+
+  return (
+    <div
+      className={`fixed inset-0 z-[100] overflow-y-auto transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
+      style={{ background: 'rgba(4,10,22,0.95)', backdropFilter: 'blur(20px)' }}
+      onClick={e => { if (e.target === e.currentTarget) handleClose(); }}
+    >
+      <div className="min-h-full flex items-center justify-center py-16 px-4">
+        <div className={`relative w-full max-w-xl transition-transform duration-300 ${visible ? 'translate-y-0' : 'translate-y-6'}`}>
+          <button
+            onClick={handleClose}
+            className="absolute -top-10 right-0 flex items-center gap-1.5 text-white/30 hover:text-white/65 transition-colors text-xs font-sans tracking-widest uppercase"
+          >
+            <X size={13} /> Close
+          </button>
+          <div className="rounded-2xl shadow-2xl overflow-hidden" style={{ background: '#0c1828', border: '1px solid rgba(56,189,248,0.15)' }}>
+            <div className="h-1 w-full" style={{ background: cave.color }} />
+            <div className="px-8 pt-7 pb-5 border-b" style={{ borderColor: 'rgba(56,189,248,0.1)' }}>
+              <p className="text-[9px] uppercase tracking-[0.25em] font-sans mb-1.5" style={{ color: cave.color }}>
+                Easter Egg · Hidden Project
+              </p>
+              <h2 className="font-serif text-[1.7rem] leading-tight font-light tracking-tight text-white/90">
+                {cave.title}
+              </h2>
+            </div>
+            <div className="px-8 py-7 overflow-y-auto" style={{ maxHeight: '52vh' }}>
+              <div className="prose prose-sm prose-invert max-w-none prose-headings:font-serif prose-headings:font-light prose-headings:tracking-tight prose-p:text-white/65 prose-p:leading-relaxed prose-h1:text-2xl prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-2">
+                <ReactMarkdown>{cave.intro}</ReactMarkdown>
+              </div>
+            </div>
+            <div className="px-8 py-4 border-t flex items-center justify-between" style={{ borderColor: 'rgba(56,189,248,0.1)' }}>
+              <a
+                href="/projects"
+                className="text-[10px] font-sans uppercase tracking-widest text-white/35 hover:text-white/60 transition-colors"
+              >
+                View all projects <ExternalLink size={9} className="inline mb-0.5" />
+              </a>
+              <a
+                href="https://projectariadne.info"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-[11px] font-sans tracking-wide hover:underline"
+                style={{ color: cave.color }}
+              >
+                Visit Project Ariadne <ExternalLink size={11} />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

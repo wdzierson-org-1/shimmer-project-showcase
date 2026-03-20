@@ -13,9 +13,9 @@ const Header = () => {
     <header
       className="fixed top-0 left-0 right-0 z-50"
       style={{
-        backgroundColor: isHome ? 'rgba(0,0,0,0.04)' : 'rgba(246,243,238,0.85)',
-        backdropFilter: isHome ? undefined : 'blur(12px)',
-        borderBottom: isHome ? 'none' : '1px solid rgba(0,0,0,0.06)',
+        backgroundColor: isHome ? 'rgba(0,0,0,0.60)' : 'rgba(246,243,238,0.85)',
+        backdropFilter: isHome ? 'blur(8px)' : 'blur(12px)',
+        borderBottom: isHome ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
       }}
     >
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-3.5 flex justify-between items-center">
