@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Search } from 'lucide-react';
 
 const Header = () => {
   const { pathname } = useLocation();
@@ -47,6 +47,13 @@ const Header = () => {
             Threads
             <ExternalLink size={10} className="opacity-60" />
           </a>
+          <button
+            aria-label="Search"
+            onClick={() => window.dispatchEvent(new Event('open-search'))}
+            className={`sm:hidden transition-colors ${textNav}`}
+          >
+            <Search size={14} />
+          </button>
         </nav>
       </div>
     </header>

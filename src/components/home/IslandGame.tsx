@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -60,8 +60,8 @@ function isPath(gx: number, gz: number): boolean {
 }
 
 function isNearHut(gx: number, gz: number): boolean {
-  if (HUT_POSITIONS.some(h => Math.abs(h.gx - gx) <= 3 && Math.abs(h.gz - gz) <= 3)) return true;
-  return Math.abs(CAVE_POSITION.gx - gx) <= 3 && Math.abs(CAVE_POSITION.gz - gz) <= 3;
+  if (HUT_POSITIONS.some(h => Math.abs(h.gx - gx) <= 4 && Math.abs(h.gz - gz) <= 4)) return true;
+  return Math.abs(CAVE_POSITION.gx - gx) <= 4 && Math.abs(CAVE_POSITION.gz - gz) <= 4;
 }
 
 // ─── Animated water shader ───────────────────────────────────────────────────
@@ -357,6 +357,8 @@ interface CaveRef {
   worldX: number;
   worldZ: number;
   glowMesh: THREE.Mesh;
+  wispMesh: THREE.Mesh;
+  wispLight: THREE.PointLight;
 }
 
 function buildScene(scene: THREE.Scene): { hutRefs: HutRef[]; caveRef: CaveRef | null; cloudRefs: THREE.Group[]; torchFlames: THREE.Mesh[] } {
@@ -660,12 +662,18 @@ function buildScene(scene: THREE.Scene): { hutRefs: HutRef[]; caveRef: CaveRef |
   }
 
   // ── Decorations ──
-  const rng = (() => { let s = 137; return () => { s = (s * 16807 + 0) % 2147483647; return s / 2147483647; }; })();
+  // Per-tile deterministic RNG seeded by position — immune to changes in
+  // which tiles are skipped (hut clearance, cave relocation, etc.).
+  const makeTileRng = (gx: number, gz: number) => {
+    let s = ((gx * 1619 + gz * 6997 + 137) & 0x7fffffff) || 1;
+    return () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+  };
 
   for (let gx = 1; gx < GRID - 1; gx++) {
     for (let gz = 1; gz < GRID - 1; gz++) {
       if (!inIsland(gx, gz) || isSand(gx, gz) || isPath(gx, gz)) continue;
       if (isNearHut(gx, gz)) continue;
+      const rng = makeTileRng(gx, gz);
       const r = rng();
       const wx = gx - HALF + 0.5, wz = gz - HALF + 0.5;
 
@@ -884,6 +892,7 @@ function buildScene(scene: THREE.Scene): { hutRefs: HutRef[]; caveRef: CaveRef |
 
   // ── Beach palm trees — voxel-style with chunky flat-box fronds ──
   for (let i = 0; i < 22; i++) {
+    const rng = makeTileRng(i * 97 + 1, i * 53 + 1);
     const angle = (i / 22) * Math.PI * 2;
     const r2 = GRID * 0.37 + rng() * 0.7;
     const gxf = HALF + Math.cos(angle) * r2;
@@ -1453,6 +1462,21 @@ function buildScene(scene: THREE.Scene): { hutRefs: HutRef[]; caveRef: CaveRef |
       add(new THREE.SphereGeometry(0.055 + p * 0.008, 5, 4), pebMat, px2, coveBase + 0.055, pz2, false);
     }
 
+    // ── Dusk/twilight wisp — floating orb visible only at dusk+, hints at the easter egg ──
+    const wispMat = new THREE.MeshLambertMaterial({
+      color: 0xaa88ff,
+      transparent: true,
+      opacity: 0,
+      emissive: new THREE.Color(0x8844ff),
+    });
+    const wispMesh = add(new THREE.SphereGeometry(0.11, 8, 6), wispMat, cx - 0.58, coveBase + 1.55, cz, false);
+    wispMesh.visible = false;
+
+    // Small point light that only activates at dusk — gives the cove a purple glow
+    const wispLight = new THREE.PointLight(0x9966ff, 0, 3.5);
+    wispLight.position.set(cx - 0.58, coveBase + 1.55, cz);
+    scene.add(wispLight);
+
     caveRef = {
       group: new THREE.Group(),
       gx: CAVE_POSITION.gx,
@@ -1460,6 +1484,8 @@ function buildScene(scene: THREE.Scene): { hutRefs: HutRef[]; caveRef: CaveRef |
       worldX: cx,
       worldZ: cz,
       glowMesh,
+      wispMesh,
+      wispLight,
     };
   }
 
@@ -1482,6 +1508,9 @@ function buildPlayer(scene: THREE.Scene): THREE.Group {
   const legGeo = new THREE.BoxGeometry(0.14, 0.28, 0.14);
   add(legGeo, 0x2c3e50, -0.08, 0.14, 0);
   add(legGeo, 0x2c3e50,  0.08, 0.14, 0);
+  // Feet
+  add(new THREE.BoxGeometry(0.12, 0.07, 0.18), 0x1a1a2e, -0.08, 0.02, 0.02);
+  add(new THREE.BoxGeometry(0.12, 0.07, 0.18), 0x1a1a2e,  0.08, 0.02, 0.02);
   // Body
   add(new THREE.BoxGeometry(0.36, 0.32, 0.22), 0x2980b9, 0, 0.42, 0);
   // Head
@@ -1494,6 +1523,9 @@ function buildPlayer(scene: THREE.Scene): THREE.Group {
   // Arms
   add(new THREE.BoxGeometry(0.12, 0.28, 0.14), 0x2980b9, -0.26, 0.42, 0);
   add(new THREE.BoxGeometry(0.12, 0.28, 0.14), 0x2980b9,  0.26, 0.42, 0);
+  // Hands
+  add(new THREE.BoxGeometry(0.10, 0.09, 0.10), 0xf5d6b8, -0.26, 0.28, 0);
+  add(new THREE.BoxGeometry(0.10, 0.09, 0.10), 0xf5d6b8,  0.26, 0.28, 0);
 
   scene.add(g);
   return g;
@@ -1516,6 +1548,8 @@ function buildNpc(scene: THREE.Scene, wx: number, wz: number, id: string): THREE
 
   add(new THREE.BoxGeometry(0.14, 0.26, 0.14), 0x2c3e50, -0.07, 0.13, 0); // leg L
   add(new THREE.BoxGeometry(0.14, 0.26, 0.14), 0x2c3e50,  0.07, 0.13, 0); // leg R
+  add(new THREE.BoxGeometry(0.12, 0.07, 0.18), 0x1a1a2e, -0.07, 0.02, 0.02); // foot L
+  add(new THREE.BoxGeometry(0.12, 0.07, 0.18), 0x1a1a2e,  0.07, 0.02, 0.02); // foot R
   add(new THREE.BoxGeometry(0.34, 0.30, 0.20), bodyColor, 0, 0.40, 0);    // body
   add(new THREE.BoxGeometry(0.30, 0.28, 0.26), 0xf5c8a0, 0, 0.67, 0);     // head
   add(new THREE.BoxGeometry(0.32, 0.06, 0.28), hatColor,  0, 0.80, 0);    // hat brim
@@ -1524,6 +1558,8 @@ function buildNpc(scene: THREE.Scene, wx: number, wz: number, id: string): THREE
   add(new THREE.BoxGeometry(0.05, 0.05, 0.03), 0x222222,  0.07, 0.68, 0.13); // eye R
   add(new THREE.BoxGeometry(0.11, 0.26, 0.12), bodyColor, -0.24, 0.40, 0); // arm L
   add(new THREE.BoxGeometry(0.11, 0.26, 0.12), bodyColor,  0.24, 0.40, 0); // arm R
+  add(new THREE.BoxGeometry(0.10, 0.09, 0.10), 0xf5c8a0, -0.24, 0.27, 0); // hand L
+  add(new THREE.BoxGeometry(0.10, 0.09, 0.10), 0xf5c8a0,  0.24, 0.27, 0); // hand R
 
   // Floating speech bubble indicator
   const bubble = new THREE.Mesh(
@@ -1573,6 +1609,44 @@ interface TeleportState {
   progress: number;
 }
 
+// ── Keyboard key illustration ─────────────────────────────────────────────────
+const KeyCap = ({ children, wide }: { children: React.ReactNode; wide?: boolean }) => (
+  <kbd style={{
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    background: 'rgba(255,250,240,0.92)', border: '1.5px solid rgba(160,120,60,0.3)',
+    borderBottom: '3px solid rgba(140,100,40,0.45)',
+    borderRadius: 5,
+    padding: wide ? '3px 10px' : '3px 6px',
+    minWidth: wide ? 68 : 26, height: 26,
+    fontSize: 10, color: 'rgba(50,32,12,0.82)', fontFamily: 'monospace', fontWeight: 700,
+    letterSpacing: '0.04em', userSelect: 'none',
+  }}>
+    {children}
+  </kbd>
+);
+
+// ── Shared parchment card micro-components ────────────────────────────────
+const ParchmentCorners = () => (
+  <>
+    <div className="absolute top-2 left-2 w-4 h-4 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(120,70,10,0.20) 0%, transparent 70%)' }} />
+    <div className="absolute top-2 right-2 w-4 h-4 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(120,70,10,0.20) 0%, transparent 70%)' }} />
+    <div className="absolute bottom-2 left-2 w-4 h-4 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(120,70,10,0.14) 0%, transparent 70%)' }} />
+    <div className="absolute bottom-2 right-2 w-4 h-4 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(120,70,10,0.14) 0%, transparent 70%)' }} />
+  </>
+);
+const AccentRule = ({ className = 'mb-5' }: { className?: string }) => (
+  <div className={`w-20 h-px mx-auto ${className}`} style={{ background: 'linear-gradient(to right, transparent, rgba(155,95,18,0.72), transparent)' }} />
+);
+const ParchmentTextures = () => (
+  <>
+    <div className="absolute inset-0 pointer-events-none" style={{ borderRadius: 'inherit', opacity: 0.35, backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(100,55,10,0.07) 3px, rgba(100,55,10,0.07) 4px)' }} />
+    <div className="absolute inset-0 pointer-events-none" style={{ borderRadius: 'inherit', background: 'radial-gradient(ellipse at center, transparent 48%, rgba(80,38,0,0.13) 100%)' }} />
+  </>
+);
+const ParchmentString = () => (
+  <div className="w-px h-6 mt-px" style={{ background: 'linear-gradient(to bottom, rgba(140,100,40,0.65), transparent)' }} />
+);
+
 const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla, onEnterCave }, ref) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -1581,6 +1655,10 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
   const playerRef = useRef<THREE.Group | null>(null);
   const hutRefsRef = useRef<HutRef[]>([]);
   const caveRefRef = useRef<CaveRef | null>(null);
+  const showNavRef = useRef(false);
+  const playerEntrancePhase = useRef<'waiting' | 'dropping' | 'puff' | 'done'>('waiting');
+  const playerEntranceTRef = useRef(0);
+  const puffParticlesRef = useRef<{ mesh: THREE.Mesh; vx: number; vz: number }[]>([]);
   const npcGroupsRef = useRef<Array<{ id: string; group: THREE.Group; wx: number; wz: number; bubble: THREE.Mesh | null; bodyMats: THREE.MeshLambertMaterial[]; glowRing: THREE.Mesh; wander?: { homeX: number; homeZ: number; targetX: number; targetZ: number; nextMoveAt: number } }>>([]);
   const cloudRefsRef = useRef<THREE.Group[]>([]);
   const sunRef = useRef<THREE.DirectionalLight | null>(null);
@@ -1594,6 +1672,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
   const timeOfDayRef = useRef(0.1);
   const keysRef = useRef<Set<string>>(new Set());
   const posRef = useRef({ x: 0, z: -1 });
+  const playerVelRef = useRef({ x: 0, z: 0 });
   const rafRef = useRef(0);
   const frameRef = useRef(0);
   const waterMatRef = useRef<THREE.ShaderMaterial | null>(null);
@@ -1626,6 +1705,20 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
   const [isSpinning, setIsSpinning] = useState(false);
   const [hoveredHut, setHoveredHut] = useState<ActiveHut | null>(null);
   const [timeOfDay, setTimeOfDay] = useState(0.1);
+  const [showNav, setShowNav] = useState(false);       // nav tutorial after title
+  const [showNavModal, setShowNavModal] = useState(false); // nav button → modal
+  const [showControls, setShowControls] = useState(false); // mobile controls panel
+  const [titleCardExiting, setTitleCardExiting] = useState(false);
+  const [navCardExiting, setNavCardExiting] = useState(false);
+  const isTouchDevice = useRef(typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0));
+
+  // Touch state refs for D-pad, orbit, and pinch
+  const touchOrbitStartXRef = useRef(0);
+  const touchOrbitStartYRef = useRef(0);
+  const touchOrbitActiveRef = useRef(false);
+  const pinchStartDistRef = useRef(0);
+  const activeTouchesRef = useRef(0);
+
   const music = useIslandMusic();
 
   useImperativeHandle(ref, () => ({
@@ -1787,21 +1880,38 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
       }
     });
 
-    // ── Player ──
+    // ── Player — starts hidden above the island until nav is dismissed ──
     const player = buildPlayer(scene);
-    player.position.set(posRef.current.x, 0.18, posRef.current.z);
+    player.position.set(posRef.current.x, 5.0, posRef.current.z);
+    player.visible = false;
     playerRef.current = player;
 
-    // Green Sims-style orientation arrow (bobs + fades out over 3s)
+    // Green Sims-style orientation arrow (bobs + fades out, shown after landing)
     const arrowMat = new THREE.MeshLambertMaterial({
-      color: 0x22ee44, transparent: true, opacity: 1.0,
+      color: 0x22ee44, transparent: true, opacity: 0,
       emissive: new THREE.Color(0x11aa33),
     });
     const arrowMesh = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.35, 4), arrowMat);
     arrowMesh.rotation.x = Math.PI;
     arrowMesh.position.set(0, 1.35, 0);
+    arrowMesh.visible = false;
     player.add(arrowMesh);
     arrowRef.current = arrowMesh;
+
+    // ── Puff burst particles (expand + fade on landing) ──
+    const puffMat = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
+    const puffGeo = new THREE.BoxGeometry(0.18, 0.18, 0.18);
+    const puffs: { mesh: THREE.Mesh; vx: number; vz: number }[] = [];
+    const puffAngles = [0, 1, 2, 3, 4, 5].map(i => (i / 6) * Math.PI * 2);
+    for (const angle of puffAngles) {
+      const m = new THREE.Mesh(puffGeo, puffMat.clone());
+      m.position.set(posRef.current.x, 0.3, posRef.current.z);
+      m.visible = false;
+      m.castShadow = false;
+      scene.add(m);
+      puffs.push({ mesh: m, vx: Math.cos(angle) * 0.06, vz: Math.sin(angle) * 0.06 });
+    }
+    puffParticlesRef.current = puffs;
 
     // ── NPCs (cache bubble + body material refs + glow rings for perf) ──
     const npcRingGeo = new THREE.RingGeometry(0.5, 0.75, 16);
@@ -1822,7 +1932,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
       scene.add(glowRing);
       return {
         id: npc.id, group, wx: npc.wx, wz: npc.wz, bubble, bodyMats, glowRing,
-        wander: npc.id === 'guide' ? { homeX: npc.wx, homeZ: npc.wz, targetX: npc.wx, targetZ: npc.wz, nextMoveAt: 0 } : undefined,
+        wander: npc.id === 'guide' ? { homeX: npc.wx, homeZ: npc.wz, targetX: npc.wx, targetZ: npc.wz, nextMoveAt: 0, velX: 0, velZ: 0 } : undefined,
       };
     });
 
@@ -1835,7 +1945,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
         return;
       }
       if (chatNpcRef.current || teleportRef.current) return;
-      if (['arrowup','arrowdown','arrowleft','arrowright','w','a','d'].includes(k)) {
+      if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(k)) {
         e.preventDefault();
         keysRef.current.add(k);
         if (moveIntervalRef.current) {
@@ -1843,13 +1953,6 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
           moveIntervalRef.current = null;
           clickMovingRef.current = false;
         }
-      }
-      if (k === 's') {
-        e.preventDefault();
-        const next = !isSpinningRef.current;
-        isSpinningRef.current = next;
-        setIsSpinning(next);
-        return;
       }
       if (k === ' ' || e.key === ' ') {
         e.preventDefault();
@@ -2000,7 +2103,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
     ro.observe(mount);
 
     // ── Animation loop ──
-    const SPEED = 0.06;
+    const SPEED = 0.12;
     let walkCycle = 0;
     let glowPhase = 0;
     const _tempColor = new THREE.Color();
@@ -2028,25 +2131,80 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
         if (cMat) cMat.opacity += (targetOp - cMat.opacity) * 0.04; // smooth lerp
       }
 
-      // Green arrow indicator — bob and fade out over first 3s
-      const arr = arrowRef.current;
-      if (arr && arr.visible) {
-        if (t < 3.5) {
-          arr.position.y = 1.35 + Math.sin(t * 3.5) * 0.18;
-          const fade = t < 2.0 ? 1.0 : Math.max(0, 1.0 - (t - 2.0) / 1.5);
-          (arr.material as THREE.MeshLambertMaterial).opacity = fade;
+      // ── Player entrance sequence ──────────────────────────────────────────
+      const player = playerRef.current;
+      const phase = playerEntrancePhase.current;
+      if (phase === 'waiting' && startedRef.current && !showNavRef.current && player) {
+        // Trigger the drop
+        playerEntrancePhase.current = 'dropping';
+        playerEntranceTRef.current = t;
+        player.visible = true;
+      }
+      if (phase === 'dropping' && player) {
+        const elapsed = t - playerEntranceTRef.current;
+        const dropDur = 0.55;
+        const startY = 5.0, endY = 0.18;
+        if (elapsed < dropDur) {
+          // Cubic ease-in (gravity)
+          const p = elapsed / dropDur;
+          player.position.y = startY + (endY - startY) * (p * p * p);
         } else {
-          arr.visible = false;
+          player.position.y = endY;
+          playerEntrancePhase.current = 'puff';
+          playerEntranceTRef.current = t;
+          // Activate puff particles at landing position
+          for (const puff of puffParticlesRef.current) {
+            puff.mesh.position.set(posRef.current.x, 0.3, posRef.current.z);
+            puff.mesh.visible = true;
+            (puff.mesh.material as THREE.MeshLambertMaterial).opacity = 0.85;
+            puff.mesh.scale.setScalar(1);
+          }
+          // Show arrow
+          const arr = arrowRef.current;
+          if (arr) { arr.visible = true; (arr.material as THREE.MeshLambertMaterial).opacity = 1.0; }
         }
+      }
+      if (phase === 'puff') {
+        const elapsed = t - playerEntranceTRef.current;
+        const puffDur = 0.45;
+        if (elapsed < puffDur) {
+          const p = elapsed / puffDur;
+          for (const puff of puffParticlesRef.current) {
+            puff.mesh.position.x += puff.vx;
+            puff.mesh.position.z += puff.vz;
+            puff.mesh.position.y = 0.3 + p * 0.4;
+            puff.mesh.scale.setScalar(1 + p * 1.8);
+            (puff.mesh.material as THREE.MeshLambertMaterial).opacity = 0.85 * (1 - p);
+          }
+        } else {
+          for (const puff of puffParticlesRef.current) puff.mesh.visible = false;
+          playerEntrancePhase.current = 'done';
+          playerEntranceTRef.current = t;
+        }
+      }
+      // Green arrow — bob and fade out after landing (3.5s window)
+      const arr = arrowRef.current;
+      if (arr && arr.visible && (phase === 'done' || phase === 'puff')) {
+        const elapsed = t - playerEntranceTRef.current + (phase === 'done' ? 0 : 0);
+        const arrowElapsed = phase === 'done' ? elapsed : Math.max(0, t - playerEntranceTRef.current);
+        arr.position.y = 1.35 + Math.sin(arrowElapsed * 4.0) * 0.14;
+        const fade = arrowElapsed < 2.2 ? 1.0 : Math.max(0, 1.0 - (arrowElapsed - 2.2) / 1.3);
+        (arr.material as THREE.MeshLambertMaterial).opacity = fade;
+        if (fade <= 0) arr.visible = false;
       }
 
       // Player movement (or teleport animation)
       const keys = keysRef.current;
       const pos = posRef.current;
-      const player = playerRef.current;
       const tp = teleportRef.current;
 
-      if (tp && player) {
+      // Skip movement while entrance animation is in progress
+      if ((playerEntrancePhase.current === 'waiting' || playerEntrancePhase.current === 'dropping') && player) {
+        player.position.x = pos.x;
+        player.position.z = pos.z;
+      }
+
+      if (tp && player && playerEntrancePhase.current !== 'waiting' && playerEntrancePhase.current !== 'dropping') {
         tp.progress += 0.016;
         if (tp.phase === 'shrink') {
           const t2 = Math.min(tp.progress / 0.28, 1);
@@ -2074,7 +2232,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
             onEnterVilla?.(villa);
           }
         }
-      } else {
+      } else if (playerEntrancePhase.current === 'done' || playerEntrancePhase.current === 'puff') {
         // Orbit-relative movement: rotate input by current camera angle so
         // arrow keys always move in the direction they appear on screen.
         const θ = orbitAngleRef.current;
@@ -2082,13 +2240,18 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
         const rgtX =  Math.cos(θ), rgtZ = -Math.sin(θ);
         let fwd = 0, rgt = 0;
         if (keys.has('arrowup')    || keys.has('w')) fwd += 1;
-        if (keys.has('arrowdown'))                    fwd -= 1;
+        if (keys.has('arrowdown') || keys.has('s'))   fwd -= 1;
         if (keys.has('arrowright') || keys.has('d')) rgt += 1;
         if (keys.has('arrowleft')  || keys.has('a')) rgt -= 1;
-        let dx = (fwd * fwdX + rgt * rgtX) * SPEED;
-        let dz = (fwd * fwdZ + rgt * rgtZ) * SPEED;
+        const targetDx = (fwd * fwdX + rgt * rgtX) * SPEED;
+        const targetDz = (fwd * fwdZ + rgt * rgtZ) * SPEED;
+        const accel = (fwd !== 0 || rgt !== 0) ? 0.18 : 0.10;
+        playerVelRef.current.x += (targetDx - playerVelRef.current.x) * accel;
+        playerVelRef.current.z += (targetDz - playerVelRef.current.z) * accel;
+        let dx = playerVelRef.current.x;
+        let dz = playerVelRef.current.z;
 
-        const moving = dx !== 0 || dz !== 0;
+        const moving = Math.abs(dx) + Math.abs(dz) > 0.0005;
 
         if (moving && player) {
           const nx = pos.x + dx, nz = pos.z + dz;
@@ -2104,14 +2267,21 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
         if (player) {
           player.position.x = pos.x;
           player.position.z = pos.z;
+          // children order: legL[0] legR[1] footL[2] footR[3] body[4] head[5] hair[6] eyeL[7] eyeR[8] armL[9] armR[10] handL[11] handR[12]
           const legL = player.children[0] as THREE.Mesh;
           const legR = player.children[1] as THREE.Mesh;
+          const armL = player.children[9] as THREE.Mesh;
+          const armR = player.children[10] as THREE.Mesh;
           if (isWalking) {
             legL.position.y = 0.14 + Math.sin(walkCycle) * 0.07;
             legR.position.y = 0.14 - Math.sin(walkCycle) * 0.07;
+            armL.rotation.x =  Math.sin(walkCycle) * 0.55;
+            armR.rotation.x = -Math.sin(walkCycle) * 0.55;
           } else {
             legL.position.y = 0.14;
             legR.position.y = 0.14;
+            armL.rotation.x *= 0.85;
+            armR.rotation.x *= 0.85;
           }
         }
       }
@@ -2195,13 +2365,25 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
         hr.glassMat.emissive.setRGB(windowInt * 0.8, windowInt * 0.5, windowInt * 0.1);
       }
 
-      // Cave glow (every frame) + auto-entry
+      // Cave glow (every frame) + auto-entry (dusk/twilight only)
       const cr = caveRefRef.current;
+      const caveUnlocked = tod >= 0.62; // dusk or later
       if (cr) {
         const caveDist = Math.hypot(pos.x - cr.worldX, pos.z - cr.worldZ);
         const glowMat = cr.glowMesh.material as THREE.MeshLambertMaterial;
         glowMat.opacity = 0.25 + Math.sin(glowPhase * 0.8) * 0.12;
-        if (caveDist < 0.8 && !caveEnteredRef.current && !chatNpcRef.current && !teleportRef.current) {
+
+        // Wisp — appears only at dusk+, bobs and pulses
+        const wispTarget = caveUnlocked ? 1 : 0;
+        const wispMat = cr.wispMesh.material as THREE.MeshLambertMaterial;
+        if (wispTarget > 0 && !cr.wispMesh.visible) cr.wispMesh.visible = true;
+        wispMat.opacity += (wispTarget * (0.72 + Math.sin(glowPhase * 1.4) * 0.22) - wispMat.opacity) * 0.04;
+        cr.wispMesh.position.y = (0.28 + 1.55 - 0.28) + Math.sin(glowPhase * 1.1) * 0.12; // bob
+        if (!caveUnlocked && wispMat.opacity < 0.01) cr.wispMesh.visible = false;
+        // Wisp point light intensity
+        cr.wispLight.intensity += (wispTarget * (0.35 + Math.sin(glowPhase * 1.4) * 0.12) - cr.wispLight.intensity) * 0.04;
+
+        if (caveUnlocked && caveDist < 0.8 && !caveEnteredRef.current && !chatNpcRef.current && !teleportRef.current) {
           caveEnteredRef.current = true;
           if (moveIntervalRef.current) { clearInterval(moveIntervalRef.current); moveIntervalRef.current = null; clickMovingRef.current = false; }
           keysRef.current.clear();
@@ -2245,10 +2427,17 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
           const wdist = Math.sqrt(wdx * wdx + wdz * wdz);
           if (wdist > 0.05) {
             const speed = 0.018;
-            npc.group.position.x += (wdx / wdist) * speed;
-            npc.group.position.z += (wdz / wdist) * speed;
+            const wAccel = 0.06;
+            w.velX = (w.velX ?? 0) + ((wdx / wdist) * speed - (w.velX ?? 0)) * wAccel;
+            w.velZ = (w.velZ ?? 0) + ((wdz / wdist) * speed - (w.velZ ?? 0)) * wAccel;
+            npc.group.position.x += w.velX;
+            npc.group.position.z += w.velZ;
             npc.group.rotation.y = Math.atan2(wdx, wdz);
+            npc.group.position.y = 0.18 + Math.abs(Math.sin(t * 4)) * 0.025;
           } else {
+            w.velX = (w.velX ?? 0) * 0.85;
+            w.velZ = (w.velZ ?? 0) * 0.85;
+            npc.group.position.y = 0.18;
             npc.group.rotation.y += Math.sin(t * 0.8 + npc.wx) * 0.002;
           }
           npc.wx = npc.group.position.x;
@@ -2329,6 +2518,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
 
   useEffect(() => { focusedRef.current = focused; }, [focused]);
   useEffect(() => { timeOfDayRef.current = timeOfDay; }, [timeOfDay]);
+  useEffect(() => { showNavRef.current = showNav || showNavModal; }, [showNav, showNavModal]);
 
   // Click-to-move only — tooltip buttons handle enter/chat actions
   const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -2397,6 +2587,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
     setChatNpc(null);
     const cr = caveRefRef.current;
     if (!cr) return;
+    if (timeOfDayRef.current < 0.62) return; // easter egg: only accessible at dusk+
     const startX = posRef.current.x, startZ = posRef.current.z;
     const endX = cr.worldX, endZ = cr.worldZ;
     const dist = Math.hypot(endX - startX, endZ - startZ);
@@ -2424,16 +2615,96 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
 
   const todLabel = timeOfDay < 0.15 ? 'Dawn' : timeOfDay < 0.38 ? 'Morning' : timeOfDay < 0.62 ? 'Afternoon' : timeOfDay < 0.85 ? 'Dusk' : 'Twilight';
 
+  const dismissNavCard = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (navCardExiting) return;
+    if (showNav && music.muted) music.toggle();
+    setNavCardExiting(true);
+    setTimeout(() => {
+      setShowNav(false);
+      setShowNavModal(false);
+      setNavCardExiting(false);
+      showNavRef.current = false; // signal entrance animation to begin
+    }, 280);
+  };
+
   return (
     <div
       ref={mountRef}
       className="relative w-full h-full outline-none"
-      style={{ cursor: started ? ((activeHut || hoveredHut) ? 'pointer' : 'default') : 'pointer' }}
+      style={{ cursor: started ? ((activeHut || hoveredHut) ? 'pointer' : 'default') : 'pointer', touchAction: 'none' }}
       onClick={e => {
-        if (!started) { setStarted(true); startedRef.current = true; setFocused(true); focusedRef.current = true; (e.currentTarget as HTMLElement).focus(); return; }
+        if (!started && !titleCardExiting) {
+          setTitleCardExiting(true);
+          startedRef.current = true;
+          showNavRef.current = true; // block entrance until nav card is dismissed
+          setFocused(true); focusedRef.current = true;
+          (e.currentTarget as HTMLElement).focus();
+          setTimeout(() => {
+            setStarted(true);
+            setTitleCardExiting(false);
+            setShowNav(true);
+          }, 340);
+          return;
+        }
+        if (showNav || showNavModal) { dismissNavCard(); return; }
         if (spaceDownTimeRef.current > 0) return;
         if (!focused) { setFocused(true); focusedRef.current = true; }
         handleClick(e);
+      }}
+      onTouchStart={e => {
+        activeTouchesRef.current = e.touches.length;
+        if (e.touches.length === 1) {
+          touchOrbitStartXRef.current = e.touches[0].clientX;
+          touchOrbitStartYRef.current = e.touches[0].clientY;
+          touchOrbitActiveRef.current = true;
+        } else if (e.touches.length === 2) {
+          touchOrbitActiveRef.current = false;
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          pinchStartDistRef.current = Math.sqrt(dx * dx + dy * dy);
+        }
+        if (!started) return;
+        if (!focused) { setFocused(true); focusedRef.current = true; }
+      }}
+      onTouchMove={e => {
+        if (!started || showNav) return;
+        e.preventDefault();
+        if (e.touches.length === 1 && touchOrbitActiveRef.current) {
+          const dx = e.touches[0].clientX - touchOrbitStartXRef.current;
+          const dy = e.touches[0].clientY - touchOrbitStartYRef.current;
+          orbitAngleRef.current += dx * 0.008;
+          viewSizeRef.current = Math.max(5, Math.min(18, viewSizeRef.current + dy * 0.04));
+          const mount = mountRef.current;
+          if (mount && cameraRef.current) {
+            const asp = mount.clientWidth / mount.clientHeight;
+            const vs = viewSizeRef.current;
+            cameraRef.current.left = -vs * asp; cameraRef.current.right = vs * asp;
+            cameraRef.current.top = vs; cameraRef.current.bottom = -vs;
+            cameraRef.current.updateProjectionMatrix();
+          }
+          touchOrbitStartXRef.current = e.touches[0].clientX;
+          touchOrbitStartYRef.current = e.touches[0].clientY;
+        } else if (e.touches.length === 2) {
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const delta = (pinchStartDistRef.current - dist) * 0.04;
+          viewSizeRef.current = Math.max(5, Math.min(18, viewSizeRef.current + delta));
+          pinchStartDistRef.current = dist;
+          const mount = mountRef.current;
+          if (mount && cameraRef.current) {
+            const asp = mount.clientWidth / mount.clientHeight;
+            const vs = viewSizeRef.current;
+            cameraRef.current.left = -vs * asp; cameraRef.current.right = vs * asp;
+            cameraRef.current.top = vs; cameraRef.current.bottom = -vs;
+            cameraRef.current.updateProjectionMatrix();
+          }
+        }
+      }}
+      onTouchEnd={() => {
+        activeTouchesRef.current = 0;
+        touchOrbitActiveRef.current = false;
       }}
       tabIndex={0}
     >
@@ -2521,32 +2792,102 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
         </div>
       )}
 
-      {/* Time of Day slider */}
-      <div className="absolute bottom-3 left-3 z-20">
-        <div className="bg-black/40 backdrop-blur-sm rounded-lg px-3 py-2 flex flex-col items-center gap-1">
-          <input
-            type="range" min="0" max="1" step="0.005"
-            value={timeOfDay}
-            onChange={e => setTimeOfDay(parseFloat(e.target.value))}
-            className="w-28 h-1 accent-amber-400 cursor-pointer appearance-none rounded-full bg-white/15 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-400 [&::-webkit-slider-thumb]:shadow"
-            onClick={e => e.stopPropagation()}
-          />
-          <span className="text-[9px] text-white/50 font-mono tracking-wide">{todLabel}</span>
+      {/* ── Bottom-left: TOD slider (desktop) or D-pad (mobile) ── */}
+      {!isTouchDevice.current && (
+        <div className="absolute bottom-3 left-3 z-20">
+          <div className="bg-black/40 backdrop-blur-sm rounded-lg px-3 py-2 flex flex-col items-center gap-1">
+            <input
+              type="range" min="0" max="1" step="0.005"
+              value={timeOfDay}
+              onChange={e => setTimeOfDay(parseFloat(e.target.value))}
+              className="w-28 h-1 accent-amber-400 cursor-pointer appearance-none rounded-full bg-white/15 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-400 [&::-webkit-slider-thumb]:shadow"
+              onClick={e => e.stopPropagation()}
+            />
+            <span className="text-[9px] text-white/50 font-mono tracking-wide">{todLabel}</span>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Controls hint + Volume */}
-      <div className="absolute bottom-3 right-3 z-20 flex items-center gap-2">
-        <VolumeControl {...music} />
-        <div className={`bg-black/40 backdrop-blur-sm text-white/45 rounded px-2.5 py-1.5 text-[10px] font-mono transition-opacity duration-300 ${focused ? 'opacity-100' : 'opacity-60'}`}>
-          WAD · Arrows · Click
-          <span className="mx-1.5 opacity-40">|</span>
-          <span className={isSpinning ? 'text-cyan-300' : ''}>S:spin</span>
-          <span className="mx-1 opacity-40">·</span>
-          Space+drag:orbit
-          <span className="mx-1.5 opacity-40">|</span>
-          Scroll:zoom
+      {/* Mobile D-pad — only on touch devices, only when playing */}
+      {isTouchDevice.current && started && !showNav && (
+        <div className="absolute bottom-4 left-4 z-20 select-none" onClick={e => e.stopPropagation()}>
+          {/* D-pad cross */}
+          <div style={{ position: 'relative', width: 120, height: 120 }}>
+            {/* Center fill */}
+            <div style={{ position:'absolute', top:40, left:40, width:40, height:40, background:'rgba(255,255,255,0.08)', borderRadius:6 }} />
+            {/* Up */}
+            <button
+              style={{ position:'absolute', top:0, left:40, width:40, height:40, background:'rgba(0,0,0,0.5)', borderRadius:'8px 8px 4px 4px', border:'1px solid rgba(255,255,255,0.3)', display:'flex', alignItems:'center', justifyContent:'center', touchAction:'none' }}
+              onTouchStart={e => { e.preventDefault(); e.stopPropagation(); keysRef.current.add('arrowup'); }}
+              onTouchEnd={e => { e.preventDefault(); keysRef.current.delete('arrowup'); }}
+            ><span style={{ display:'block', width:0, height:0, borderLeft:'7px solid transparent', borderRight:'7px solid transparent', borderBottom:'9px solid rgba(255,255,255,0.95)' }} /></button>
+            {/* Down */}
+            <button
+              style={{ position:'absolute', top:80, left:40, width:40, height:40, background:'rgba(0,0,0,0.5)', borderRadius:'4px 4px 8px 8px', border:'1px solid rgba(255,255,255,0.3)', display:'flex', alignItems:'center', justifyContent:'center', touchAction:'none' }}
+              onTouchStart={e => { e.preventDefault(); e.stopPropagation(); keysRef.current.add('arrowdown'); }}
+              onTouchEnd={e => { e.preventDefault(); keysRef.current.delete('arrowdown'); }}
+            ><span style={{ display:'block', width:0, height:0, borderLeft:'7px solid transparent', borderRight:'7px solid transparent', borderTop:'9px solid rgba(255,255,255,0.95)' }} /></button>
+            {/* Left */}
+            <button
+              style={{ position:'absolute', top:40, left:0, width:40, height:40, background:'rgba(0,0,0,0.5)', borderRadius:'8px 4px 4px 8px', border:'1px solid rgba(255,255,255,0.3)', display:'flex', alignItems:'center', justifyContent:'center', touchAction:'none' }}
+              onTouchStart={e => { e.preventDefault(); e.stopPropagation(); keysRef.current.add('arrowleft'); }}
+              onTouchEnd={e => { e.preventDefault(); keysRef.current.delete('arrowleft'); }}
+            ><span style={{ display:'block', width:0, height:0, borderTop:'7px solid transparent', borderBottom:'7px solid transparent', borderRight:'9px solid rgba(255,255,255,0.95)' }} /></button>
+            {/* Right */}
+            <button
+              style={{ position:'absolute', top:40, left:80, width:40, height:40, background:'rgba(0,0,0,0.5)', borderRadius:'4px 8px 8px 4px', border:'1px solid rgba(255,255,255,0.3)', display:'flex', alignItems:'center', justifyContent:'center', touchAction:'none' }}
+              onTouchStart={e => { e.preventDefault(); e.stopPropagation(); keysRef.current.add('arrowright'); }}
+              onTouchEnd={e => { e.preventDefault(); keysRef.current.delete('arrowright'); }}
+            ><span style={{ display:'block', width:0, height:0, borderTop:'7px solid transparent', borderBottom:'7px solid transparent', borderLeft:'9px solid rgba(255,255,255,0.95)' }} /></button>
+          </div>
         </div>
+      )}
+
+      {/* ── Bottom-right: volume + navigation (desktop) or volume + settings (mobile) ── */}
+      <div className="absolute bottom-3 right-3 z-20 flex items-center gap-2" onClick={e => e.stopPropagation()}>
+        <VolumeControl {...music} />
+
+        {isTouchDevice.current ? (
+          /* Mobile: settings button that expands TOD + info */
+          <div className="relative">
+            {showControls && (
+              <div className="absolute bottom-10 right-0 bg-black/70 backdrop-blur-md rounded-xl p-3 flex flex-col gap-3 min-w-[160px] border border-white/10 shadow-xl">
+                <div className="flex flex-col items-center gap-1">
+                  <input
+                    type="range" min="0" max="1" step="0.005"
+                    value={timeOfDay}
+                    onChange={e => setTimeOfDay(parseFloat(e.target.value))}
+                    className="w-full h-1 accent-amber-400 cursor-pointer appearance-none rounded-full bg-white/15 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-400"
+                    onClick={e => e.stopPropagation()}
+                    onTouchStart={e => e.stopPropagation()}
+                    onTouchMove={e => e.stopPropagation()}
+                    onTouchEnd={e => e.stopPropagation()}
+                  />
+                  <span className="text-[10px] text-white/50 font-mono tracking-wide">{todLabel}</span>
+                </div>
+                <button
+                  className="text-[10px] text-white/60 uppercase tracking-widest border border-white/15 rounded-lg py-1.5 hover:bg-white/10 transition-colors"
+                  onClick={e => { e.stopPropagation(); setShowControls(false); setShowNavModal(true); }}
+                >Navigation</button>
+              </div>
+            )}
+            <button
+              className="bg-black/40 backdrop-blur-sm rounded px-2.5 py-2 hover:bg-black/60 transition-colors"
+              style={{ display:'flex', flexDirection:'column', gap:3, alignItems:'center', justifyContent:'center', width:34, height:34 }}
+              onClick={e => { e.stopPropagation(); setShowControls(v => !v); }}
+            >
+              <span style={{ display:'block', width:14, height:1.5, background:'rgba(255,255,255,0.6)', borderRadius:1 }} />
+              <span style={{ display:'block', width:14, height:1.5, background:'rgba(255,255,255,0.6)', borderRadius:1 }} />
+              <span style={{ display:'block', width:14, height:1.5, background:'rgba(255,255,255,0.6)', borderRadius:1 }} />
+            </button>
+          </div>
+        ) : (
+          /* Desktop: navigation button */
+          <button
+            className={`bg-black/40 backdrop-blur-sm text-white/50 rounded px-2.5 py-1.5 text-[10px] font-mono hover:text-white/80 hover:bg-black/60 transition-all ${focused ? 'opacity-100' : 'opacity-60'}`}
+            onClick={e => { e.stopPropagation(); setShowNavModal(true); }}
+          >Navigation</button>
+        )}
       </div>
 
       {/* NPC proximity prompt */}
@@ -2594,50 +2935,123 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
         </div>
       )}
 
-      {/* ── Title card (before first click) — world-embedded signboard ── */}
-      {!started && (
-        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none select-none"
-             style={{ background: 'radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%)' }}>
-          {/* Signboard tablet */}
-          <div className="relative px-10 py-8 text-center"
+      {/* ── Title card (before first click) ── */}
+      {(!started || titleCardExiting) && (
+        <div className={`absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none select-none ${titleCardExiting ? 'island-backdrop-out' : 'island-backdrop-in'}`}
+             style={{ background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.58) 100%)' }}>
+          <div className={`relative px-10 py-8 text-center ${titleCardExiting ? 'island-card-exit' : 'island-card-enter'}`}
                style={{
-                 background: 'linear-gradient(160deg, rgba(255,240,210,0.96) 0%, rgba(240,220,185,0.96) 100%)',
-                 borderRadius: '4px 14px 6px 16px / 12px 4px 14px 6px',
-                 boxShadow: '0 8px 48px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(0,0,0,0.08)',
-                 border: '1.5px solid rgba(160,120,60,0.35)',
-                 minWidth: '280px',
+                 background: 'radial-gradient(ellipse at 28% 22%, rgba(255,249,224,0.99) 0%, rgba(236,212,158,0.98) 52%, rgba(212,182,112,0.98) 100%)',
+                 borderRadius: '3px 16px 5px 18px / 14px 3px 16px 5px',
+                 boxShadow: '0 14px 60px rgba(0,0,0,0.58), inset 0 2px 0 rgba(255,255,255,0.52), inset 0 -3px 6px rgba(80,40,0,0.20), inset 5px 0 10px rgba(80,40,0,0.07), inset -5px 0 10px rgba(80,40,0,0.07)',
+                 border: '2px solid rgba(140,95,30,0.52)',
+                 outline: '1px solid rgba(200,160,70,0.28)',
+                 outlineOffset: '4px',
+                 minWidth: 'min(320px, 85vw)',
                }}>
-            {/* Top accent rule */}
-            <div className="w-16 h-px mx-auto mb-5" style={{ background: 'rgba(200,150,60,0.55)' }} />
-
-            <p className="text-[9px] font-mono uppercase tracking-[0.38em] mb-3" style={{ color: 'rgba(160,110,40,0.75)' }}>
+            <ParchmentCorners />
+            <AccentRule />
+            <p className="text-[7.5px] font-mono uppercase tracking-[0.44em] mb-4" style={{ color: 'rgba(130,78,18,0.68)' }}>
               ✦ &nbsp;Interactive Portfolio&nbsp; ✦
             </p>
-            <h1 className="font-serif font-normal tracking-tight leading-tight mb-1"
-                style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)', color: 'rgba(50,32,12,0.92)', textShadow: '0 1px 2px rgba(255,220,140,0.4)' }}>
-              Experience Oasis
+            <h1 className="mb-7"
+                style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 'clamp(0.68rem,2.1vw,0.92rem)', lineHeight: 1.8, color: 'rgba(42,22,4,0.93)', textShadow: '0 1px 0 rgba(255,220,130,0.65), 0 2px 8px rgba(80,40,0,0.22)' }}>
+              Experience<br />Oasis
             </h1>
-            <p className="text-[11px] font-sans tracking-wide mb-7" style={{ color: 'rgba(100,70,25,0.65)' }}>
-              William Dzierson &nbsp;·&nbsp; Design &amp; Product
-            </p>
-
-            {/* Bottom accent rule */}
-            <div className="w-16 h-px mx-auto mb-6" style={{ background: 'rgba(200,150,60,0.55)' }} />
-
-            {/* Click-to-start pill — styled like in-game tooltips */}
-            <div className="inline-flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-5 py-2 border border-white/15 animate-pulse">
-              <span className="text-[10px] font-mono uppercase tracking-[0.28em] text-white/80">
+            <AccentRule />
+            <div className="mt-6 inline-flex items-center gap-2 bg-black/32 backdrop-blur-sm rounded-full px-5 py-2 border border-white/18 animate-pulse">
+              <span className="text-[9.5px] font-mono uppercase tracking-[0.30em] text-white/82">
                 Click to start
               </span>
             </div>
-
-            {/* Wood grain texture overlay */}
-            <div className="absolute inset-0 rounded-[4px] pointer-events-none opacity-20"
-                 style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(140,90,30,0.08) 3px, rgba(140,90,30,0.08) 4px)' }} />
+            <ParchmentTextures />
           </div>
+          <ParchmentString />
+        </div>
+      )}
 
-          {/* Hanging string detail */}
-          <div className="w-px h-6 mt-px" style={{ background: 'linear-gradient(to bottom, rgba(140,100,40,0.6), transparent)' }} />
+      {/* ── Navigation tutorial screen (after title card click) ── */}
+      {(showNav || showNavModal || navCardExiting) && (
+        <div
+          className={`absolute inset-0 z-40 flex flex-col items-center justify-center select-none ${navCardExiting ? 'island-backdrop-out' : 'island-backdrop-in'}`}
+          style={{ background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.58) 100%)', pointerEvents: 'auto' }}
+          onClick={dismissNavCard}
+        >
+          <div
+            className={`relative text-center mx-4 ${navCardExiting ? 'island-card-exit' : 'island-card-enter'}`}
+            style={{
+              background: 'radial-gradient(ellipse at 28% 22%, rgba(255,249,224,0.99) 0%, rgba(236,212,158,0.98) 52%, rgba(212,182,112,0.98) 100%)',
+              borderRadius: '3px 16px 5px 18px / 14px 3px 16px 5px',
+              boxShadow: '0 14px 60px rgba(0,0,0,0.58), inset 0 2px 0 rgba(255,255,255,0.52), inset 0 -3px 6px rgba(80,40,0,0.20), inset 5px 0 10px rgba(80,40,0,0.07), inset -5px 0 10px rgba(80,40,0,0.07)',
+              border: '2px solid rgba(140,95,30,0.52)',
+              outline: '1px solid rgba(200,160,70,0.28)',
+              outlineOffset: '4px',
+              maxWidth: 'min(440px, 90vw)',
+              width: '100%',
+              padding: '28px 32px 26px',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <ParchmentCorners />
+            <AccentRule />
+            <p className="text-[7.5px] font-mono uppercase tracking-[0.44em] mb-5" style={{ color: 'rgba(130,78,18,0.68)' }}>
+              ✦ &nbsp;How to Navigate&nbsp; ✦
+            </p>
+
+            {/* Desktop controls */}
+            {!isTouchDevice.current && (
+              <div className="flex flex-col gap-4 mt-2 mb-5">
+                {[
+                  {
+                    keys: <><div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}><KeyCap>W</KeyCap><div style={{display:'flex',gap:2}}><KeyCap>A</KeyCap><KeyCap>S</KeyCap><KeyCap>D</KeyCap></div><p className="text-[7px] font-mono mt-0.5" style={{color:'rgba(120,85,30,0.5)'}}>or arrows</p></div></>,
+                    h: 52, label: 'Move your explorer',
+                  },
+                  { keys: <><KeyCap wide>Space</KeyCap><span style={{fontSize:10,color:'rgba(120,85,30,0.55)',marginLeft:4}}>+ drag</span></>, h: 32, label: 'Orbit the camera' },
+                  { keys: <KeyCap wide>Scroll</KeyCap>, h: 32, label: 'Zoom in / out' },
+                  { keys: <KeyCap wide>Click</KeyCap>,  h: 32, label: 'Move to location · enter huts' },
+                ].map(({ keys, h, label }, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div style={{ flexShrink: 0, display:'flex', alignItems:'center' }}>{keys}</div>
+                    <div style={{ width:1, height:h, background:'rgba(160,120,60,0.18)', flexShrink:0 }} />
+                    <p className="text-[11px] font-sans text-left leading-snug" style={{ color: 'rgba(55,32,10,0.72)' }}>{label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Mobile controls */}
+            {isTouchDevice.current && (
+              <div className="flex flex-col gap-3.5 mt-2 mb-5">
+                {[
+                  { key: 'D-pad',  label: 'Use the D-pad (bottom-left) to move' },
+                  { key: 'Drag',   label: 'Drag left/right to orbit · up/down to zoom' },
+                  { key: 'Pinch',  label: 'Pinch to zoom in / out' },
+                  { key: 'Menu',   label: 'Tap Menu (bottom-right) for settings' },
+                ].map(({ key, label }) => (
+                  <div key={key} className="flex items-center gap-3">
+                    <div style={{ flexShrink: 0 }}><KeyCap wide>{key}</KeyCap></div>
+                    <div style={{ width:1, height:30, background:'rgba(160,120,60,0.18)', flexShrink:0 }} />
+                    <p className="text-[11px] font-sans text-left leading-snug" style={{ color: 'rgba(55,32,10,0.72)' }}>{label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <AccentRule className="mb-5" />
+
+            <button
+              className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 border border-white/20 transition-all hover:bg-black/12 active:scale-95"
+              style={{ background: 'rgba(0,0,0,0.24)', backdropFilter: 'blur(6px)' }}
+              onClick={dismissNavCard}
+            >
+              <span className="text-[9.5px] font-mono uppercase tracking-[0.30em] text-white/85">
+                {showNav ? "Let's explore →" : 'Got it'}
+              </span>
+            </button>
+
+            <ParchmentTextures />
+          </div>
+          {(showNav || showNavModal) && <ParchmentString />}
         </div>
       )}
 

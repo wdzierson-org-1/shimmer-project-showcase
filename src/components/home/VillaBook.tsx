@@ -135,7 +135,7 @@ const VillaBook = ({ villa, onClose }: VillaBookProps) => {
           {/* Close */}
           <button
             onClick={handleClose}
-            className="absolute -top-10 right-0 flex items-center gap-1.5 text-white/30 hover:text-white/65 transition-colors text-xs font-sans tracking-widest uppercase"
+            className="absolute top-3 right-3 sm:-top-10 sm:right-0 z-10 flex items-center gap-1.5 text-white/50 sm:text-white/30 hover:text-white/80 transition-colors text-xs font-sans tracking-widest uppercase bg-black/30 sm:bg-transparent rounded-full sm:rounded-none px-3 py-1.5 sm:px-0 sm:py-0"
           >
             <X size={13} /> Close
           </button>
@@ -416,7 +416,7 @@ export const CaveBookOverlay = ({ cave, onClose }: { cave: CaveBook; onClose: ()
         <div className={`relative w-full max-w-xl transition-transform duration-300 ${visible ? 'translate-y-0' : 'translate-y-6'}`}>
           <button
             onClick={handleClose}
-            className="absolute -top-10 right-0 flex items-center gap-1.5 text-white/30 hover:text-white/65 transition-colors text-xs font-sans tracking-widest uppercase"
+            className="absolute top-3 right-3 sm:-top-10 sm:right-0 z-10 flex items-center gap-1.5 text-white/50 sm:text-white/30 hover:text-white/80 transition-colors text-xs font-sans tracking-widest uppercase bg-black/30 sm:bg-transparent rounded-full sm:rounded-none px-3 py-1.5 sm:px-0 sm:py-0"
           >
             <X size={13} /> Close
           </button>

@@ -20,6 +20,7 @@ const CommandPalette = () => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [projects, setProjects] = useState<SearchResult[]>([]);
+  const [vpOffset, setVpOffset] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const debounceRef = useRef<NodeJS.Timeout>();
@@ -56,9 +57,14 @@ const CommandPalette = () => {
         setIsOpen(false);
       }
     };
+    const handleOpen = () => setIsOpen(true);
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('open-search', handleOpen);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('open-search', handleOpen);
+    };
   }, []);
 
   useEffect(() => {
@@ -69,6 +75,16 @@ const CommandPalette = () => {
       setQuery('');
       setResults([]);
     }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) { setVpOffset(0); return; }
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => setVpOffset(window.innerHeight - vv.height - vv.offsetTop);
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    return () => { vv.removeEventListener('resize', update); vv.removeEventListener('scroll', update); };
   }, [isOpen]);
 
   const handleSearch = useCallback(
@@ -145,10 +161,10 @@ const CommandPalette = () => {
 
   return (
     <>
-      {/* Trigger hint */}
+      {/* Trigger hint — hidden on mobile to avoid overlapping game controls */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-1.5 px-3 py-2 rounded-full bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 transition-all text-foreground/40 hover:text-foreground/60 backdrop-blur-sm"
+        className="hidden sm:flex fixed bottom-6 right-6 z-40 items-center gap-1.5 px-3 py-2 rounded-full bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 transition-all text-foreground/40 hover:text-foreground/60 backdrop-blur-sm"
       >
         <Command size={13} />
         <span className="text-xs font-mono">K</span>
@@ -173,7 +189,8 @@ const CommandPalette = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.98, y: -10 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed top-[20%] left-1/2 -translate-x-1/2 z-50 w-full max-w-xl"
+              className="fixed top-4 sm:top-[20%] left-1/2 z-50 w-[calc(100%-2rem)] max-w-xl"
+              style={{ transform: `translateX(-50%) translateY(${-vpOffset}px)` }}
             >
               <div className="bg-background/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl overflow-hidden">
                 {/* Input */}
@@ -202,7 +219,7 @@ const CommandPalette = () => {
                 </form>
 
                 {/* Results */}
-                <div className="max-h-80 overflow-y-auto">
+                <div className="max-h-48 sm:max-h-80 overflow-y-auto">
                   {isLoading && (
                     <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground">
                       <div className="w-3 h-3 border border-foreground/20 border-t-foreground/60 rounded-full animate-spin" />
@@ -261,13 +278,19 @@ const CommandPalette = () => {
 
                 {/* Footer */}
                 <div className="flex items-center justify-between px-4 py-2 border-t border-border/20 text-[10px] text-muted-foreground/30">
-                  <span>
+                  <span className="hidden sm:inline">
                     <kbd className="px-1 py-0.5 rounded bg-muted/50 border border-border/30 font-mono">
                       Enter
                     </kbd>{' '}
                     to ask
                   </span>
-                  <span>
+                  <button
+                    className="sm:hidden text-xs text-muted-foreground/60 py-1 px-2 rounded hover:bg-muted/50 transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Close
+                  </button>
+                  <span className="hidden sm:inline">
                     <kbd className="px-1 py-0.5 rounded bg-muted/50 border border-border/30 font-mono">
                       Esc
                     </kbd>{' '}
