@@ -1678,6 +1678,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
   const waterMatRef = useRef<THREE.ShaderMaterial | null>(null);
   const moveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const clickMovingRef = useRef(false);
+  const clickTargetRef = useRef<{ x: number; z: number } | null>(null);
   const focusedRef = useRef(false);
   const arrowRef = useRef<THREE.Mesh | null>(null);
   const teleportRef = useRef<TeleportState | null>(null);
@@ -1948,11 +1949,8 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
       if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(k)) {
         e.preventDefault();
         keysRef.current.add(k);
-        if (moveIntervalRef.current) {
-          clearInterval(moveIntervalRef.current);
-          moveIntervalRef.current = null;
-          clickMovingRef.current = false;
-        }
+        clickTargetRef.current = null;
+        clickMovingRef.current = false;
       }
       if (k === ' ' || e.key === ' ') {
         e.preventDefault();
@@ -1962,7 +1960,8 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
         return;
       }
       if (k === 'enter' && activeHutRef.current) {
-        if (moveIntervalRef.current) { clearInterval(moveIntervalRef.current); moveIntervalRef.current = null; clickMovingRef.current = false; }
+        clickTargetRef.current = null;
+        clickMovingRef.current = false;
         keysRef.current.clear();
         onEnterVilla?.(activeHutRef.current.villa);
       }
@@ -2243,9 +2242,24 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
         if (keys.has('arrowdown') || keys.has('s'))   fwd -= 1;
         if (keys.has('arrowright') || keys.has('d')) rgt += 1;
         if (keys.has('arrowleft')  || keys.has('a')) rgt -= 1;
-        const targetDx = (fwd * fwdX + rgt * rgtX) * SPEED;
-        const targetDz = (fwd * fwdZ + rgt * rgtZ) * SPEED;
-        const accel = (fwd !== 0 || rgt !== 0) ? 0.18 : 0.10;
+        // Click-to-move target steering — feeds same lerp as keys
+        const ct = clickTargetRef.current;
+        let targetDx = (fwd * fwdX + rgt * rgtX) * SPEED;
+        let targetDz = (fwd * fwdZ + rgt * rgtZ) * SPEED;
+
+        if (ct && fwd === 0 && rgt === 0) {
+          const cdx = ct.x - pos.x, cdz = ct.z - pos.z;
+          const cdist = Math.hypot(cdx, cdz);
+          if (cdist > 0.06) {
+            targetDx = (cdx / cdist) * SPEED;
+            targetDz = (cdz / cdist) * SPEED;
+          } else {
+            clickTargetRef.current = null;
+            clickMovingRef.current = false;
+          }
+        }
+
+        const accel = (fwd !== 0 || rgt !== 0 || clickTargetRef.current !== null) ? 0.18 : 0.10;
         playerVelRef.current.x += (targetDx - playerVelRef.current.x) * accel;
         playerVelRef.current.z += (targetDz - playerVelRef.current.z) * accel;
         let dx = playerVelRef.current.x;
@@ -2257,7 +2271,8 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
           const nx = pos.x + dx, nz = pos.z + dz;
           const gx = Math.floor(nx + HALF), gz = Math.floor(nz + HALF);
           if (inIsland(gx, gz)) { pos.x = nx; pos.z = nz; }
-          player.rotation.y = Math.atan2(dx, dz);
+          // Only override facing direction from keys; click sets it in handleClick
+          if (fwd !== 0 || rgt !== 0 || !ct) player.rotation.y = Math.atan2(dx, dz);
         }
 
         const isWalking = moving || clickMovingRef.current;
@@ -2385,7 +2400,8 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
 
         if (caveUnlocked && caveDist < 0.8 && !caveEnteredRef.current && !chatNpcRef.current && !teleportRef.current) {
           caveEnteredRef.current = true;
-          if (moveIntervalRef.current) { clearInterval(moveIntervalRef.current); moveIntervalRef.current = null; clickMovingRef.current = false; }
+          clickTargetRef.current = null;
+          clickMovingRef.current = false;
           keysRef.current.clear();
           onEnterCave?.(CAVE_BOOK);
         }
@@ -2524,12 +2540,6 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
   const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (chatNpcRef.current || teleportRef.current) return;
 
-    if (moveIntervalRef.current) {
-      clearInterval(moveIntervalRef.current);
-      moveIntervalRef.current = null;
-      clickMovingRef.current = false;
-    }
-
     const camera = cameraRef.current;
     const mount = mountRef.current;
     if (!camera || !mount) return;
@@ -2548,31 +2558,15 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
     const endX = target.x, endZ = target.z;
     const dist = Math.hypot(endX - startX, endZ - startZ);
     if (dist < 0.1) return;
-    const steps = Math.ceil(dist / 0.06);
-    let step = 0;
+
+    clickTargetRef.current = { x: endX, z: endZ };
     clickMovingRef.current = true;
     if (playerRef.current) playerRef.current.rotation.y = Math.atan2(endX - startX, endZ - startZ);
-
-    moveIntervalRef.current = setInterval(() => {
-      if (step >= steps) {
-        clearInterval(moveIntervalRef.current!);
-        moveIntervalRef.current = null;
-        clickMovingRef.current = false;
-        return;
-      }
-      const t = step / steps;
-      posRef.current.x = startX + (endX - startX) * t;
-      posRef.current.z = startZ + (endZ - startZ) * t;
-      step++;
-    }, 16);
   }, []);
 
   const handleTeleport = useCallback((villa: VillaBook, worldX: number, worldZ: number) => {
-    if (moveIntervalRef.current) {
-      clearInterval(moveIntervalRef.current);
-      moveIntervalRef.current = null;
-      clickMovingRef.current = false;
-    }
+    clickTargetRef.current = null;
+    clickMovingRef.current = false;
     teleportRef.current = {
       target: { x: worldX, z: worldZ },
       villa,
@@ -2592,6 +2586,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
     const endX = cr.worldX, endZ = cr.worldZ;
     const dist = Math.hypot(endX - startX, endZ - startZ);
     if (dist < 0.3) { onEnterCave?.(CAVE_BOOK); return; }
+    clickTargetRef.current = null;
     if (moveIntervalRef.current) { clearInterval(moveIntervalRef.current); moveIntervalRef.current = null; }
     const steps = Math.ceil(dist / 0.06);
     let step = 0;
@@ -2741,7 +2736,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
               <p className="text-[9px] text-white/40 mt-0.5 font-mono tracking-wide">{activeHut.villa.role} · {activeHut.villa.years}</p>
             </div>
             <button
-              onClick={e => { e.stopPropagation(); if (moveIntervalRef.current) { clearInterval(moveIntervalRef.current); moveIntervalRef.current = null; clickMovingRef.current = false; } keysRef.current.clear(); onEnterVilla?.(activeHut.villa); }}
+              onClick={e => { e.stopPropagation(); clickTargetRef.current = null; clickMovingRef.current = false; keysRef.current.clear(); onEnterVilla?.(activeHut.villa); }}
               className="w-full text-[9px] uppercase tracking-[0.18em] py-2 border-t border-white/8 transition-colors"
               style={{ color: activeHut.villa.color }}
               onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}

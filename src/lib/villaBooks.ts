@@ -59,7 +59,7 @@ First design hire. No design system, no brand, no component library — just a v
     years: '2014–2023',
     color: '#16a8a0',
     teaserVideo: '',
-    clientMatch: ['Grand Rounds', 'Included Health', 'Optum', 'Crescendo', 'Form Health', 'Bernard of Hollywood', 'PHC'],
+    clientMatch: ['Grand Rounds', 'Included Health', 'Optum', 'Crescendo', 'Bernard of Hollywood', 'PHC'],
     intro: `# Act II — Healthcare Design
 
 Nine years of designing systems that people use when they're sick, scared, or confused. Grand Rounds became Included Health — and what started as a specialist second-opinion service grew into one of the most comprehensive healthcare navigation platforms in the country.
@@ -81,7 +81,7 @@ Joined as a lead designer when the product was a focused second-opinion platform
 
 ## Consulting (concurrent)
 
-Also led design for Crescendo Bioscience (genomics diagnostics), Optum (enterprise health data), Form Health (obesity medicine), and PHC (behavioral health) during this period — bringing the same patient-first lens to adjacent healthcare problems.`,
+Also led design for Crescendo Bioscience (genomics diagnostics), Optum (enterprise health data), and PHC (behavioral health) during this period — bringing the same patient-first lens to adjacent healthcare problems.`,
   },
 
   // ─── Act III: Founding & Fractional ──────────────────────────────────────────

@@ -135,7 +135,7 @@ const VillaBook = ({ villa, onClose }: VillaBookProps) => {
           {/* Close */}
           <button
             onClick={handleClose}
-            className="absolute top-3 right-3 sm:-top-10 sm:right-0 z-10 flex items-center gap-1.5 text-white/50 sm:text-white/30 hover:text-white/80 transition-colors text-xs font-sans tracking-widest uppercase bg-black/30 sm:bg-transparent rounded-full sm:rounded-none px-3 py-1.5 sm:px-0 sm:py-0"
+            className="absolute top-20 right-3 sm:-top-10 sm:right-0 z-10 flex items-center gap-1.5 text-white/50 sm:text-white/30 hover:text-white/80 transition-colors text-xs font-sans tracking-widest uppercase bg-black/30 sm:bg-transparent rounded-full sm:rounded-none px-3 py-1.5 sm:px-0 sm:py-0"
           >
             <X size={13} /> Close
           </button>
@@ -191,7 +191,7 @@ const VillaBook = ({ villa, onClose }: VillaBookProps) => {
             </div>
 
             {/* Content */}
-            <div className="px-6 sm:px-8 py-6 overflow-y-auto" style={{ maxHeight: '65vh' }}>
+            <div className="px-6 sm:px-8 py-6 overflow-y-auto overflow-x-hidden" style={{ maxHeight: '65vh' }}>
               {isIntro ? (
                 <div className="prose prose-sm max-w-none prose-headings:font-serif prose-headings:font-light prose-headings:tracking-tight prose-p:text-black/65 prose-p:leading-relaxed prose-h1:text-2xl prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-2">
                   <ReactMarkdown>{page.content}</ReactMarkdown>
@@ -416,7 +416,7 @@ export const CaveBookOverlay = ({ cave, onClose }: { cave: CaveBook; onClose: ()
         <div className={`relative w-full max-w-xl transition-transform duration-300 ${visible ? 'translate-y-0' : 'translate-y-6'}`}>
           <button
             onClick={handleClose}
-            className="absolute top-3 right-3 sm:-top-10 sm:right-0 z-10 flex items-center gap-1.5 text-white/50 sm:text-white/30 hover:text-white/80 transition-colors text-xs font-sans tracking-widest uppercase bg-black/30 sm:bg-transparent rounded-full sm:rounded-none px-3 py-1.5 sm:px-0 sm:py-0"
+            className="absolute top-20 right-3 sm:-top-10 sm:right-0 z-10 flex items-center gap-1.5 text-white/50 sm:text-white/30 hover:text-white/80 transition-colors text-xs font-sans tracking-widest uppercase bg-black/30 sm:bg-transparent rounded-full sm:rounded-none px-3 py-1.5 sm:px-0 sm:py-0"
           >
             <X size={13} /> Close
           </button>
