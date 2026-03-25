@@ -48,7 +48,7 @@ const AboutSection = () => {
                 Previously
               </p>
               <p className="text-sm text-white/50 font-sans font-light leading-relaxed">
-                Google &middot; Yahoo &middot; Salesforce &middot; Included Health &middot; Gigwalk &middot; Lockheed-Martin &middot; John Hancock &middot; IBM &middot; Softbank Japan &middot; Bose &middot; Dr. Seuss Enterprises &middot; PepsiCo &middot; Lincoln Center &middot; Harvard Medical School &middot; The Smithsonian &middot; Caterpillar
+                Google &middot; Yahoo &middot; Salesforce &middot; Noodle &middot; Included Health &middot; Gigwalk &middot; Lockheed-Martin &middot; John Hancock &middot; IBM &middot; Softbank Japan &middot; Bose &middot; Dr. Seuss Enterprises &middot; PepsiCo &middot; Lincoln Center &middot; Harvard Medical School &middot; The Smithsonian &middot; Caterpillar &middot; The Public Health Company &middot; Optum
               </p>
             </div>
 

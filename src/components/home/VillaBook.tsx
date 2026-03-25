@@ -268,7 +268,7 @@ const MediaImage = ({ src, alt }: { src: string; alt: string }) => {
       <img
         src={src}
         alt={alt}
-        className={`w-full h-full object-contain transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`w-full h-full object-contain object-center transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
         onLoad={() => setLoaded(true)}
         onError={() => setError(true)}
       />
@@ -313,7 +313,7 @@ const ProjectPageContent = ({
     <div className="space-y-5">
       {/* Media carousel — large prominent display */}
       {media.length > 0 && (
-        <div className="relative rounded-xl overflow-hidden bg-gradient-to-b from-black/[0.03] to-black/[0.06] border border-black/[0.04]"
+        <div className="relative rounded-xl overflow-hidden bg-gradient-to-b from-black/[0.03] to-black/[0.06] border border-black/[0.04] mx-auto flex items-center justify-center"
              style={{ minHeight: '280px', maxHeight: '480px', aspectRatio: '16/10' }}>
           {isVid ? (
             <MediaVideo key={currentSrc} src={currentSrc} />

@@ -319,7 +319,7 @@
 
   .prose h2 {
     font-family: 'PP Editorial New', 'Fabric Serif', 'Playfair Display', serif;
-    font-weight: 800;
+    font-weight: 100;
     font-size: 28px;
     @apply border-none;
   }
