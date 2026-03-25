@@ -308,11 +308,25 @@
     @apply text-foreground;
   }
   
-  .prose h2 {
+  .prose h1,
+  .prose h4,
+  .prose h5,
+  .prose h6 {
+    font-family: 'PP Editorial New', 'Fabric Serif', 'Playfair Display', serif;
+    font-weight: 400;
     @apply border-none;
   }
-  
+
+  .prose h2 {
+    font-family: 'PP Editorial New', 'Fabric Serif', 'Playfair Display', serif;
+    font-weight: 800;
+    font-size: 28px;
+    @apply border-none;
+  }
+
   .prose h3 {
+    font-family: 'PP Editorial New', 'Fabric Serif', 'Playfair Display', serif;
+    font-weight: 200;
     @apply border-none;
   }
   

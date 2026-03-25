@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ExternalLink, Search } from 'lucide-react';
 
@@ -5,8 +6,27 @@ const Header = () => {
   const { pathname } = useLocation();
   const isHome = pathname === '/';
 
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY < 50) {
+        setIsVisible(true);
+      } else if (currentY > lastScrollY.current) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+      lastScrollY.current = currentY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const textPrimary = isHome ? 'text-white/90 hover:text-white' : 'text-foreground/80 hover:text-foreground';
-  const textMuted = isHome ? 'text-white/30' : 'text-foreground/35';
   const textNav = isHome ? 'text-white/45 hover:text-white/80' : 'text-foreground/45 hover:text-foreground/80';
 
   return (
@@ -16,21 +36,18 @@ const Header = () => {
         backgroundColor: isHome ? 'rgba(0,0,0,0.60)' : 'rgba(246,243,238,0.85)',
         backdropFilter: isHome ? 'blur(8px)' : 'blur(12px)',
         borderBottom: isHome ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+        transform: isVisible ? 'translateY(0)' : 'translateY(-100%)',
+        transition: 'transform 300ms ease',
       }}
     >
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-3.5 flex justify-between items-center">
-        <div className="flex items-baseline gap-3">
-          <Link
-            to="/"
-            className={`font-serif text-[15px] tracking-tight no-underline transition-colors ${textPrimary}`}
-            style={{ fontWeight: 200 }}
-          >
-            William Dzierson
-          </Link>
-          <span className={`text-[10px] uppercase tracking-[0.18em] font-sans hidden sm:inline ${textMuted}`}>
-            Design &amp; Engineering
-          </span>
-        </div>
+      <div className="max-w-7xl mx-auto px-6 md:px-12 pt-3 pb-[10px] flex justify-between items-center">
+        <Link
+          to="/"
+          className={`font-serif text-[17px] tracking-[-0.01em] no-underline transition-colors ${textPrimary}`}
+          style={{ fontWeight: 200 }}
+        >
+          William Dzierson
+        </Link>
         <nav className="flex items-center gap-6">
           <Link
             to="/projects"

@@ -1939,7 +1939,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
 
     // ── Input ──
     const onDown = (e: KeyboardEvent) => {
-      if (!focusedRef.current) return;
+      if (!focusedRef.current || showNavRef.current) return;
       const k = e.key.toLowerCase();
       if (k === 'escape' && chatNpcRef.current) {
         setChatNpc(null);
@@ -1987,7 +1987,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
     const _hoverHit = new THREE.Vector3();
 
     const onMouseMove = (e: MouseEvent) => {
-      if (!startedRef.current) return;
+      if (!startedRef.current || showNavRef.current) return;
       if (spaceDownTimeRef.current > 0) {
         if (!isPanningRef.current) {
           isPanningRef.current = true;
@@ -2058,7 +2058,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
 
     // ── Scroll zoom ──
     const onWheel = (e: WheelEvent) => {
-      if (!focusedRef.current) return;
+      if (!focusedRef.current || showNavRef.current) return;
       e.preventDefault();
       const delta = e.deltaY > 0 ? 0.5 : -0.5;
       viewSizeRef.current = Math.max(5, Math.min(18, viewSizeRef.current + delta));

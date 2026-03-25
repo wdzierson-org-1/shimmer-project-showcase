@@ -38,7 +38,7 @@ const AboutSection = () => {
             className="flex flex-col justify-center"
           >
             <p className="text-lg text-white/50 font-sans font-light leading-relaxed">
-              I sit at the intersection of design and engineering — always have.
+              I sit at the intersection of design and engineering.
               I love to design, and I love to build. I've spent my career making
               software for healthcare, AI, and consumer products.
             </p>
@@ -47,9 +47,8 @@ const AboutSection = () => {
               <p className="text-xs uppercase tracking-[0.2em] text-white/30 mb-4 font-sans">
                 Previously
               </p>
-              <p className="text-sm text-white/50 font-sans font-light">
-                Included Health &middot; Google &middot; Grand Rounds &middot;
-                Optum &middot; Gigwalk
+              <p className="text-sm text-white/50 font-sans font-light leading-relaxed">
+                Google &middot; Yahoo &middot; Salesforce &middot; Included Health &middot; Gigwalk &middot; Lockheed-Martin &middot; John Hancock &middot; IBM &middot; Softbank Japan &middot; Bose &middot; Dr. Seuss Enterprises &middot; PepsiCo &middot; Lincoln Center &middot; Harvard Medical School &middot; The Smithsonian &middot; Caterpillar
               </p>
             </div>
 

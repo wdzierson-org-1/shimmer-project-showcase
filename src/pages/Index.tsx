@@ -5,7 +5,7 @@ import Header from '@/components/layout/Header';
 import Hero from '@/components/home/Hero';
 import FeaturedProject from '@/components/home/FeaturedProject';
 import AboutSection from '@/components/home/AboutSection';
-import FooterAmbient from '@/components/home/FooterAmbient';
+import FooterPlayground from '@/components/home/FooterPlayground';
 
 interface FeaturedProjectData {
   id: string;
@@ -115,21 +115,9 @@ const Index = () => {
 
       <AboutSection />
 
-      {/* Footer with ambient animation */}
-      <footer className="relative overflow-hidden bg-[#08070b] border-t border-white/5 py-14">
-        <FooterAmbient />
-        <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 flex justify-between items-center">
-          <p className="text-xs text-white/25 font-sans">
-            &copy; {new Date().getFullYear()} William Dzierson
-          </p>
-          <p className="text-xs text-white/25 font-sans">
-            Press{' '}
-            <kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-white/40 font-mono text-[10px]">
-              ⌘K
-            </kbd>{' '}
-            to explore
-          </p>
-        </div>
+      {/* Footer playground */}
+      <footer className="relative bg-[#08070b] border-t border-white/5" style={{ overflow: 'visible' }}>
+        <FooterPlayground />
       </footer>
     </div>
   );
