@@ -37,7 +37,7 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects: providedProjects, l
             )
           `)
           .eq('visible', true)
-          .order('created_at', { ascending: false });
+          .order('display_order', { ascending: true });
           
         if (limit) {
           query = query.limit(limit);

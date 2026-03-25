@@ -7,6 +7,7 @@ export const useBasicProjectState = () => {
   const [description, setDescription] = useState('');
   const [involvement, setInvolvement] = useState('');
   const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [featured, setFeatured] = useState(false);
 
   return {
     title,
@@ -18,6 +19,8 @@ export const useBasicProjectState = () => {
     involvement,
     setInvolvement,
     year,
-    setYear
+    setYear,
+    featured,
+    setFeatured
   };
 };

@@ -8,6 +8,7 @@ export interface ProjectFormData {
   liveUrl: string;
   involvement: string;
   year: number;
+  featured: boolean;
   tags: string[];
   newTag: string;
 }
@@ -29,6 +30,8 @@ export interface ProjectDataState {
   setInvolvement: (involvement: string) => void;
   year: number;
   setYear: (year: number) => void;
+  featured: boolean;
+  setFeatured: (featured: boolean) => void;
   tags: string[];
   setTags: (tags: string[]) => void;
   newTag: string;

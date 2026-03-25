@@ -56,6 +56,7 @@ const ProjectEditor = () => {
         liveUrl: projectData.liveUrl,
         involvement: projectData.involvement,
         year: projectData.year,
+        featured: projectData.featured,
         tags: projectData.tags,
         isNew
       });
@@ -104,6 +105,8 @@ const ProjectEditor = () => {
               setInvolvement={projectData.setInvolvement}
               year={projectData.year}
               setYear={projectData.setYear}
+              featured={projectData.featured}
+              setFeatured={projectData.setFeatured}
               tags={projectData.tags}
               setTags={projectData.setTags}
               newTag={projectData.newTag}

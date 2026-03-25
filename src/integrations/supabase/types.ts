@@ -217,6 +217,8 @@ export type Database = {
           client: string
           created_at: string | null
           description: string
+          display_order: number
+          featured: boolean
           id: string
           involvement: string | null
           liveurl: string | null
@@ -229,6 +231,8 @@ export type Database = {
           client: string
           created_at?: string | null
           description: string
+          display_order?: number
+          featured?: boolean
           id?: string
           involvement?: string | null
           liveurl?: string | null
@@ -241,6 +245,8 @@ export type Database = {
           client?: string
           created_at?: string | null
           description?: string
+          display_order?: number
+          featured?: boolean
           id?: string
           involvement?: string | null
           liveurl?: string | null

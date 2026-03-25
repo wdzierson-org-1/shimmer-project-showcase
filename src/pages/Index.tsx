@@ -17,12 +17,6 @@ interface FeaturedProjectData {
   liveUrl?: string;
 }
 
-const FEATURED_TITLES = [
-  'Stash',
-  'weOS',
-  'Included Health Multimodal AI (Voice, Chat, Video)',
-];
-
 const Index = () => {
   const [projects, setProjects] = useState<FeaturedProjectData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,17 +39,14 @@ const Index = () => {
             )
           `
           )
-          .in('title', FEATURED_TITLES)
-          .eq('visible', true);
+          .eq('featured', true)
+          .eq('visible', true)
+          .order('display_order', { ascending: true });
 
         if (error) throw error;
 
         if (data) {
-          const ordered = FEATURED_TITLES.map((title) =>
-            data.find((p) => p.title === title)
-          ).filter(Boolean);
-
-          const formatted: FeaturedProjectData[] = ordered.map((item: any) => ({
+          const formatted: FeaturedProjectData[] = data.map((item: any) => ({
             id: item.id,
             title: item.title,
             client: item.client,

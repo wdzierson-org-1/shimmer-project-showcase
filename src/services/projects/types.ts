@@ -9,6 +9,7 @@ export interface ProjectSubmitData {
   liveUrl?: string;
   involvement?: string;
   year: number;
+  featured?: boolean;
   tags: string[];
   isNew: boolean;
 }

@@ -69,6 +69,8 @@ export const useProjectData = () => {
         // Set year if available, otherwise default to current year
         projectDataState.setYear(projectData.year || new Date().getFullYear());
         
+        projectDataState.setFeatured(projectData.featured ?? false);
+        
         // Fetch and process images
         const imageData = await fetchProjectImages(id);
         const { primaryImageUrl, additionalImages } = processImageData(imageData);

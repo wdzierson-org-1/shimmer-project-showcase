@@ -17,6 +17,7 @@ export async function saveProject({
   liveUrl = '',
   involvement = '',
   year,
+  featured = false,
   tags,
   isNew
 }: ProjectSubmitData): Promise<boolean> {
@@ -110,6 +111,7 @@ export async function saveProject({
       client: sanitizedClient,
       description: sanitizedDescription,
       year: validatedYear,
+      featured,
       updated_at: new Date().toISOString(),
       ...(isNew && { created_at: new Date().toISOString() }),
       ...(sanitizedUrl && { liveurl: sanitizedUrl }),
