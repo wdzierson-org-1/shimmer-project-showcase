@@ -71,7 +71,9 @@ const CommandPalette = () => {
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
-      inputRef.current.focus();
+      // setTimeout required on iOS to trigger the software keyboard
+      const t = setTimeout(() => inputRef.current?.focus(), 50);
+      return () => clearTimeout(t);
     }
     if (!isOpen) {
       setQuery('');
@@ -79,11 +81,13 @@ const CommandPalette = () => {
     }
   }, [isOpen]);
 
+  // Track visual viewport offset (keyboard height) for mobile bottom-sheet positioning
   useEffect(() => {
     if (!isOpen) { setVpOffset(0); return; }
     const vv = window.visualViewport;
     if (!vv) return;
-    const update = () => setVpOffset(window.innerHeight - vv.height - vv.offsetTop);
+    const update = () => setVpOffset(Math.max(0, window.innerHeight - vv.height - vv.offsetTop));
+    update();
     vv.addEventListener('resize', update);
     vv.addEventListener('scroll', update);
     return () => { vv.removeEventListener('resize', update); vv.removeEventListener('scroll', update); };
@@ -175,31 +179,116 @@ const CommandPalette = () => {
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Backdrop */}
+            {/* Backdrop — desktop only */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+              className="hidden sm:block fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
               onClick={() => setIsOpen(false)}
             />
 
-            {/* Palette */}
+            {/* Mobile: full-screen overlay pinned to top, shrinks to keyboard height */}
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              className="sm:hidden fixed left-0 right-0 top-0 z-50 flex flex-col bg-background"
+              style={{ height: vpOffset > 0 ? window.innerHeight - vpOffset : '100dvh' }}
+            >
+              {/* Input row */}
+              <form onSubmit={handleSubmit} className="flex items-center px-4 pt-14 pb-0 border-b border-border/30 shrink-0">
+                <Search size={16} className="text-muted-foreground shrink-0" />
+                <input
+                  ref={inputRef}
+                  value={query}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  placeholder="Search or ask a question…"
+                  className="flex-1 px-3 py-4 bg-transparent text-base font-sans text-foreground placeholder:text-muted-foreground/40 outline-none"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  enterKeyHint="search"
+                />
+                {query ? (
+                  <button
+                    type="button"
+                    onClick={() => { setQuery(''); setResults([]); inputRef.current?.focus(); }}
+                    className="p-2 text-muted-foreground"
+                  >
+                    <X size={16} />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    className="text-sm text-muted-foreground/60 py-1 px-2"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </form>
+
+              {/* Results — fills remaining space */}
+              <div className="flex-1 overflow-y-auto">
+                {isLoading && (
+                  <div className="flex items-center gap-2 px-4 py-4 text-sm text-muted-foreground">
+                    <div className="w-3 h-3 border border-foreground/20 border-t-foreground/60 rounded-full animate-spin" />
+                    Thinking…
+                  </div>
+                )}
+                {results.map((result, i) => {
+                  if (result.type === 'answer') {
+                    return (
+                      <div key={`answer-${i}`} className="px-4 py-4 border-b border-border/20">
+                        <div className="text-sm text-foreground/80 font-sans font-light leading-relaxed prose prose-sm max-w-none">
+                          <ReactMarkdown>{result.content || ''}</ReactMarkdown>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <button
+                      key={result.id || i}
+                      onClick={() => handleResultClick(result)}
+                      className="w-full flex items-center justify-between px-4 py-3 border-b border-border/10 transition-colors text-left group active:bg-muted/50"
+                    >
+                      <div>
+                        <p className="text-sm font-sans text-foreground">{result.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{result.client}</p>
+                      </div>
+                      <ArrowRight size={14} className="text-muted-foreground/30" />
+                    </button>
+                  );
+                })}
+                {!isLoading && results.length === 0 && query && (
+                  <p className="px-4 py-4 text-sm text-muted-foreground/60">
+                    Tap return to ask about "{query}"
+                  </p>
+                )}
+                {!query && (
+                  <p className="px-4 py-4 text-sm text-muted-foreground/40">
+                    Type to search projects, or ask a question about Will's work
+                  </p>
+                )}
+              </div>
+            </motion.div>
+
+            {/* Desktop: centered floating palette */}
             <motion.div
               initial={{ opacity: 0, scale: 0.98, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.98, y: -10 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed top-4 sm:top-[20%] left-1/2 z-50 w-[calc(100%-2rem)] max-w-xl"
-              style={{ transform: `translateX(-50%) translateY(${-vpOffset}px)` }}
+              className="hidden sm:block fixed top-[20%] left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-xl"
             >
               <div className="bg-background/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl overflow-hidden">
-                {/* Input */}
                 <form onSubmit={handleSubmit} className="flex items-center px-4 border-b border-border/30">
                   <Search size={16} className="text-muted-foreground shrink-0" />
                   <input
-                    ref={inputRef}
+                    autoFocus
                     value={query}
                     onChange={(e) => handleInputChange(e.target.value)}
                     placeholder="Search projects or ask a question..."
@@ -208,11 +297,7 @@ const CommandPalette = () => {
                   {query && (
                     <button
                       type="button"
-                      onClick={() => {
-                        setQuery('');
-                        setResults([]);
-                        inputRef.current?.focus();
-                      }}
+                      onClick={() => { setQuery(''); setResults([]); }}
                       className="p-1 text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <X size={14} />
@@ -220,29 +305,23 @@ const CommandPalette = () => {
                   )}
                 </form>
 
-                {/* Results */}
-                <div className="max-h-48 sm:max-h-80 overflow-y-auto">
+                <div className="max-h-80 overflow-y-auto">
                   {isLoading && (
                     <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground">
                       <div className="w-3 h-3 border border-foreground/20 border-t-foreground/60 rounded-full animate-spin" />
                       Thinking...
                     </div>
                   )}
-
                   {results.map((result, i) => {
                     if (result.type === 'answer') {
                       return (
-                        <div
-                          key={`answer-${i}`}
-                          className="px-4 py-3 border-b border-border/20"
-                        >
+                        <div key={`answer-${i}`} className="px-4 py-3 border-b border-border/20">
                           <div className="text-sm text-foreground/80 font-sans font-light leading-relaxed prose prose-sm max-w-none">
                             <ReactMarkdown>{result.content || ''}</ReactMarkdown>
                           </div>
                         </div>
                       );
                     }
-
                     return (
                       <button
                         key={result.id || i}
@@ -250,27 +329,18 @@ const CommandPalette = () => {
                         className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors text-left group"
                       >
                         <div>
-                          <p className="text-sm font-sans text-foreground">
-                            {result.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {result.client}
-                          </p>
+                          <p className="text-sm font-sans text-foreground">{result.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{result.client}</p>
                         </div>
-                        <ArrowRight
-                          size={14}
-                          className="text-muted-foreground/30 group-hover:text-muted-foreground transition-colors"
-                        />
+                        <ArrowRight size={14} className="text-muted-foreground/30 group-hover:text-muted-foreground transition-colors" />
                       </button>
                     );
                   })}
-
                   {!isLoading && results.length === 0 && query && (
                     <div className="px-4 py-3 text-sm text-muted-foreground/60">
                       Press Enter to ask about "{query}"
                     </div>
                   )}
-
                   {!query && (
                     <div className="px-4 py-3 text-xs text-muted-foreground/40">
                       Type to search projects, or ask a question about Will's work
@@ -278,25 +348,12 @@ const CommandPalette = () => {
                   )}
                 </div>
 
-                {/* Footer */}
                 <div className="flex items-center justify-between px-4 py-2 border-t border-border/20 text-[10px] text-muted-foreground/30">
-                  <span className="hidden sm:inline">
-                    <kbd className="px-1 py-0.5 rounded bg-muted/50 border border-border/30 font-mono">
-                      Enter
-                    </kbd>{' '}
-                    to ask
+                  <span>
+                    <kbd className="px-1 py-0.5 rounded bg-muted/50 border border-border/30 font-mono">Enter</kbd>{' '}to ask
                   </span>
-                  <button
-                    className="sm:hidden text-xs text-muted-foreground/60 py-1 px-2 rounded hover:bg-muted/50 transition-colors"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Close
-                  </button>
-                  <span className="hidden sm:inline">
-                    <kbd className="px-1 py-0.5 rounded bg-muted/50 border border-border/30 font-mono">
-                      Esc
-                    </kbd>{' '}
-                    to close
+                  <span>
+                    <kbd className="px-1 py-0.5 rounded bg-muted/50 border border-border/30 font-mono">Esc</kbd>{' '}to close
                   </span>
                 </div>
               </div>

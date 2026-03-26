@@ -115,10 +115,10 @@ const ContextualChatBot: React.FC<ContextualChatBotProps> = ({
 
   return (
     <>
-      {/* Chat toggle button */}
+      {/* Chat toggle button — hidden on mobile */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-4 right-4 sm:right-4 rounded-full w-12 h-12 p-0 shadow-lg z-50"
+        className="hidden sm:flex fixed bottom-4 right-4 rounded-full w-12 h-12 p-0 shadow-lg z-50"
         aria-label={`Toggle ${contextType} chat`}
       >
         {isOpen ? <X /> : <MessageCircle />}

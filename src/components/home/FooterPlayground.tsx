@@ -1162,7 +1162,7 @@ export default function FooterPlayground() {
 
         <div style={{ position: 'absolute', bottom: 10, left: 0, right: 0, display: 'flex', justifyContent: 'space-between', paddingLeft: 24, paddingRight: 24, pointerEvents: 'none', zIndex: 5 }}>
           <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.18)', fontFamily: 'monospace', userSelect: 'none' }}>© {new Date().getFullYear()} William Dzierson</p>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.18)', fontFamily: 'monospace', userSelect: 'none' }}>press <span style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 3, padding: '1px 5px', fontSize: 10 }}>⌘K</span> to explore</p>
+          <p className="hidden sm:block" style={{ fontSize: 11, color: 'rgba(255,255,255,0.18)', fontFamily: 'monospace', userSelect: 'none' }}>press <span style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 3, padding: '1px 5px', fontSize: 10 }}>⌘K</span> to explore</p>
         </div>
       </div>
 

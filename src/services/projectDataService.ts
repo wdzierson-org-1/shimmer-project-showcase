@@ -18,6 +18,7 @@ export interface ProjectImageData {
   display_order: number;
   media_type?: string;
   video_thumbnail_url?: string;
+  caption?: string;
 }
 
 export interface ProjectTagData {
@@ -42,7 +43,7 @@ export const fetchProjectBasicData = async (id: string): Promise<ProjectDataFrom
 export const fetchProjectImages = async (id: string): Promise<ProjectImageData[]> => {
   const { data: imageData } = await supabase
     .from('project_images')
-    .select('image_url, is_primary, display_order, media_type, video_thumbnail_url')
+    .select('image_url, is_primary, display_order, media_type, video_thumbnail_url, caption')
     .eq('project_id', id)
     .order('display_order', { ascending: true });
     
@@ -68,32 +69,28 @@ export const processImageData = (imageData: ProjectImageData[]): { primaryImageU
     // Find primary image
     const primaryImage = imageData.find(img => img.is_primary);
     if (primaryImage) {
-      // Create media object for primary image
       const primaryMedia = {
         url: primaryImage.image_url,
         type: primaryImage.media_type || 'image',
-        // For videos, use video_thumbnail_url if available, otherwise fallback to image_url
-        thumbnailUrl: primaryImage.media_type === 'video' && primaryImage.video_thumbnail_url 
-          ? primaryImage.video_thumbnail_url 
-          : primaryImage.image_url
+        thumbnailUrl: primaryImage.media_type === 'video' && primaryImage.video_thumbnail_url
+          ? primaryImage.video_thumbnail_url
+          : primaryImage.image_url,
+        caption: primaryImage.caption || '',
       };
       primaryImageUrl = JSON.stringify(primaryMedia);
-      console.log('Primary media object for editing:', primaryMedia);
     }
     
-    // Get additional images (non-primary)
     additionalImages = imageData
       .filter(img => !img.is_primary)
       .map(img => {
         const media = {
           url: img.image_url,
           type: img.media_type || 'image',
-          // For videos, use video_thumbnail_url if available, otherwise fallback to image_url
-          thumbnailUrl: img.media_type === 'video' && img.video_thumbnail_url 
-            ? img.video_thumbnail_url 
-            : img.image_url
+          thumbnailUrl: img.media_type === 'video' && img.video_thumbnail_url
+            ? img.video_thumbnail_url
+            : img.image_url,
+          caption: img.caption || '',
         };
-        console.log('Additional media object for editing:', media);
         return JSON.stringify(media);
       });
   }

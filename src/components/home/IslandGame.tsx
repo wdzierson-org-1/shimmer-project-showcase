@@ -1937,6 +1937,47 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
       };
     });
 
+    // ── Title sparkle particles (Three.js Points in world space) ──
+    // Scattered gold sprites in the sky; bloom is applied by the UnrealBloomPass.
+    // We use MeshBasicMaterial on small plane meshes so they survive the bloom threshold (0.88).
+    const SPARKLE_COUNT = 70;
+    const sparkleBaseX = new Float32Array(SPARKLE_COUNT);
+    const sparkleBaseY = new Float32Array(SPARKLE_COUNT);
+    const sparkleBaseZ = new Float32Array(SPARKLE_COUNT);
+    const sparklePhase = new Float32Array(SPARKLE_COUNT);
+    const sparkleSpeed = new Float32Array(SPARKLE_COUNT);
+    const sparkleAmp  = new Float32Array(SPARKLE_COUNT);
+
+    const sparkleMeshes: THREE.Mesh[] = [];
+    const sparklePlaneGeo = new THREE.PlaneGeometry(0.55, 0.55);
+
+    for (let i = 0; i < SPARKLE_COUNT; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const r = 1.5 + Math.random() * 9;
+      sparkleBaseX[i] = Math.cos(angle) * r;
+      // Keep Y within camera frustum (≈0–10.5 maps to bottom-top of screen)
+      sparkleBaseY[i] = 0.5 + Math.random() * 9.5;
+      sparkleBaseZ[i] = Math.sin(angle) * r;
+      sparklePhase[i] = Math.random() * Math.PI * 2;
+      sparkleSpeed[i] = 0.28 + Math.random() * 0.55;
+      sparkleAmp[i]   = 0.18 + Math.random() * 0.45;
+
+      const mat = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(4.5, 2.8, 0.5), // HDR — bright enough to bloom
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        depthTest: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
+      });
+      const mesh = new THREE.Mesh(sparklePlaneGeo, mat);
+      mesh.position.set(sparkleBaseX[i], sparkleBaseY[i], sparkleBaseZ[i]);
+      mesh.renderOrder = 999;
+      scene.add(mesh);
+      sparkleMeshes.push(mesh);
+    }
+
     // ── Input ──
     const onDown = (e: KeyboardEvent) => {
       if (!focusedRef.current || showNavRef.current) return;
@@ -2498,6 +2539,28 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
         }
       }
 
+      // ── Title sparkle animation (mesh-based, always renders above scene) ──
+      {
+        const fadeTarget = startedRef.current ? 0 : 1.0;
+        const fadeRate   = startedRef.current ? 0.06 : 0.035;
+        for (let i = 0; i < SPARKLE_COUNT; i++) {
+          const mesh = sparkleMeshes[i];
+          const mat  = mesh.material as THREE.MeshBasicMaterial;
+          // Individual twinkle: per-particle phase offset drives opacity pulse
+          const pulse = 0.55 + 0.45 * Math.abs(Math.sin(t * sparkleSpeed[i] * 1.4 + sparklePhase[i]));
+          const perTarget = fadeTarget * pulse;
+          mat.opacity += (perTarget - mat.opacity) * fadeRate;
+          // Float
+          mesh.position.set(
+            sparkleBaseX[i] + Math.sin(t * sparkleSpeed[i] * 0.38 + sparklePhase[i] + 1.1) * sparkleAmp[i] * 0.7,
+            sparkleBaseY[i] + Math.sin(t * sparkleSpeed[i] + sparklePhase[i]) * sparkleAmp[i],
+            sparkleBaseZ[i] + Math.cos(t * sparkleSpeed[i] * 0.28 + sparklePhase[i]) * sparkleAmp[i] * 0.6,
+          );
+          // Always face camera (billboard)
+          mesh.quaternion.copy(camera.quaternion);
+        }
+      }
+
       if (composerRef.current) {
         composerRef.current.render();
       } else {
@@ -2933,32 +2996,67 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
       {/* ── Title card (before first click) ── */}
       {(!started || titleCardExiting) && (
         <div className={`absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none select-none ${titleCardExiting ? 'island-backdrop-out' : 'island-backdrop-in'}`}
-             style={{ background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.58) 100%)' }}>
-          <div className={`relative px-10 py-8 text-center ${titleCardExiting ? 'island-card-exit' : 'island-card-enter'}`}
+             style={{ background: 'radial-gradient(ellipse 90% 90% at center, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.46) 100%)' }}>
+          <div className={`relative text-center ${titleCardExiting ? 'island-card-exit' : 'island-card-enter'}`}
                style={{
-                 background: 'radial-gradient(ellipse at 28% 22%, rgba(255,249,224,0.99) 0%, rgba(236,212,158,0.98) 52%, rgba(212,182,112,0.98) 100%)',
-                 borderRadius: '3px 16px 5px 18px / 14px 3px 16px 5px',
-                 boxShadow: '0 14px 60px rgba(0,0,0,0.58), inset 0 2px 0 rgba(255,255,255,0.52), inset 0 -3px 6px rgba(80,40,0,0.20), inset 5px 0 10px rgba(80,40,0,0.07), inset -5px 0 10px rgba(80,40,0,0.07)',
-                 border: '2px solid rgba(140,95,30,0.52)',
-                 outline: '1px solid rgba(200,160,70,0.28)',
-                 outlineOffset: '4px',
-                 minWidth: 'min(320px, 85vw)',
+                 background: 'radial-gradient(ellipse at 30% 15%, rgba(255,254,245,0.98) 0%, rgba(245,225,168,0.97) 50%, rgba(222,192,118,0.97) 100%)',
+                 borderRadius: 2,
+                 boxShadow: '0 24px 90px rgba(0,0,0,0.60), 0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.65)',
+                 border: '1.5px solid rgba(165,112,28,0.60)',
+                 outline: '1px solid rgba(200,155,50,0.22)',
+                 outlineOffset: '6px',
+                 width: 'min(450px, 86vw)',
+                 padding: '32px 48px 30px',
                }}>
             <ParchmentCorners />
-            <AccentRule />
-            <p className="text-[7.5px] font-mono uppercase tracking-[0.44em] mb-4" style={{ color: 'rgba(130,78,18,0.68)' }}>
-              ✦ &nbsp;Interactive Portfolio&nbsp; ✦
+
+            {/* Top ornament row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 16 }}>
+              <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, transparent, rgba(150,95,18,0.45))' }} />
+              <span style={{ fontSize: 9, color: 'rgba(150,95,18,0.60)', letterSpacing: '0.18em' }}>◆</span>
+              <div style={{ flex: 1, height: 1, background: 'linear-gradient(to left, transparent, rgba(150,95,18,0.45))' }} />
+            </div>
+
+            {/* Subtitle */}
+            <p style={{
+              fontSize: 7.5, letterSpacing: '0.36em', textTransform: 'uppercase',
+              color: 'rgba(115,72,16,0.68)', fontFamily: 'monospace',
+              marginBottom: 16, lineHeight: 1,
+            }}>
+              Mini-Interactive Portfolio Experience
             </p>
-            <h1 className="mb-7"
-                style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 'clamp(0.68rem,2.1vw,0.92rem)', lineHeight: 1.8, color: 'rgba(42,22,4,0.93)', textShadow: '0 1px 0 rgba(255,220,130,0.65), 0 2px 8px rgba(80,40,0,0.22)' }}>
+
+            {/* Main title */}
+            <h1 style={{
+              fontFamily: "'Cinzel Decorative', serif",
+              fontSize: 'clamp(2rem, 5.8vw, 3rem)',
+              fontWeight: 700,
+              lineHeight: 1.15,
+              marginBottom: 0,
+              background: 'linear-gradient(175deg, #e8b840 0%, #c07818 28%, #8a5008 55%, #c08828 80%, #e8b840 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              filter: 'drop-shadow(0 2px 4px rgba(140,80,0,0.30))',
+            }}>
               Experience<br />Oasis
             </h1>
-            <AccentRule />
-            <div className="mt-6 inline-flex items-center gap-2 bg-black/32 backdrop-blur-sm rounded-full px-5 py-2 border border-white/18 animate-pulse">
-              <span className="text-[9.5px] font-mono uppercase tracking-[0.30em] text-white/82">
-                Click to start
+
+            {/* Bottom ornament row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 18, marginBottom: 22 }}>
+              <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, transparent, rgba(150,95,18,0.45))' }} />
+              <span style={{ fontSize: 9, color: 'rgba(150,95,18,0.60)', letterSpacing: '0.18em' }}>◆</span>
+              <div style={{ flex: 1, height: 1, background: 'linear-gradient(to left, transparent, rgba(150,95,18,0.45))' }} />
+            </div>
+
+            {/* CTA */}
+            <div className="inline-flex items-center gap-2 rounded-full animate-pulse"
+                 style={{ background: 'rgba(18,8,0,0.30)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.20)', padding: '10px 28px' }}>
+              <span style={{ fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.86)', fontFamily: 'monospace' }}>
+                Click to Start
               </span>
             </div>
+
             <ParchmentTextures />
           </div>
           <ParchmentString />
