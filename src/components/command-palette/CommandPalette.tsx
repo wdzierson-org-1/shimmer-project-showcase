@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ArrowRight, X, Command } from 'lucide-react';
 import { processUserMessage } from '@/services/chatService';
@@ -23,6 +23,8 @@ const CommandPalette = () => {
   const [vpOffset, setVpOffset] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isProjectDetail = location.pathname.startsWith('/project/');
   const debounceRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -161,10 +163,10 @@ const CommandPalette = () => {
 
   return (
     <>
-      {/* Trigger hint — hidden on mobile to avoid overlapping game controls */}
+      {/* Trigger hint — hidden on mobile and project detail pages */}
       <button
         onClick={() => setIsOpen(true)}
-        className="hidden sm:flex fixed bottom-6 right-6 z-40 items-center gap-1.5 px-3 py-2 rounded-full bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 transition-all text-foreground/40 hover:text-foreground/60 backdrop-blur-sm"
+        className={`${isProjectDetail ? 'hidden' : 'hidden sm:flex'} fixed bottom-6 right-6 z-40 items-center gap-1.5 px-3 py-2 rounded-full bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 transition-all text-foreground/40 hover:text-foreground/60 backdrop-blur-sm`}
       >
         <Command size={13} />
         <span className="text-xs font-mono">K</span>

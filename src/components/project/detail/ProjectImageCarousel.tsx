@@ -10,6 +10,7 @@ interface MediaItem {
   url: string;
   type: 'image' | 'video' | 'pdf';
   thumbnailUrl?: string;
+  caption?: string;
 }
 
 interface ProjectImageCarouselProps {
@@ -38,16 +39,17 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
       return {
         url: parsed.url || mediaString,
         type: parsed.type || 'image',
-        thumbnailUrl: parsed.thumbnailUrl || parsed.url || mediaString
+        thumbnailUrl: parsed.thumbnailUrl || parsed.url || mediaString,
+        caption: parsed.caption || '',
       };
     } catch {
-      // Fallback for legacy URLs - check file extension
       const isVideo = mediaString.toLowerCase().match(/\.(mp4|mov|avi|webm)$/);
       const isPdf = mediaString.toLowerCase().match(/\.pdf$/);
       return {
         url: mediaString,
         type: isVideo ? 'video' : isPdf ? 'pdf' : 'image',
-        thumbnailUrl: mediaString
+        thumbnailUrl: mediaString,
+        caption: '',
       };
     }
   };
@@ -197,13 +199,19 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
           {mainMedia && mainMedia.url && (
             <div>
               {renderMediaItem(mainMedia)}
+              {mainMedia.caption && (
+                <p className="text-sm text-foreground/40 mt-2">{mainMedia.caption}</p>
+              )}
             </div>
           )}
-          
+
           {/* Additional media */}
           {hasAdditionalMedia && additionalMedia.map((media, index) => (
             <div key={`additional-media-${index}`} className="pt-4">
               {renderMediaItem(media, index)}
+              {media.caption && (
+                <p className="text-sm text-foreground/40 mt-2">{media.caption}</p>
+              )}
             </div>
           ))}
           

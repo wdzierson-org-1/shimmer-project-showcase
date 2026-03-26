@@ -49,18 +49,24 @@ const ProjectImageUpload = ({
           <div className="space-y-6">
             {/* Primary image */}
             {imageUrl && (
-              <PrimaryImage 
-                imageUrl={imageUrl} 
+              <PrimaryImage
+                imageUrl={imageUrl}
                 onRemove={() => setImageUrl('')}
+                onUpdate={setImageUrl}
               />
             )}
 
             {/* Additional images */}
             {additionalImages.length > 0 && (
-              <AdditionalImages 
+              <AdditionalImages
                 images={additionalImages}
                 onRemove={handleRemoveAdditionalImage}
                 onMakePrimary={handleMakePrimary}
+                onUpdate={(index, value) => {
+                  const updated = [...additionalImages];
+                  updated[index] = value;
+                  setAdditionalImages(updated);
+                }}
                 primaryImageUrl={imageUrl}
               />
             )}

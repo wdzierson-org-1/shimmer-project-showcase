@@ -12,8 +12,10 @@ const GROUND_H = 44;
 const GROUND_Y = SCENE_H - GROUND_H;
 const CHAR_GROUND_TOP = GROUND_Y - CHAR_H;
 
-const WALK_SPEED = 140;
-const WALK_STOP = 4;
+const WALK_SPEED_MAX = 180;   // px/s top speed
+const WALK_ACCEL = 520;       // px/s² acceleration
+const WALK_DECEL_DIST = 55;   // px from target where braking starts
+const WALK_STOP = 3;
 
 const SPRING_K = 0.12;
 const DAMPING = 0.78;
@@ -316,6 +318,7 @@ const KEYFRAMES = `
 interface SpriteProps {
   visual: Visual;
   walking: boolean;
+  walkSpeed: number;        // 0-1 normalized speed for animation cadence
   held: boolean;
   falling: boolean;
   flashing: boolean;
@@ -325,7 +328,7 @@ interface SpriteProps {
   tiltDeg: number;
   eyeOffX: number;
   eyeOffY: number;
-  nervousLevel: number;     // 0-1 how scared
+  nervousLevel: number;
   squashLanding: boolean;
 }
 
@@ -334,7 +337,7 @@ function blk(x: number, y: number, w: number, h: number, color: string): React.C
 }
 
 function ExplorerSprite({
-  visual, walking, held, falling, flashing, spawning, mood, idlePhase,
+  visual, walking, walkSpeed, held, falling, flashing, spawning, mood, idlePhase,
   tiltDeg, eyeOffX, eyeOffY, nervousLevel, squashLanding,
 }: SpriteProps) {
   const isTapping = idlePhase === 'tap' && !walking && !held;
@@ -350,8 +353,10 @@ function ExplorerSprite({
   const mouthColor = isAngry ? '#c0392b' : nervous ? '#c0a070' : mood === 'happy' ? '#e8a87c' : isZombie ? '#4a7a4a' : 'transparent';
   const faceFlush = isAngry ? 'rgba(220,38,38,0.25)' : nervous ? `rgba(200,180,100,${nervousLevel * 0.2})` : 'none';
 
-  const walkDur = isHyper ? '0.18s' : isZombie ? '0.7s' : '0.36s';
-  const walkAnim = (name: string) => walking ? `${name} ${walkDur} steps(2, end) infinite` : 'none';
+  // Walk cadence scales with speed: slow start/stop, fast at full speed
+  const baseWalkDur = isHyper ? 0.18 : isZombie ? 0.7 : 0.36;
+  const walkDurS = (baseWalkDur / Math.max(0.25, walkSpeed)).toFixed(3) + 's';
+  const walkAnim = (name: string) => walking ? `${name} ${walkDurS} steps(2, end) infinite` : 'none';
 
   const eyeScale = nervous ? 1 + nervousLevel * 0.6 : 1;
 
@@ -646,7 +651,9 @@ export default function FooterPlayground() {
   const [facingLeft, setFacingLeft] = useState(false);
   const facingRef = useRef(false);
   const [walking, setWalking] = useState(false);
+  const [walkSpeed, setWalkSpeed] = useState(1);  // normalized 0-1 for animation cadence
   const walkTargetRef = useRef<number | null>(null);
+  const walkVelRef = useRef(0);                   // current px/s signed velocity
   const walkRafRef = useRef(0);
   const lastWalkTRef = useRef(0);
 
@@ -737,7 +744,8 @@ export default function FooterPlayground() {
 
   // ── Walk ──
   const stopWalk = useCallback(() => {
-    walkTargetRef.current = null; setWalking(false);
+    walkTargetRef.current = null; walkVelRef.current = 0;
+    setWalking(false); setWalkSpeed(1);
     cancelAnimationFrame(walkRafRef.current); resetIdleTimer();
   }, [resetIdleTimer]);
 
@@ -750,9 +758,34 @@ export default function FooterPlayground() {
     const cur = xRef.current;
     const dist = target - cur;
     if (Math.abs(dist) <= WALK_STOP) { xRef.current = target; setExplorerX(target); stopWalk(); return; }
-    const speed = WALK_SPEED * visual.walkMul;
-    const step = Math.sign(dist) * Math.min(speed * dt, Math.abs(dist));
+
+    const dir = Math.sign(dist);
+    const absDist = Math.abs(dist);
+    const topSpeed = WALK_SPEED_MAX * visual.walkMul;
+
+    // Deceleration: clamp max speed so we can stop cleanly at target
+    const brakingSpeed = Math.sqrt(2 * WALK_ACCEL * absDist);
+    const targetSpeed = Math.min(topSpeed, brakingSpeed);
+
+    // Accelerate/decelerate toward targetSpeed
+    let vel = walkVelRef.current;
+    if (Math.abs(vel) < targetSpeed) {
+      vel += dir * WALK_ACCEL * dt;
+      // Don't overshoot target speed
+      if (Math.abs(vel) > targetSpeed) vel = dir * targetSpeed;
+    } else if (Math.abs(vel) > targetSpeed) {
+      vel -= dir * WALK_ACCEL * dt;
+      if (Math.abs(vel) < targetSpeed) vel = dir * targetSpeed;
+    }
+    walkVelRef.current = vel;
+
+    const step = Math.sign(dist) * Math.min(Math.abs(vel * dt), absDist);
     xRef.current += step; setExplorerX(xRef.current);
+
+    // Normalized speed for walk animation cadence (0.3 = slow shamble, 1 = full sprint)
+    const speedFrac = Math.max(0.25, Math.abs(vel) / topSpeed);
+    setWalkSpeed(speedFrac);
+
     const f = dist < 0;
     if (f !== facingRef.current) { facingRef.current = f; setFacingLeft(f); }
     walkRafRef.current = requestAnimationFrame(walkLoop);
@@ -1064,7 +1097,7 @@ export default function FooterPlayground() {
 
         {/* Food pile */}
         <div style={{ position: 'absolute', right: 20, top: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, zIndex: 20 }}>
-          <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 1, userSelect: 'none' }}>choose wisely</p>
+          <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 1, userSelect: 'none' }}>gifts</p>
           <div style={{ display: 'flex', gap: 6 }}>
             {FOODS.map(food => {
               const count = traits[food.id as keyof Traits];
@@ -1113,9 +1146,9 @@ export default function FooterPlayground() {
           )}
           <div style={{ transform: `scaleX(${facingLeft ? -1 : 1})`, transition: 'transform 0.08s ease', transformOrigin: 'center bottom' }}>
             <ExplorerSprite
-              visual={visual} walking={walking && dragPhase === 'none'} held={dragPhase === 'held'}
-              falling={falling} flashing={flashing} spawning={spawning} mood={mood}
-              idlePhase={dragPhase === 'none' && !walking ? idlePhase : 'still'}
+              visual={visual} walking={walking && dragPhase === 'none'} walkSpeed={walkSpeed}
+              held={dragPhase === 'held'} falling={falling} flashing={flashing} spawning={spawning}
+              mood={mood} idlePhase={dragPhase === 'none' && !walking ? idlePhase : 'still'}
               tiltDeg={tiltDeg} eyeOffX={eyeOff.x} eyeOffY={eyeOff.y}
               nervousLevel={nervousLevel} squashLanding={squashLanding}
             />

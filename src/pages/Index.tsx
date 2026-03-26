@@ -104,7 +104,7 @@ const Index = () => {
             className="inline-flex items-center gap-2 font-sans text-sm text-foreground/60 hover:text-foreground transition-colors no-underline group"
           >
             <span className="border-b border-foreground/20 group-hover:border-foreground/50 pb-0.5 transition-colors">
-              View all projects
+              All projects
             </span>
             <span className="text-xs transition-transform group-hover:translate-x-0.5">
               &rarr;

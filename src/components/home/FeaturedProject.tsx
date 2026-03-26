@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { ArrowRight, ArrowUpRight } from 'lucide-react';
 
 interface FeaturedProjectProps {
   id: string;
@@ -91,17 +92,30 @@ const FeaturedProject = ({
           </Badge>
         ))}
       </div>
-      {liveUrl && (
-        <a
-          href={liveUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-5 text-sm font-sans text-foreground/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5"
+      <div className="mt-6 flex items-center gap-8">
+        <Link
+          to={`/project/${id}`}
+          className="text-sm font-sans text-foreground/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5 no-underline group"
         >
-          View live
-          <span className="text-[10px]">&#x2197;</span>
-        </a>
-      )}
+          <span className="border-b border-foreground/20 group-hover:border-foreground/50 pb-0.5 transition-colors">
+            Case study
+          </span>
+          <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+        </Link>
+        {liveUrl && (
+          <a
+            href={liveUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-sans text-foreground/60 hover:text-foreground transition-colors inline-flex items-center gap-1.5 no-underline group"
+          >
+            <span className="border-b border-foreground/20 group-hover:border-foreground/50 pb-0.5 transition-colors">
+              Live site
+            </span>
+            <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </a>
+        )}
+      </div>
     </motion.div>
   );
 

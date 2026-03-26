@@ -5,6 +5,7 @@ interface MediaItem {
   url: string;
   type: 'image' | 'video';
   thumbnailUrl?: string;
+  caption?: string;
 }
 
 // Helper function to parse media item
@@ -14,14 +15,16 @@ const parseMediaItem = (mediaString: string): MediaItem => {
     return {
       url: parsed.url || mediaString,
       type: parsed.type || 'image',
-      thumbnailUrl: parsed.thumbnailUrl || parsed.url || mediaString
+      thumbnailUrl: parsed.thumbnailUrl || parsed.url || mediaString,
+      caption: parsed.caption || '',
     };
   } catch {
     // Fallback for legacy image URLs
     return {
       url: mediaString,
       type: 'image',
-      thumbnailUrl: mediaString
+      thumbnailUrl: mediaString,
+      caption: '',
     };
   }
 };
@@ -132,7 +135,8 @@ export async function saveProjectImages(
           is_primary: true,
           display_order: 0,
           media_type: primaryMedia.type,
-          video_thumbnail_url: primaryMedia.type === 'video' ? primaryMedia.thumbnailUrl : null
+          video_thumbnail_url: primaryMedia.type === 'video' ? primaryMedia.thumbnailUrl : null,
+          caption: primaryMedia.caption || null,
         });
         
       if (primaryImageError) {
@@ -152,7 +156,8 @@ export async function saveProjectImages(
           is_primary: false,
           display_order: index + 1,
           media_type: media.type,
-          video_thumbnail_url: media.type === 'video' ? media.thumbnailUrl : null
+          video_thumbnail_url: media.type === 'video' ? media.thumbnailUrl : null,
+          caption: media.caption || null,
         };
       });
       
