@@ -6,8 +6,7 @@ import Footer from '@/components/layout/Footer';
 import ContextualChatBot from '@/components/chat/ContextualChatBot';
 import { ContentEntry, fetchContentById } from '@/services/content/contentService';
 import ContentDetail from '@/components/content/ContentDetail';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+
 
 const ContentDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,7 +49,7 @@ const ContentDetailPage = () => {
     return (
       <div>
         <Header />
-        <div className="container mx-auto pt-24 px-4 md:px-6 flex justify-center">
+        <div className="max-w-7xl mx-auto pt-24 px-6 md:px-12 flex justify-center">
           <div className="text-lg">Loading content...</div>
         </div>
         <Footer />
@@ -62,12 +61,7 @@ const ContentDetailPage = () => {
     return (
       <div>
         <Header />
-        <div className="container mx-auto pt-24 px-4 md:px-6">
-          <Button asChild variant="ghost" className="mb-4">
-            <Link to="/">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Chat
-            </Link>
-          </Button>
+        <div className="max-w-7xl mx-auto pt-24 px-6 md:px-12">
           <h1 className="text-2xl font-bold mt-8">{error || 'Content not found'}</h1>
         </div>
         <Footer />
@@ -80,13 +74,7 @@ const ContentDetailPage = () => {
       <Header />
       
       <main className="flex-grow pt-24">
-        <div className="container mx-auto px-4 md:px-6">
-          <Button asChild variant="ghost" className="mb-6">
-            <Link to="/">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Chat
-            </Link>
-          </Button>
-          
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="max-w-4xl mx-auto">
             <ContentDetail 
               content={content} 

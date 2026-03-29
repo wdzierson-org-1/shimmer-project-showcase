@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { Button } from '@/components/ui/button';
 import { ExternalLink, Play, FileText } from 'lucide-react';
 import PdfViewer from '@/components/ui/pdf-viewer';
@@ -192,9 +192,8 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
   const hasImages = (mainMedia && mainMedia.url) || hasAdditionalMedia;
   
   return (
-    <div className="max-h-[80vh] min-h-[400px]">
-      <ScrollArea className="h-full">
-        <div className="space-y-4 pr-2">
+    <div>
+      <div className="space-y-4">
           {/* Main media */}
           {mainMedia && mainMedia.url && (
             <div>
@@ -214,17 +213,7 @@ const ProjectImageCarousel: React.FC<ProjectImageCarouselProps> = ({
               )}
             </div>
           ))}
-          
-          {/* Scroll indicator for additional media */}
-          {hasAdditionalMedia && (
-            <div className="flex justify-center py-2">
-              <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
-                {additionalMedia.length + 1} media items • Scroll to see more
-              </div>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
+      </div>
       
       {/* PDF Viewer Modal */}
       {currentPdf && (

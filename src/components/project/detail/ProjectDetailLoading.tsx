@@ -7,7 +7,7 @@ const ProjectDetailLoading: React.FC = () => {
   return (
     <div>
       <Header />
-      <div className="container mx-auto pt-24 px-4 md:px-6 flex justify-center items-center min-h-[50vh]">
+      <div className="max-w-7xl mx-auto pt-24 px-6 md:px-12 flex justify-center items-center min-h-[50vh]">
         <div className="flex items-center gap-1.5">
           {[0, 1, 2].map((i) => (
             <span

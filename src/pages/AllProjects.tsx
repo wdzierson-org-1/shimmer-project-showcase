@@ -9,7 +9,7 @@ const AllProjects = () => {
       <Header />
       
       <main className="flex-1 pt-24 pb-12">
-        <div className="container mx-auto px-4 md:px-6">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="mb-8">
             <h1 className="text-3xl font-serif tracking-tight mb-2" style={{ fontWeight: 200 }}>All Projects</h1>
             <p className="text-muted-foreground">A collection of recent design and development work</p>

@@ -1,9 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft } from 'lucide-react';
 import { Project } from '@/components/project/ProjectCard';
 import ProjectImageCarousel from '@/components/project/detail/ProjectImageCarousel';
 import ProjectMeta from '@/components/project/detail/ProjectMeta';
@@ -22,14 +19,9 @@ interface ProjectDetailContentProps {
 
 const ProjectDetailContent: React.FC<ProjectDetailContentProps> = ({ project }) => {
   return (
-    <main className="flex-grow pt-24 px-6 md:px-12">
-      <div className="max-w-7xl mx-auto">
-        <Button asChild variant="ghost" className="mb-6 hidden lg:inline-flex -ml-3">
-          <Link to="/">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back
-          </Link>
-        </Button>
-        
+    <main className="flex-grow pt-24 pb-16">
+      <div className="max-w-7xl mx-auto px-6 md:px-12">
+
         {/* Mobile: tabbed layout */}
         <div className="lg:hidden">
           <Tabs defaultValue="about">
@@ -75,8 +67,8 @@ const ProjectDetailContent: React.FC<ProjectDetailContentProps> = ({ project }) 
         </div>
 
         {/* Desktop: two-column layout */}
-        <div className="hidden lg:grid grid-cols-2 gap-12 min-h-[calc(100vh-12rem)]">
-          <div className="min-h-full">
+        <div className="hidden lg:grid grid-cols-2 gap-12 items-start">
+          <div>
             <ProjectImageCarousel 
               mainImageUrl={project.imageUrl} 
               additionalImages={project.additionalImages}

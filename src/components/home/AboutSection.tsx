@@ -14,6 +14,7 @@ const AboutSection = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="flex flex-col"
           >
             <h2
               className="font-serif text-[clamp(2.5rem,5vw,4.5rem)] leading-[1.05] tracking-tight text-white/90"
@@ -25,6 +26,26 @@ const AboutSection = () => {
                 builder.
               </em>
             </h2>
+
+            <div className="mt-8 flex items-center gap-6">
+              <a
+                href="https://github.com/wdzierson"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-white/40 hover:text-white/70 transition-colors text-sm font-sans"
+              >
+                <Github size={16} />
+                GitHub
+              </a>
+              <a
+                href="https://www.linkedin.com/in/will-dzierson-1081963/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/40 hover:text-white/70 transition-colors text-sm font-sans"
+              >
+                LinkedIn
+              </a>
+            </div>
           </motion.div>
 
           <motion.div
@@ -48,27 +69,28 @@ const AboutSection = () => {
                 Previously
               </p>
               <p className="text-sm text-white/50 font-sans font-light leading-relaxed">
-                Google &middot; Yahoo &middot; Salesforce &middot; Noodle &middot; Included Health &middot; Gigwalk &middot; Lockheed-Martin &middot; John Hancock &middot; IBM &middot; Softbank Japan &middot; Bose &middot; Dr. Seuss Enterprises &middot; PepsiCo &middot; Lincoln Center &middot; Harvard Medical School &middot; The Smithsonian &middot; Caterpillar &middot; The Public Health Company &middot; Optum &middot; Obvious Ventures
+                Google &middot; Yahoo &middot; Salesforce &middot; Dexterity Robotics &middot; Darwin AI &middot; Noodle &middot; Included Health &middot; Gigwalk &middot; Lockheed-Martin &middot; John Hancock &middot; IBM &middot; Softbank Japan &middot; Bose &middot; Dr. Seuss Enterprises &middot; PepsiCo &middot; Lincoln Center &middot; Harvard Medical School &middot; The Smithsonian &middot; Caterpillar &middot; The Public Health Company &middot; Optum &middot; Obvious Ventures
               </p>
             </div>
 
-            <div className="mt-8 flex items-center gap-6">
+            <div className="mt-8">
               <a
-                href="https://github.com/wdzierson"
+                href="https://lovable.dev/guides/11-ux-portfolio-examples"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-white/40 hover:text-white/70 transition-colors text-sm font-sans"
+                className="inline-flex items-center gap-2.5 text-white/40 hover:text-white/70 transition-colors group"
               >
-                <Github size={16} />
-                GitHub
-              </a>
-              <a
-                href="https://linkedin.com/in/wdzierson"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/40 hover:text-white/70 transition-colors text-sm font-sans"
-              >
-                LinkedIn
+                <span className="text-xs font-sans shrink-0 tracking-wide">Featured by</span>
+                <img
+                  src="https://lovable.dev/img/logo/logowhite.svg"
+                  alt="Lovable"
+                  className="h-3 opacity-40 group-hover:opacity-70 transition-opacity"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    (e.currentTarget.nextElementSibling as HTMLElement)?.removeAttribute('hidden');
+                  }}
+                />
+                <span hidden className="text-sm font-sans font-medium">Lovable</span>
               </a>
             </div>
           </motion.div>
