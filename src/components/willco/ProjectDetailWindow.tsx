@@ -80,10 +80,17 @@ function CRTMarkdown({ content }: { content: string }) {
   );
 }
 
-/** Single monochrome thumbnail with scanlines and pixel-art dither feel */
-function MonochromeThumbnail({ src }: { src: string }) {
+/** Single monochrome thumbnail styled to match the CRT blue phosphor palette */
+function MonochromeThumbnail({ src, onViewProject }: { src: string; onViewProject: () => void }) {
+  const [hovered, setHovered] = useState(false);
+
   return (
-    <div style={{ position: 'relative', overflow: 'hidden', marginBottom: 8 }}>
+    <div
+      style={{ position: 'relative', overflow: 'hidden', marginBottom: 8, cursor: 'pointer' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={onViewProject}
+    >
       <img
         src={src}
         alt=""
@@ -93,34 +100,56 @@ function MonochromeThumbnail({ src }: { src: string }) {
           width: '100%',
           aspectRatio: '16 / 9',
           objectFit: 'cover',
-          filter: 'grayscale(1) contrast(1.45) brightness(0.78) sepia(0.15)',
+          filter: 'grayscale(1) contrast(1.3) brightness(0.72) hue-rotate(180deg)',
           imageRendering: 'pixelated',
-          opacity: 0.82,
+          opacity: 0.85,
+          transition: 'opacity 0.15s',
         }}
       />
-      {/* Horizontal scanlines */}
+      {/* Lighter scanlines — wider spacing so they're subtle */}
       <div
         aria-hidden="true"
         style={{
           position: 'absolute',
           inset: 0,
-          background:
-            'repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 1px, transparent 1px, transparent 3px)',
+          background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.10) 0px, rgba(0,0,0,0.10) 1px, transparent 1px, transparent 5px)',
           pointerEvents: 'none',
         }}
       />
-      {/* Subtle phosphor tint */}
+      {/* Phosphor tint — stronger to match #88c0d0 palette */}
       <div
         aria-hidden="true"
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'rgba(136,192,208,0.06)',
+          background: 'rgba(136,192,208,0.14)',
           mixBlendMode: 'screen',
           pointerEvents: 'none',
         }}
       />
-      {/* Thin border in CRT palette */}
+      {/* Hover overlay */}
+      {hovered && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(17,17,24,0.78)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '1px solid rgba(136,192,208,0.4)',
+        }}>
+          <span style={{
+            fontFamily: 'IBM Plex Mono, monospace',
+            fontSize: 10,
+            color: '#88c0d0',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+          }}>
+            [ VIEW FULL PROJECT → ]
+          </span>
+        </div>
+      )}
+      {/* Border */}
       <div
         aria-hidden="true"
         style={{
@@ -194,8 +223,7 @@ export function ProjectDetailWindow({ projectId }: ProjectDetailWindowProps) {
     );
   }
 
-  // Up to 3 thumbnails: prefer non-primary images, fall back to primary if few images
-  const thumbnails = project.images.slice(0, 3);
+  const thumbnail = project.images[0];
 
   return (
     <div style={{
@@ -227,12 +255,13 @@ export function ProjectDetailWindow({ projectId }: ProjectDetailWindowProps) {
         {DIVIDER}
       </div>
 
-      {/* Monochrome thumbnails */}
-      {thumbnails.length > 0 && (
+      {/* Monochrome thumbnail */}
+      {thumbnail && (
         <div style={{ marginBottom: 14 }}>
-          {thumbnails.map((img, i) => (
-            <MonochromeThumbnail key={i} src={img.image_url} />
-          ))}
+          <MonochromeThumbnail
+            src={thumbnail.image_url}
+            onViewProject={() => navigate(`/project/${project.id}`)}
+          />
         </div>
       )}
 
