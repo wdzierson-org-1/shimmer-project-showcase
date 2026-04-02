@@ -2,8 +2,10 @@
 import { ContentEntry } from '@/services/content/contentService';
 import { getChatCompletion } from '@/services/openai';
 import { supabase } from '@/integrations/supabase/client';
+import { Project } from '@/components/project/ProjectCard';
 import { fetchProjects } from '../projectFetcher';
 import { sortProjectsByYear } from './projectResponses';
+import { buildWillbotSystemPrompt } from '../willbotPrompt';
 
 /**
  * Generates response based on content entries found
@@ -16,7 +18,7 @@ export const generateContentBasedResponse = async (
   content: string;
   contentEntries?: ContentEntry[];
   showContentEntries?: boolean;
-  projects?: any[];
+  projects?: Project[];
   showProjects?: boolean;
 }> => {
   console.log('Generating content-based response for:', userMessage);
@@ -44,7 +46,7 @@ export const generateContentBasedResponse = async (
         messages: [
           {
             role: 'system',
-            content: `You are Will's portfolio assistant. The user is asking about Project Ariadne. Here's the project information: 
+            content: buildWillbotSystemPrompt(`The user is asking about Project Ariadne. Here's the project information: 
             Title: ${ariadneProject.title}
             Client: ${ariadneProject.client}
             Description: ${ariadneProject.description}
@@ -53,7 +55,7 @@ export const generateContentBasedResponse = async (
             Tags: ${ariadneProject.tags.join(', ')}
             ${ariadneProject.liveUrl ? `Live URL: ${ariadneProject.liveUrl}` : ''}
             
-            Provide detailed information about this project based on the data above. Be informative and engaging.`
+            Provide detailed information about this project based on the data above. Be informative and engaging.`)
           },
           {
             role: 'user',
@@ -82,7 +84,7 @@ export const generateContentBasedResponse = async (
     messages: [
       {
         role: 'system',
-        content: `You are Will's portfolio assistant. Use the following information to answer the user's question concisely and helpfully: ${context}`
+        content: buildWillbotSystemPrompt(`Use the following retrieved information to answer the user's question concisely and helpfully:\n\n${context}`)
       },
       {
         role: 'user',
@@ -104,10 +106,10 @@ export const generateContentBasedResponse = async (
  */
 export const generateProjectBasedResponse = async (
   userMessage: string,
-  projects: any[]
+  projects: Project[]
 ): Promise<{
   content: string;
-  projects: any[];
+  projects: Project[];
   showProjects: boolean;
 }> => {
   const context = projects
@@ -118,7 +120,7 @@ export const generateProjectBasedResponse = async (
     messages: [
       {
         role: 'system',
-        content: `You are Will's portfolio assistant. Use the following project information to answer the user's question: ${context}`
+        content: buildWillbotSystemPrompt(`Use the following retrieved project information to answer the user's question:\n\n${context}`)
       },
       {
         role: 'user',
@@ -174,15 +176,16 @@ export const generateThoughtsResponse = async (): Promise<{
     }
     
     // Try to fetch recent "thoughts" type content entries first
-    let { data: thoughtsData, error } = await supabase
+    const { data: initialThoughtsData, error: thoughtsError } = await supabase
       .from('content_entries')
       .select('*')
       .eq('type', 'thoughts')
       .eq('visible', true)
       .order('created_at', { ascending: false })
       .limit(5);
+    let thoughtsData = initialThoughtsData;
       
-    console.log('Thoughts query result:', { data: thoughtsData, error });
+    console.log('Thoughts query result:', { data: thoughtsData, error: thoughtsError });
     
     // If no "thoughts" found, try alternative type names
     if (!thoughtsData || thoughtsData.length === 0) {
@@ -230,8 +233,8 @@ export const generateThoughtsResponse = async (): Promise<{
       }
     }
       
-    if (error) {
-      console.error('Error fetching thoughts:', error);
+    if (thoughtsError) {
+      console.error('Error fetching thoughts:', thoughtsError);
       return {
         content: "I'd love to share what's been on my mind, but I'm having trouble accessing that information right now.",
         showContentEntries: false

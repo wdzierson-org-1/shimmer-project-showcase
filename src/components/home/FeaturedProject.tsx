@@ -67,13 +67,21 @@ const FeaturedProject = ({
       transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
       className="flex flex-col justify-center"
     >
-      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3">
+      <p
+        className="text-muted-foreground font-sans mb-3"
+        style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase' }}
+      >
         {client}
       </p>
       <Link to={`/project/${id}`} className="no-underline">
         <h2
-          className="font-serif text-[clamp(2rem,4vw,3.5rem)] leading-[1.05] tracking-tight text-foreground hover:opacity-70 transition-opacity"
-          style={{ fontWeight: 200 }}
+          className="font-serif text-foreground hover:opacity-70 transition-opacity"
+          style={{
+            fontSize: 'clamp(2.4rem, 4.8vw, 4.2rem)',
+            fontWeight: 200,
+            lineHeight: '1.0',
+            letterSpacing: '-0.02em',
+          }}
         >
           {title}
         </h2>

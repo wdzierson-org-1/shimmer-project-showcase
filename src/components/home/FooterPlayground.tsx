@@ -31,6 +31,13 @@ const HOLE_HIT_R = 40;
 const HOLE_RX = 32;
 const HOLE_RY = 10;
 
+// SVG hole layout constants (derived from HOLE_R* above)
+const HOLE_SVG_PAD_X  = 22;    // horizontal padding for feather/glow overflow
+const HOLE_SVG_PAD_TOP = 16;   // space above hole center for effect headroom
+const HOLE_SVG_W  = HOLE_RX * 2 + HOLE_SVG_PAD_X * 2;   // 108
+const HOLE_SVG_CX = HOLE_SVG_W / 2;                       // 54
+const HOLE_SVG_CY = HOLE_SVG_PAD_TOP + HOLE_RY;           // 26 — hole center in SVG coords
+
 const STORAGE_KEY = 'fp-explorer';
 const MAX_FEED = 5;
 
@@ -309,6 +316,7 @@ const KEYFRAMES = `
 @keyframes fp-dizzyWobble{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
 @keyframes fp-dustPart{0%{opacity:.8;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0.3)}}
 @keyframes fp-squash{0%{transform:scaleX(1) scaleY(1)}30%{transform:scaleX(1.3) scaleY(0.7)}60%{transform:scaleX(0.9) scaleY(1.1)}100%{transform:scaleX(1) scaleY(1)}}
+@keyframes fp-rayRise{0%{opacity:0;transform:rotate(var(--ra)) scaleY(0.05)}15%{opacity:.85;transform:rotate(var(--ra)) scaleY(0.6)}40%{opacity:.7;transform:rotate(var(--ra)) scaleY(1)}100%{opacity:0;transform:rotate(var(--ra)) scaleY(1.55)}}
 `;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -638,8 +646,130 @@ function SpeechBubble({ text, x, y, dur = 2.2 }: { text: string; x: number; y: n
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export default function FooterPlayground() {
+// ═══════════════════════════════════════════════════════════════════════════════
+// HOLE DISPLAY
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function HoleSvg({ active }: { active: boolean }) {
+  const RX = HOLE_RX;
+  const RY = HOLE_RY;
+  const SW = HOLE_SVG_W;
+  const SH = HOLE_SVG_PAD_TOP + RY * 2 + 8;  // 44px tall
+  const CX = HOLE_SVG_CX;
+  const CY = HOLE_SVG_CY;
+  const gc = '#0d0e13';  // ground mid-tone for feather gradient
+
+  return (
+    <svg
+      width={SW} height={SH}
+      viewBox={`0 0 ${SW} ${SH}`}
+      style={{ display: 'block', overflow: 'visible' }}
+      aria-hidden="true"
+    >
+      <defs>
+        {/* Deep void interior — slight purple tint at center for depth illusion */}
+        <radialGradient id="fp-hv" cx="50%" cy="22%" r="55%">
+          <stop offset="0%"   stopColor={active ? '#1c0b35' : '#080410'} />
+          <stop offset="38%"  stopColor="#030108" />
+          <stop offset="100%" stopColor="#000000" />
+        </radialGradient>
+
+        {/* Ground feather — fades void edge into ground surface */}
+        <radialGradient id="fp-hf" cx="50%" cy="50%" r="50%">
+          <stop offset="40%"  stopColor={gc} stopOpacity="0"   />
+          <stop offset="57%"  stopColor={gc} stopOpacity="0.25"/>
+          <stop offset="71%"  stopColor={gc} stopOpacity="0.60"/>
+          <stop offset="83%"  stopColor={gc} stopOpacity="0.87"/>
+          <stop offset="95%"  stopColor={gc} stopOpacity="1"   />
+        </radialGradient>
+
+        {/* Soft blur (ambient-occlusion shadow, inner wall) */}
+        <filter id="fp-hbl" x="-50%" y="-80%" width="200%" height="260%">
+          <feGaussianBlur stdDeviation="3" />
+        </filter>
+
+        {/* Larger blur for portal glow */}
+        <filter id="fp-hgl" x="-120%" y="-250%" width="340%" height="600%">
+          <feGaussianBlur stdDeviation="10" />
+        </filter>
+
+        {/* Clip to the void ellipse (for inner wall shadow) */}
+        <clipPath id="fp-hcp">
+          <ellipse cx={CX} cy={CY} rx={RX} ry={RY} />
+        </clipPath>
+      </defs>
+
+      {/* ── Ambient-occlusion shadow cast on the ground surface ── */}
+      <ellipse
+        cx={CX} cy={CY + RY * 0.55}
+        rx={RX + 13} ry={RY + 6}
+        fill="rgba(0,0,0,0.68)"
+        filter="url(#fp-hbl)"
+      />
+
+      {/* ── Portal glow rising from below (active only) ── */}
+      {active && (
+        <ellipse
+          cx={CX} cy={CY - 2}
+          rx={RX + 4} ry={RY + 2}
+          fill="rgba(145,55,255,0.32)"
+          filter="url(#fp-hgl)"
+          style={{ animation: 'fp-holePulse 0.9s ease-in-out infinite' }}
+        />
+      )}
+
+      {/* ── Dark void interior ── */}
+      <ellipse cx={CX} cy={CY} rx={RX} ry={RY} fill="url(#fp-hv)" />
+
+      {/* ── Inner-wall shadow: rim casts a shadow into the hole top ── */}
+      <ellipse
+        cx={CX} cy={CY - RY * 0.12}
+        rx={RX - 4} ry={RY - 1}
+        fill="none"
+        stroke="rgba(0,0,0,0.92)"
+        strokeWidth="7"
+        clipPath="url(#fp-hcp)"
+        filter="url(#fp-hbl)"
+      />
+
+      {/* ── Ground feather overlay — blends hole edge into floor ── */}
+      <ellipse
+        cx={CX} cy={CY}
+        rx={RX + HOLE_SVG_PAD_X - 3} ry={RY + 9}
+        fill="url(#fp-hf)"
+      />
+
+      {/* ── Rim: ambient light on the top lip of the hole ── */}
+      <path
+        d={`M ${CX - RX + 6} ${CY} A ${RX - 6} ${RY - 1.5} 0 0 1 ${CX + RX - 6} ${CY}`}
+        fill="none"
+        stroke={active ? 'rgba(210,155,255,0.50)' : 'rgba(255,255,255,0.09)'}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+
+      {/* ── Active: glowing rim ring ── */}
+      {active && (
+        <ellipse
+          cx={CX} cy={CY}
+          rx={RX + 1} ry={RY + 0.5}
+          fill="none"
+          stroke="rgba(175,85,255,0.65)"
+          strokeWidth="1.5"
+          filter="url(#fp-hbl)"
+          style={{ animation: 'fp-holePulse 0.9s ease-in-out infinite' }}
+        />
+      )}
+    </svg>
+  );
+}
+
+export default function FooterPlayground({ onHoleFall, gameOpen }: { onHoleFall?: () => void; gameOpen?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Keep a stable ref so handleHoleFall closure doesn't go stale
+  const onHoleFallRef = useRef(onHoleFall);
+  useEffect(() => { onHoleFallRef.current = onHoleFall; }, [onHoleFall]);
 
   const [traits, setTraits] = useState<Traits>(loadTraits);
   const traitsRef = useRef(traits);
@@ -656,6 +786,15 @@ export default function FooterPlayground() {
   const walkVelRef = useRef(0);                   // current px/s signed velocity
   const walkRafRef = useRef(0);
   const lastWalkTRef = useRef(0);
+
+  // Stable refs for auto-fall sequence (walk-to-hole when all items maxed)
+  const shouldFallWhenArrivingRef = useRef(false);
+  const handleHoleFallRef = useRef<((hf: { x: number; y: number }) => void) | null>(null);
+  const startWalkRef = useRef<((tx: number) => void) | null>(null);
+  // Prevent re-triggering if traits are already all-maxed on page load
+  const autoFallFiredRef = useRef(
+    traits.m >= MAX_FEED && traits.b >= MAX_FEED && traits.p >= MAX_FEED
+  );
 
   const [dragPhase, setDragPhase] = useState<DragPhase>('none');
   const dragPhaseRef = useRef<DragPhase>('none');
@@ -757,7 +896,14 @@ export default function FooterPlayground() {
     lastWalkTRef.current = now;
     const cur = xRef.current;
     const dist = target - cur;
-    if (Math.abs(dist) <= WALK_STOP) { xRef.current = target; setExplorerX(target); stopWalk(); return; }
+    if (Math.abs(dist) <= WALK_STOP) {
+      xRef.current = target; setExplorerX(target); stopWalk();
+      if (shouldFallWhenArrivingRef.current) {
+        shouldFallWhenArrivingRef.current = false;
+        handleHoleFallRef.current?.(getHoleCenterFixed());
+      }
+      return;
+    }
 
     const dir = Math.sign(dist);
     const absDist = Math.abs(dist);
@@ -789,7 +935,7 @@ export default function FooterPlayground() {
     const f = dist < 0;
     if (f !== facingRef.current) { facingRef.current = f; setFacingLeft(f); }
     walkRafRef.current = requestAnimationFrame(walkLoop);
-  }, [stopWalk, visual.walkMul]);
+  }, [stopWalk, visual.walkMul, getHoleCenterFixed]);
 
   const startWalk = useCallback((tx: number) => {
     if (dragPhaseRef.current !== 'none' || falling || spawning) return;
@@ -881,7 +1027,8 @@ export default function FooterPlayground() {
     setDragPhase_('falling'); setFalling(true); setNervousLevel(0);
     setPhysPos({ x: holeFx.x - CHAR_W / 2, y: holeFx.y - CHAR_H }); setTiltDeg(0);
     playYelp(); addBubble('!!!', holeFx.x, holeFx.y - 20);
-    setTraits({ m: 0, b: 0, p: 0 });
+    // Open the game modal after the fall-in animation starts
+    setTimeout(() => onHoleFallRef.current?.(), 350);
     setTimeout(() => {
       setFalling(false);
       const rect = containerRef.current?.getBoundingClientRect();
@@ -892,6 +1039,10 @@ export default function FooterPlayground() {
       setTimeout(() => { setSpawning(false); setDragPhase_('none'); resetIdleTimer(); }, 500);
     }, 1400);
   }, [setDragPhase_, addBubble, addDust, resetIdleTimer]);
+
+  // Keep stable refs in sync so walkLoop can safely call these without stale closures
+  useEffect(() => { handleHoleFallRef.current = handleHoleFall; }, [handleHoleFall]);
+  useEffect(() => { startWalkRef.current = startWalk; }, [startWalk]);
 
   // ── Pointer handlers ──
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
@@ -980,6 +1131,19 @@ export default function FooterPlayground() {
         const prev = traitsRef.current;
         const next = { ...prev, [key]: Math.min(prev[key] + 1, MAX_FEED) };
         setTraits(next);
+
+        // If every item is now maxed, walk to the hole and jump in
+        if (next.m >= MAX_FEED && next.b >= MAX_FEED && next.p >= MAX_FEED && !autoFallFiredRef.current) {
+          autoFallFiredRef.current = true;
+          shouldFallWhenArrivingRef.current = true;
+          const cRect = containerRef.current?.getBoundingClientRect();
+          if (cRect) {
+            const holeTargetX = HOLE_FRAC * cRect.width - CHAR_W / 2;
+            // Delay so the transformation bubble & name reveal can play before the character runs off
+            setTimeout(() => startWalkRef.current?.(holeTargetX), 2500);
+          }
+        }
+
         const prevVis = computeVisual(prev);
         const nextVis = computeVisual(next);
         if (nextVis.name !== prevVis.name) {
@@ -1056,8 +1220,7 @@ export default function FooterPlayground() {
       if (rect) {
         const bx = rect.left + xRef.current + CHAR_W / 2;
         const by = rect.top + CHAR_GROUND_TOP;
-        const beh = visual.behavior;
-        const thoughts = beh === 'zombie' ? ['🧟', '🍖', '💀'] : beh === 'hyper' ? ['⚡', '🔥', '💥'] : ['💭', '💡', '🤔', '✨', '🎮', '🍕'];
+        const thoughts = ['⬆', '↑', '☝️', '⬆', '↑', '⬆'];
         addBubble(thoughts[Math.floor(Math.random() * thoughts.length)], bx, by, 2.8);
       }
     } else if (idlePhase !== 'think') thinkRef.current = false;
@@ -1072,7 +1235,22 @@ export default function FooterPlayground() {
 
   // ── Render ──
   const isPhysics = dragPhase === 'held' || dragPhase === 'flung' || dragPhase === 'falling';
+  const isHoleActive = dragPhase === 'held' || dragPhase === 'flung';
   const total = traits.m + traits.b + traits.p;
+
+  // Rays fan from -75° to +75° (0° = straight up), purple-blue-cyan portal palette
+  const RAY_PARTICLES = [
+    { id: 0,  angle: -72, dur: '1.4s', delay: '0s',    w: 2, h: 22, color: '#22d3ee' },
+    { id: 1,  angle: -50, dur: '1.1s', delay: '0.28s', w: 3, h: 16, color: '#818cf8' },
+    { id: 2,  angle: -28, dur: '1.7s', delay: '0.6s',  w: 2, h: 26, color: '#a78bfa' },
+    { id: 3,  angle:  -6, dur: '1.25s', delay: '0.85s', w: 3, h: 20, color: '#60a5fa' },
+    { id: 4,  angle:  15, dur: '1.15s', delay: '0.08s', w: 2, h: 24, color: '#c084fc' },
+    { id: 5,  angle:  37, dur: '1.5s', delay: '0.42s', w: 3, h: 18, color: '#22d3ee' },
+    { id: 6,  angle:  58, dur: '1.05s', delay: '0.72s', w: 2, h: 20, color: '#818cf8' },
+    { id: 7,  angle:  74, dur: '1.65s', delay: '1.0s',  w: 2, h: 15, color: '#a78bfa' },
+    { id: 8,  angle: -42, dur: '1.3s', delay: '1.18s', w: 2, h: 14, color: '#60a5fa' },
+    { id: 9,  angle:  24, dur: '1.1s', delay: '1.35s', w: 2, h: 18, color: '#c084fc' },
+  ];
 
   return (
     <>
@@ -1082,8 +1260,43 @@ export default function FooterPlayground() {
 
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: GROUND_H, background: 'linear-gradient(180deg, #111218 0%, #0d0e13 40%, #0a0b0f 100%)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
-          <div style={{ position: 'absolute', left: `${HOLE_FRAC * 100}%`, top: -HOLE_RY, transform: 'translateX(-50%)', width: HOLE_RX * 2, height: HOLE_RY * 2 + 16, display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none' }}>
-            <div style={{ width: HOLE_RX * 2, height: HOLE_RY * 2, background: 'radial-gradient(ellipse, #000 30%, #0a0a0a 70%, #111218)', borderRadius: '50%', boxShadow: 'inset 0 3px 12px rgba(0,0,0,0.9), 0 0 18px 5px rgba(0,0,0,0.5)', animation: 'fp-holePulse 3s ease-in-out infinite' }} />
+          {/* Hole — positioned so SVG's CY lands right at the ground surface */}
+          <div style={{
+            position: 'absolute',
+            left: `${HOLE_FRAC * 100}%`,
+            top: -HOLE_SVG_CY,
+            transform: 'translateX(-50%)',
+            width: HOLE_SVG_W,
+            pointerEvents: 'none',
+            overflow: 'visible',
+          }}>
+            <HoleSvg active={isHoleActive} />
+            {/* Portal ray burst — rays emanate from hole opening when character is held/flung */}
+            {isHoleActive && (
+              <div style={{
+                position: 'absolute',
+                left: HOLE_SVG_CX,
+                top: HOLE_SVG_PAD_TOP,
+                width: 0, height: 0,
+                pointerEvents: 'none',
+              }}>
+                {RAY_PARTICLES.map(r => (
+                  <div key={r.id} style={{
+                    position: 'absolute',
+                    left: -r.w / 2,
+                    top: -r.h,
+                    width: r.w,
+                    height: r.h,
+                    transformOrigin: `${r.w / 2}px ${r.h}px`,
+                    background: `linear-gradient(to top, ${r.color}cc 0%, ${r.color}55 55%, transparent 100%)`,
+                    boxShadow: `0 0 ${r.w + 3}px ${r.w + 1}px ${r.color}44`,
+                    borderRadius: '50% 50% 20% 20%',
+                    '--ra': `${r.angle}deg`,
+                    animation: `fp-rayRise ${r.dur} ease-out ${r.delay} infinite`,
+                  } as React.CSSProperties} />
+                ))}
+              </div>
+            )}
           </div>
           {[{ left: '40%', w: 12, h: 8, c: '#1a1b22' }, { left: '55%', w: 8, h: 5, c: '#181920' }, { left: '82%', w: 14, h: 9, c: '#1c1d25' }, { left: '10%', w: 10, h: 6, c: '#191a21' }].map((r, i) => (
             <div key={i} style={{ position: 'absolute', left: r.left, bottom: 5, width: r.w, height: r.h, background: r.c, borderRadius: '40% 40% 20% 20%', border: '1px solid rgba(255,255,255,0.03)' }} />
@@ -1097,7 +1310,6 @@ export default function FooterPlayground() {
 
         {/* Food pile */}
         <div style={{ position: 'absolute', right: 20, top: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, zIndex: 20 }}>
-          <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 1, userSelect: 'none' }}>gifts</p>
           <div style={{ display: 'flex', gap: 6 }}>
             {FOODS.map(food => {
               const count = traits[food.id as keyof Traits];
@@ -1128,11 +1340,14 @@ export default function FooterPlayground() {
           onClick={handleExplorerClick}
           style={isPhysics ? {
             position: 'fixed', left: physPos.x, top: physPos.y, zIndex: 9999,
+            opacity: gameOpen ? 0 : 1,
             filter: dragPhase === 'held' ? 'drop-shadow(0 8px 20px rgba(0,0,0,0.6))' : 'drop-shadow(0 4px 12px rgba(0,0,0,0.4))',
-            willChange: 'left, top', touchAction: 'none', pointerEvents: dragPhase === 'falling' ? 'none' : 'auto',
+            willChange: 'left, top', touchAction: 'none',
+            pointerEvents: (gameOpen || dragPhase === 'falling') ? 'none' : 'auto',
           } : {
             position: 'absolute', left: explorerX, top: visual.behavior === 'floating' ? CHAR_GROUND_TOP - 55 : CHAR_GROUND_TOP, zIndex: 10, touchAction: 'none',
-            transition: 'top 1.2s cubic-bezier(0.22,1,0.36,1)',
+            opacity: gameOpen ? 0 : 1,
+            transition: 'top 1.2s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease',
           }}
         >
           {showHint && dragPhase === 'none' && (

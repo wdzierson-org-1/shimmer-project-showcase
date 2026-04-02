@@ -19,9 +19,10 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				sans: ['PP Mori', 'Inter', 'sans-serif'],
+				sans: ['PP Mori', 'Plus Jakarta Sans', 'Inter', 'sans-serif'],
 				mono: ['IBM Plex Mono', 'monospace'],
 				serif: ['PP Editorial New', 'Fabric Serif', 'Playfair Display', 'serif'],
+				display: ['"Plus Jakarta Sans"', 'PP Mori', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',

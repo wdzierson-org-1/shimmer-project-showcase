@@ -13,12 +13,14 @@ import Index from "./pages/Index";
 import CommandPalette from "./components/command-palette/CommandPalette";
 import AllProjects from "./pages/AllProjects";
 import AllEntries from "./pages/AllEntries";
+import About from "./pages/About";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import AdminProjects from "./pages/AdminProjects"; 
 import AdminContent from "./pages/AdminContent";
 import AdminPrompts from "./pages/AdminPrompts";
 import AdminUsers from "./pages/AdminUsers";
+import AdminAbout from "./pages/AdminAbout";
 import ProjectEditor from "./pages/ProjectEditor";
 import ContentEditor from "./pages/ContentEditor";
 import ProjectDetail from "./pages/ProjectDetail";
@@ -90,6 +92,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/projects" element={<AllProjects />} />
+              <Route path="/about" element={<About />} />
               <Route path="/entries" element={<AllEntries />} />
               <Route path="/project/:id" element={<ProjectDetail />} />
               <Route path="/content/:id" element={<ContentDetail />} />
@@ -129,6 +132,11 @@ const App = () => {
               <Route path="/admin/users" element={
                 <ProtectedRoute requireAdmin={true}>
                   <AdminUsers />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/about" element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminAbout />
                 </ProtectedRoute>
               } />
               <Route path="*" element={<NotFound />} />

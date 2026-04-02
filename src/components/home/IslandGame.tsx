@@ -1750,7 +1750,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
     if (!mount) return;
 
     // ── Renderer ──
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: false });
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.setClearColor(0x8ecde6, 1); // atmospheric sky
@@ -1842,7 +1842,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
     gtaoPass.blendIntensity = 1.0;
     const gtaoAlgo = gtaoPass.algorithm as { samples: number; radius: number; distanceExponent: number; thickness: number };
     if (gtaoAlgo) {
-      gtaoAlgo.samples = 16;
+      gtaoAlgo.samples = 4;
       gtaoAlgo.radius = 0.5;
       gtaoAlgo.distanceExponent = 2.0;
       gtaoAlgo.thickness = 1.0;
@@ -2150,6 +2150,7 @@ const IslandGame = forwardRef<IslandGameHandle, IslandGameProps>(({ onEnterVilla
 
     const loop = () => {
       rafRef.current = requestAnimationFrame(loop);
+      if (document.hidden) return;
       const t = (frameRef.current++ * 0.016);
 
       // Animate water

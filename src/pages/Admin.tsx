@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Newspaper, FolderOpen, MessageSquare, LogOut, Users } from 'lucide-react';
+import { ArrowLeft, Newspaper, FolderOpen, MessageSquare, LogOut, Users, UserCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
@@ -104,6 +104,21 @@ const Admin = () => {
             <CardContent>
               <Button asChild className="w-full">
                 <Link to="/admin/users">Manage Users</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <UserCircle className="mr-2 h-5 w-5" />
+                About & Contact
+              </CardTitle>
+              <CardDescription>Edit bio, headline, and contact links</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full">
+                <Link to="/admin/about">Edit About Page</Link>
               </Button>
             </CardContent>
           </Card>

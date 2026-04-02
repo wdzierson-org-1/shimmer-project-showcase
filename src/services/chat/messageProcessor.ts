@@ -28,8 +28,17 @@ import { ContentEntry } from '../content/contentService';
 import { findRelevantContentEntriesEnhanced, analyzeQuery } from './search/enhancedContentSearch';
 import { generateFocusedResponse, assessContentRelevance } from './responses/enhancedResponseGenerator';
 
+// Persona short-circuit: answer identity/background questions from bundled
+// knowledge, skipping vector search and embedding calls entirely.
+import { matchesPersonaTopic, generatePersonaResponse } from './personaContext';
+import { getWillbotRouteMode, type WillbotRouteMode } from './willbotPrompt';
+
+export const classifyWillbotRequestMode = (userMessage: string): WillbotRouteMode =>
+  getWillbotRouteMode(userMessage);
+
 /**
- * Processes user messages with enhanced RAG pipeline and improved affirmative response handling
+ * Processes user messages with enhanced RAG pipeline and improved affirmative response handling.
+ * Persona-matched queries are answered from the bundled knowledge base without RAG.
  */
 export const processUserMessage = async (
   userMessage: string
@@ -41,6 +50,14 @@ export const processUserMessage = async (
   showContentEntries?: boolean;
   suggestions?: { text: string; delay: number }[];
 }> => {
+  // ── Persona short-circuit ──────────────────────────────────────────────────
+  // Answers questions about Will's identity, background, and interests using
+  // the bundled WILLBOT_PERSONA constant — no embeddings or vector search needed.
+  if (matchesPersonaTopic(userMessage)) {
+    const content = await generatePersonaResponse(userMessage);
+    return { content };
+  }
+
   // Check for the "What's been on your mind lately?" query
   if (userMessage.toLowerCase().includes("what's been on your mind lately") || 
       userMessage.toLowerCase().includes("what's on your mind") ||
@@ -59,6 +76,11 @@ export const processUserMessage = async (
     return handlePortfolioQuery();
   }
   
+  if (classifyWillbotRequestMode(userMessage) === 'prompt') {
+    const content = await generatePersonaResponse(userMessage);
+    return { content };
+  }
+
   // Analyze the query to determine search strategy
   const queryAnalysis = analyzeQuery(userMessage);
 

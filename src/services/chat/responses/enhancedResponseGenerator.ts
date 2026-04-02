@@ -2,6 +2,7 @@
 import { ContentEntry } from '@/services/content/contentService';
 import { getChatCompletion } from '@/services/openai';
 import { Project } from '@/components/project/ProjectCard';
+import { buildWillbotSystemPrompt } from '../willbotPrompt';
 
 /**
  * Generates more focused responses based on content analysis
@@ -43,7 +44,7 @@ export const generateFocusedResponse = async (
   console.log('Generating AI response with focused context');
   
   // Create a more specific system prompt based on content type
-  let systemPrompt = `You are Will's portfolio assistant. Answer the user's question using the provided information. Be concise and directly address their question.`;
+  let systemPrompt = `Answer the user's question using the provided information. Be concise and directly address their question.`;
   
   if (primaryContent.type === 'thoughts') {
     systemPrompt += ` The user is asking about thoughts and insights. Provide a thoughtful, personal response.`;
@@ -53,13 +54,13 @@ export const generateFocusedResponse = async (
     systemPrompt += ` The user is asking about research. Provide an informative, evidence-based response.`;
   }
   
-  systemPrompt += `\n\nContext: ${context}`;
+  systemPrompt += `\n\nRetrieved context:\n${context}`;
   
   const aiResponse = await getChatCompletion({
     messages: [
       {
         role: 'system',
-        content: systemPrompt
+        content: buildWillbotSystemPrompt(systemPrompt)
       },
       {
         role: 'user',

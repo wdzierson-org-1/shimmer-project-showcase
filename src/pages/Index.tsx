@@ -6,6 +6,7 @@ import Hero from '@/components/home/Hero';
 import FeaturedProject from '@/components/home/FeaturedProject';
 import AboutSection from '@/components/home/AboutSection';
 import FooterPlayground from '@/components/home/FooterPlayground';
+import IslandGameModal from '@/components/home/IslandGameModal';
 
 interface FeaturedProjectData {
   id: string;
@@ -20,6 +21,7 @@ interface FeaturedProjectData {
 const Index = () => {
   const [projects, setProjects] = useState<FeaturedProjectData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [gameOpen, setGameOpen] = useState(false);
 
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -73,12 +75,17 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <Header />
-      <Hero />
+      <div className="hidden md:block">
+        <Hero />
+      </div>
 
       <div className="relative z-10 bg-background">
         {/* Section heading */}
-        <div className="max-w-7xl mx-auto px-6 md:px-12 pt-16 pb-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 pt-20 md:pt-8 pb-2">
+          <p
+            className="text-muted-foreground font-sans"
+            style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase' }}
+          >
             Selected Work
           </p>
         </div>
@@ -117,8 +124,10 @@ const Index = () => {
 
       {/* Footer playground */}
       <footer className="relative bg-[#08070b] border-t border-white/5" style={{ overflow: 'visible' }}>
-        <FooterPlayground />
+        <FooterPlayground onHoleFall={() => setGameOpen(true)} gameOpen={gameOpen} />
       </footer>
+
+      <IslandGameModal open={gameOpen} onClose={() => setGameOpen(false)} />
     </div>
   );
 };

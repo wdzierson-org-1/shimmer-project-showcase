@@ -46,7 +46,7 @@ export const handleAIProjectsQuery = async (userMessage: string): Promise<{
     } else if (/show\s+(?:me\s+)?(?:recent\s+)?(?:work|projects?|portfolio|all)/i.test(userMessage.toLowerCase())) {
       // If it's a direct "show me" query, focus on presenting the projects
       return {
-        content: "Here are my AI-related projects. Click on any of them to learn more:",
+        content: "Here are Will's AI-related projects. Type a number to learn more about one:",
         projects: sortedProjects,
         showProjects: true
       };
@@ -75,7 +75,7 @@ export const handlePortfolioQuery = async (): Promise<{
   console.log(`Fetched ${sortedProjects.length} projects for display`);
   
   return {
-    content: "Here are some of my recent projects. Click on any of them to learn more:",
+    content: "Here are some of Will's recent projects. Type a number to learn more about one:",
     showProjects: true,
     projects: sortedProjects
   };
