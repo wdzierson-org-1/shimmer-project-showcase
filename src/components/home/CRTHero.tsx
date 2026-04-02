@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { CRTTerminal } from 'cool-retro-term-renderer';
 import { Terminal } from '@xterm/xterm';
+import { SerializeAddon } from '@xterm/addon-serialize';
 import { processUserMessage } from '@/services/chatService';
 import { classifyWillbotRequestMode } from '@/services/chat/messageProcessor';
 import {
@@ -8,6 +9,9 @@ import {
   generateShortcut2Response,
   generateShortcut3Response,
 } from '@/services/chat/personaContext';
+
+const TERMINAL_STATE_KEY = 'crtTerminalState';
+const TERMINAL_META_KEY = 'crtTerminalMeta';
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
@@ -215,6 +219,21 @@ const CRTHero = () => {
     xterm.open(hidden);
     xtermRef.current = xterm;
 
+    const serializeAddon = new SerializeAddon();
+    xterm.loadAddon(serializeAddon);
+
+    const saveTerminalState = () => {
+      try {
+        localStorage.setItem(TERMINAL_STATE_KEY, serializeAddon.serialize());
+        localStorage.setItem(TERMINAL_META_KEY, JSON.stringify({
+          lastTopic: lastTopicRef.current,
+          pendingOptions: pendingOptionsRef.current,
+        }));
+      } catch {
+        // localStorage may be unavailable (private mode, quota exceeded)
+      }
+    };
+
     let cancelled = false;
     let crt: CRTTerminal | null = null;
     let resizeObserver: ResizeObserver | null = null;
@@ -366,6 +385,9 @@ const CRTHero = () => {
       /** Call when the user should see a fresh `> ` and may idle (starts ghost timer once). */
       const finishPromptLine = () => {
         writePrompt();
+        // Persist terminal buffer after every prompt so the session survives navigation.
+        // Skip during the very first boot (isBootingRef is still true at that point).
+        if (!isBootingRef.current) saveTerminalState();
         clearGhostSchedule();
         ghostTimerRef.current = window.setTimeout(() => {
           if (cancelled || isProcessingRef.current || isBootingRef.current) return;
@@ -524,6 +546,11 @@ const CRTHero = () => {
           pendingOptionsRef.current = [];
           xterm.clear();
           xterm.write('\x1b[2J\x1b[H');
+          // Wipe persisted state so next page load boots fresh
+          try {
+            localStorage.removeItem(TERMINAL_STATE_KEY);
+            localStorage.removeItem(TERMINAL_META_KEY);
+          } catch { /* ignore */ }
           isProcessingRef.current = false;
           finishPromptLine();
           return;
@@ -715,28 +742,49 @@ const CRTHero = () => {
       };
       container.addEventListener('click', handleClick);
 
-      // ── Boot sequence ──────────────────────────────────────────────────────
+      // ── Boot sequence or state restore ────────────────────────────────────
       (async () => {
-        await sleep(200);
-        let lineIndex = 0;
-        for (; lineIndex < BOOT_LINES.length; lineIndex += 1) {
-          const line = BOOT_LINES[lineIndex];
-          if (bootAbortRef.current) break;
-          await sleep(line.delay);
-          if (bootAbortRef.current) break;
-          if (line.text) await writeTypewriter(line.text, 9);
-          xterm.write('\r\n');
-        }
-        if (bootAbortRef.current) {
-          xterm.write(HIDE_CURSOR);
+        const savedState = (() => {
+          try { return localStorage.getItem(TERMINAL_STATE_KEY); } catch { return null; }
+        })();
+
+        if (savedState) {
+          // Restore previous session — replay serialized buffer, skip boot.
+          try {
+            const meta = JSON.parse(localStorage.getItem(TERMINAL_META_KEY) || '{}');
+            lastTopicRef.current = meta.lastTopic ?? "Will's work";
+            if (Array.isArray(meta.pendingOptions)) {
+              pendingOptionsRef.current = meta.pendingOptions;
+            }
+          } catch { /* ignore corrupt meta */ }
+
+          xterm.write(savedState);
+          isBootingRef.current = false;
+          finishPromptLine();
+          xterm.focus();
+        } else {
+          // Fresh boot sequence
+          await sleep(200);
+          let lineIndex = 0;
           for (; lineIndex < BOOT_LINES.length; lineIndex += 1) {
-            xterm.writeln(BOOT_LINES[lineIndex].text);
+            const line = BOOT_LINES[lineIndex];
+            if (bootAbortRef.current) break;
+            await sleep(line.delay);
+            if (bootAbortRef.current) break;
+            if (line.text) await writeTypewriter(line.text, 9);
+            xterm.write('\r\n');
           }
-          xterm.write(SHOW_CURSOR);
+          if (bootAbortRef.current) {
+            xterm.write(HIDE_CURSOR);
+            for (; lineIndex < BOOT_LINES.length; lineIndex += 1) {
+              xterm.writeln(BOOT_LINES[lineIndex].text);
+            }
+            xterm.write(SHOW_CURSOR);
+          }
+          isBootingRef.current = false;
+          finishPromptLine();
+          xterm.focus();
         }
-        isBootingRef.current = false;
-        finishPromptLine();
-        xterm.focus();
       })();
 
       (container as HTMLElement & { _crtCleanup?: () => void })._crtCleanup = () => {
@@ -753,6 +801,8 @@ const CRTHero = () => {
         window.clearTimeout(ghostTimerRef.current);
         ghostTimerRef.current = null;
       }
+      // Final save before unmount
+      if (!isBootingRef.current) saveTerminalState();
       resizeObserver?.disconnect();
       const el = container as HTMLElement & { _crtCleanup?: () => void };
       el._crtCleanup?.();

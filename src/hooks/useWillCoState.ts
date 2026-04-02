@@ -72,15 +72,33 @@ function reducer(state: WillCoWindowState[], action: Action): WillCoWindowState[
   }
 }
 
+/** Min px of a window that must remain visible inside the viewport on load. */
+const VIEWPORT_MARGIN = 40;
+
+/**
+ * Clamp a window's position so at least VIEWPORT_MARGIN px of it stays on-screen.
+ * Applied at hydration time so stale positions from a different resolution don't
+ * leave windows permanently off-canvas.
+ */
+function clampWindow(w: WillCoWindowState): WillCoWindowState {
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1280;
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
+  return {
+    ...w,
+    x: Math.min(Math.max(w.x, -(w.width - VIEWPORT_MARGIN)), vw - VIEWPORT_MARGIN),
+    y: Math.min(Math.max(w.y, 0), vh - VIEWPORT_MARGIN),
+  };
+}
+
 function loadFromStorage(): WillCoWindowState[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed: PersistedState = JSON.parse(raw);
     if (parsed.version !== STATE_VERSION) return [];
-    return parsed.windows.filter(
-      (w) => w.id && w.appId && typeof w.x === 'number' && typeof w.y === 'number',
-    );
+    return parsed.windows
+      .filter((w) => w.id && w.appId && typeof w.x === 'number' && typeof w.y === 'number')
+      .map(clampWindow);
   } catch {
     return [];
   }
