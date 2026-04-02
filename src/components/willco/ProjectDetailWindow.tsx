@@ -100,9 +100,9 @@ function MonochromeThumbnail({ src, onViewProject }: { src: string; onViewProjec
           width: '100%',
           aspectRatio: '16 / 9',
           objectFit: 'cover',
-          filter: 'grayscale(1) contrast(1.3) brightness(0.72) hue-rotate(180deg)',
+          filter: 'grayscale(1) contrast(1.6) brightness(0.55) hue-rotate(180deg) saturate(3)',
           imageRendering: 'pixelated',
-          opacity: 0.85,
+          opacity: 0.9,
           transition: 'opacity 0.15s',
         }}
       />
@@ -255,16 +255,6 @@ export function ProjectDetailWindow({ projectId }: ProjectDetailWindowProps) {
         {DIVIDER}
       </div>
 
-      {/* Monochrome thumbnail */}
-      {thumbnail && (
-        <div style={{ marginBottom: 14 }}>
-          <MonochromeThumbnail
-            src={thumbnail.image_url}
-            onViewProject={() => navigate(`/project/${project.id}`)}
-          />
-        </div>
-      )}
-
       {/* Description — rendered as markdown */}
       <div style={{ fontSize: 11, letterSpacing: '0.02em', marginBottom: 14 }}>
         <CRTMarkdown content={project.description} />
@@ -302,6 +292,16 @@ export function ProjectDetailWindow({ projectId }: ProjectDetailWindowProps) {
       <div style={{ fontSize: 9, color: CRT_FG_GHOST, marginBottom: 12, letterSpacing: 0 }}>
         {DIVIDER}
       </div>
+
+      {/* Monochrome thumbnail — above action buttons */}
+      {thumbnail && (
+        <div style={{ marginBottom: 12 }}>
+          <MonochromeThumbnail
+            src={thumbnail.image_url}
+            onViewProject={() => navigate(`/project/${project.id}`)}
+          />
+        </div>
+      )}
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: 12, marginTop: 'auto' }}>
