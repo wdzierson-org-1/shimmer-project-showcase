@@ -185,6 +185,10 @@ const CRTHero = () => {
     // and sizing it to effectiveBaseW+60 × (wrapH/s+60) keeps the frame margin
     // exactly at the overflow:hidden clip boundary at any scale.
     const FRAME_M = 30;
+    // Inset the text 8px from the screen edges (top + left) without moving the
+    // glass boundary — achieved by reducing the crop offset by the inset amount
+    // so the CRT frame shadow is still fully hidden while the content shifts in.
+    const TEXT_INSET = 8;
     const applyLayout = (w: number, h: number) => {
       if (w === 0 || h === 0) return;
       const rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
@@ -194,9 +198,9 @@ const CRTHero = () => {
       const scale = Math.min(rawScale, maxScale);
       scaleRef.current = scale;
       const virtualWidth = Math.round(w / scale);
-      // The bezel shadow is part of the rendered CRT frame, so its crop offset
-      // tracks the on-screen scale rather than the unscaled virtual dimensions.
-      const offset = Math.round(FRAME_M * scale);
+      // Reduce the crop offset by TEXT_INSET so the canvas shifts inward,
+      // giving text padding from the edges while keeping the frame hidden.
+      const offset = Math.round(FRAME_M * scale) - TEXT_INSET;
       container.style.left = `-${offset}px`;
       container.style.top = `-${offset}px`;
       container.style.width = `${virtualWidth + FRAME_M * 2}px`;
@@ -840,8 +844,8 @@ const CRTHero = () => {
         ref={wrapperRef}
         style={{
           position: 'absolute',
-          top: NAV_H + 8,
-          left: 8,
+          top: NAV_H,
+          left: 0,
           right: 0,
           bottom: 0,
           overflow: 'hidden',
