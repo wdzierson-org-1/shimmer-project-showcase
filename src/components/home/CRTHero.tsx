@@ -840,8 +840,8 @@ const CRTHero = () => {
         ref={wrapperRef}
         style={{
           position: 'absolute',
-          top: NAV_H,
-          left: 0,
+          top: NAV_H + 8,
+          left: 8,
           right: 0,
           bottom: 0,
           overflow: 'hidden',
