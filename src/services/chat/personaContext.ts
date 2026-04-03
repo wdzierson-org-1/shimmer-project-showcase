@@ -39,7 +39,7 @@ export const generateShortcut1Response = async (): Promise<string> =>
   generateWillbotPromptResponse("Give me a concise summary of Will's most recent and notable work and projects.");
 
 export const generateShortcut2Response = async (): Promise<string> =>
-  generateWillbotPromptResponse("Summarize Will's design and technology interests — what he cares about and finds compelling.");
+  generateWillbotPromptResponse("Describe Will's design and creative process — how he approaches problems, the role coding plays in his workflow, and what makes his process distinctive.");
 
 export const generateShortcut3Response = async (): Promise<string> =>
   generateWillbotPromptResponse("What is Will currently working on or exploring? What are his in-flight projects and areas of focus?");

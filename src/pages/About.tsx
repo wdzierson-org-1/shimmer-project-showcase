@@ -14,18 +14,6 @@ interface SiteSettings {
   about_calendar_url: string;
 }
 
-const DEFAULT_SETTINGS: SiteSettings = {
-  about_headline: 'Principal Product Designer specializing in AI-native experiences.',
-  about_bio: `I sit at the intersection of design and engineering — I love to design, and I love to build.
-
-At Google, I led design on mobile experiences that [reshaped how millions of users](https://www.youtube.com/watch?v=JKxzX3p1iRs) interact with information on their phones. Since then I've shipped software for healthcare, AI, and consumer products at Salesforce, Included Health, Dexterity Robotics, and a dozen others.
-
-I'm drawn to the hard problems: building AI interfaces that feel intuitive, designing systems that scale, and bridging the gap between what's technically possible and what's genuinely useful.`,
-  about_email: '',
-  about_resume_url: '',
-  about_calendar_url: '',
-};
-
 const PREVIOUSLY = [
   'Google', 'Yahoo', 'Salesforce', 'Dexterity Robotics', 'Darwin AI',
   'Noodle', 'Included Health', 'Gigwalk', 'Lockheed-Martin', 'John Hancock',
@@ -35,7 +23,7 @@ const PREVIOUSLY = [
 ];
 
 const About = () => {
-  const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: '-60px' });
 
@@ -48,19 +36,17 @@ const About = () => {
 
       if (error || !data) return;
 
-      const merged = { ...DEFAULT_SETTINGS };
+      const result: Partial<SiteSettings> = {};
       data.forEach(({ key, value }) => {
-        if (key in merged && value) {
-          (merged as Record<string, string>)[key] = value;
-        }
+        if (value) (result as Record<string, string>)[key] = value;
       });
-      setSettings(merged);
+      setSettings(result as SiteSettings);
     };
 
     fetchSettings();
   }, []);
 
-  const contactLinks = [
+  const contactLinks = settings ? [
     settings.about_email && {
       href: `mailto:${settings.about_email}`,
       icon: <Mail size={15} />,
@@ -79,7 +65,7 @@ const About = () => {
       label: "Let's talk",
       external: true,
     },
-  ].filter(Boolean) as { href: string; icon: React.ReactNode; label: string; external: boolean }[];
+  ].filter(Boolean) as { href: string; icon: React.ReactNode; label: string; external: boolean }[] : [];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -95,12 +81,16 @@ const About = () => {
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             className="max-w-3xl mb-16"
           >
-            <h1
-              className="font-serif text-[clamp(2rem,4.5vw,3.75rem)] leading-[1.08] tracking-tight text-foreground/90"
-              style={{ fontWeight: 200 }}
-            >
-              {settings.about_headline}
-            </h1>
+            {settings ? (
+              <h1
+                className="font-serif text-[clamp(2rem,4.5vw,3.75rem)] leading-[1.08] tracking-tight text-foreground/90"
+                style={{ fontWeight: 200 }}
+              >
+                {settings.about_headline}
+              </h1>
+            ) : (
+              <div className="h-[clamp(2rem,4.5vw,3.75rem)] w-2/3 rounded bg-foreground/5 animate-pulse" />
+            )}
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
@@ -113,23 +103,31 @@ const About = () => {
               className="flex flex-col gap-8"
             >
               <div className="flex flex-col gap-4 text-base md:text-lg text-foreground/60 font-sans font-light leading-relaxed">
-                <ReactMarkdown
-                  components={{
-                    p: ({ children }) => <p className="text-base md:text-lg text-foreground/60 font-sans font-light leading-relaxed">{children}</p>,
-                    a: ({ href, children }) => (
-                      <a
-                        href={href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-foreground/70 underline underline-offset-2 decoration-foreground/25 hover:text-foreground hover:decoration-foreground/50 transition-colors"
-                      >
-                        {children}
-                      </a>
-                    ),
-                  }}
-                >
-                  {settings.about_bio}
-                </ReactMarkdown>
+                {settings ? (
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => <p className="text-base md:text-lg text-foreground/60 font-sans font-light leading-relaxed">{children}</p>,
+                      a: ({ href, children }) => (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-foreground/70 underline underline-offset-2 decoration-foreground/25 hover:text-foreground hover:decoration-foreground/50 transition-colors"
+                        >
+                          {children}
+                        </a>
+                      ),
+                    }}
+                  >
+                    {settings.about_bio}
+                  </ReactMarkdown>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <div className="h-4 w-full rounded bg-foreground/5 animate-pulse" />
+                    <div className="h-4 w-5/6 rounded bg-foreground/5 animate-pulse" />
+                    <div className="h-4 w-4/6 rounded bg-foreground/5 animate-pulse" />
+                  </div>
+                )}
               </div>
 
               {/* Contact CTAs */}

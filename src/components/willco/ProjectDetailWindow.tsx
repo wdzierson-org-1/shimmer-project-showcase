@@ -100,23 +100,12 @@ function MonochromeThumbnail({ src, onViewProject }: { src: string; onViewProjec
           width: '100%',
           aspectRatio: '16 / 9',
           objectFit: 'cover',
-          filter: 'grayscale(1) contrast(1.6) brightness(0.55) hue-rotate(180deg) saturate(3)',
-          imageRendering: 'pixelated',
+          filter: 'grayscale(1) contrast(1.1) brightness(0.80) hue-rotate(180deg) saturate(2)',
           opacity: 0.9,
           transition: 'opacity 0.15s',
         }}
       />
-      {/* Lighter scanlines — wider spacing so they're subtle */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.10) 0px, rgba(0,0,0,0.10) 1px, transparent 1px, transparent 5px)',
-          pointerEvents: 'none',
-        }}
-      />
-      {/* Phosphor tint — stronger to match #88c0d0 palette */}
+      {/* Phosphor tint — matches #88c0d0 palette */}
       <div
         aria-hidden="true"
         style={{

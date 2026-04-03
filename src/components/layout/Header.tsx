@@ -66,7 +66,7 @@ const Header = () => {
         transition: 'transform 300ms ease',
       }}
     >
-      <div className="max-w-7xl mx-auto px-6 md:px-12 pt-3 pb-[10px] flex justify-between items-center">
+      <div className={`pt-3 pb-[10px] flex justify-between items-center ${isHome ? 'w-full px-6 md:px-8' : 'max-w-7xl mx-auto px-6 md:px-12'}`}>
         <Link
           to="/"
           className={`font-serif text-[17px] tracking-[-0.01em] no-underline transition-colors ${textPrimary}`}

@@ -69,7 +69,7 @@ const BOOT_LINES: { text: string; delay: number }[] = [
   { text: 'Feel free to ask me anything about Will,', delay: 80 },
   { text: 'or choose a shortcut:', delay: 80 },
   { text: '  1] Summarize recent work + projects', delay: 60 },
-  { text: '  2] Design + technology interests', delay: 60 },
+  { text: "  2] Will's process", delay: 60 },
   { text: '  3] In-flight / current projects', delay: 60 },
   { text: '', delay: 280 },
 ];
@@ -384,10 +384,11 @@ const CRTHero = () => {
 
       /** Call when the user should see a fresh `> ` and may idle (starts ghost timer once). */
       const finishPromptLine = () => {
-        writePrompt();
-        // Persist terminal buffer after every prompt so the session survives navigation.
-        // Skip during the very first boot (isBootingRef is still true at that point).
+        // Persist before writing the prompt so the saved buffer never includes a trailing "> ".
+        // On restore, xterm.write(savedState) replays up to the last response, then
+        // finishPromptLine() writes exactly one clean prompt — no duplicates on navigation.
         if (!isBootingRef.current) saveTerminalState();
+        writePrompt();
         clearGhostSchedule();
         ghostTimerRef.current = window.setTimeout(() => {
           if (cancelled || isProcessingRef.current || isBootingRef.current) return;
@@ -562,7 +563,7 @@ const CRTHero = () => {
             '',
             'Available commands:',
             '  1  Summarize recent work + projects',
-            '  2  Design + technology interests',
+            "  2  Will's process",
             '  3  In-flight / current projects',
             '  clear  Clear the terminal',
             '  help   Show this message',
@@ -621,6 +622,9 @@ const CRTHero = () => {
           xterm.write('\r\n');
           await writeResponse(text);
           xterm.write('\r\n');
+          // Parse any AI-generated numbered list so digit input on next turn selects correctly.
+          const shortcutListMatches = [...text.matchAll(/^\s*\d+\]\s*(.+)$/gm)];
+          pendingOptionsRef.current = shortcutListMatches.map((m) => ({ title: m[1]!.trim() }));
           isProcessingRef.current = false;
           finishPromptLine();
           return;
@@ -658,7 +662,15 @@ const CRTHero = () => {
             xterm.write('\r\n');
           }
         } else {
-          pendingOptionsRef.current = [];
+          // Parse AI-generated numbered list (e.g. "1] Label\n2] Other") so digit
+          // input on the next turn selects the correct item rather than triggering
+          // the hardcoded global shortcuts.
+          const aiListMatches = [...(result.content ?? '').matchAll(/^\s*\d+\]\s*(.+)$/gm)];
+          if (aiListMatches.length > 0) {
+            pendingOptionsRef.current = aiListMatches.map((m) => ({ title: m[1]!.trim() }));
+          } else {
+            pendingOptionsRef.current = [];
+          }
         }
 
         xterm.write('\r\n');
