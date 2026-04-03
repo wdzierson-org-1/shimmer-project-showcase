@@ -18,6 +18,9 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 // Nav bar height (matches Header.tsx pt-3 + content + pb-[10px])
 const NAV_H = 48;
 
+// Inset margin around the CRT canvas — the dark parent background shows through
+const TERMINAL_MARGIN = 12;
+
 // Virtual terminal width used as the 1x reference for CSS font scaling.
 // At 1440 px the CRT renders at exactly natural size (scale = 1.0), which
 // matches typical laptop/desktop resolutions. Narrower viewports scale
@@ -852,10 +855,10 @@ const CRTHero = () => {
         ref={wrapperRef}
         style={{
           position: 'absolute',
-          top: NAV_H,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          top: NAV_H + TERMINAL_MARGIN,
+          left: TERMINAL_MARGIN,
+          right: TERMINAL_MARGIN,
+          bottom: TERMINAL_MARGIN,
           overflow: 'hidden',
         }}
       >
