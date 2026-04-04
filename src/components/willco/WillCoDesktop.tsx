@@ -9,7 +9,7 @@ import { MusicPlayerWindow } from './MusicPlayerWindow';
 
 const CRT_FG = '#88c0d0';
 const CRT_FG_DIM = 'rgba(136,192,208,0.35)';
-const CRT_BG = '#111118';
+const CRT_BG = '#101014';
 const BROWSER_ID = 'project-browser';
 
 // The two intersecting circles logo from Lumon-style reference
@@ -202,6 +202,25 @@ export function WillCoDesktop() {
         fontFamily: 'IBM Plex Mono, monospace',
       }}
     >
+      {/* Desktop wallpaper */}
+      <img
+        aria-hidden="true"
+        src="/willco-desktop-bg.png"
+        alt=""
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '55%',
+          height: 'auto',
+          opacity: 0.55,
+          zIndex: 0,
+          pointerEvents: 'none',
+          userSelect: 'none',
+        }}
+      />
+
       {/* Subtle scanline overlay */}
       <div
         aria-hidden="true"
@@ -227,7 +246,8 @@ export function WillCoDesktop() {
         padding: '0 12px',
         gap: 8,
         zIndex: 10,
-        background: CRT_BG,
+        background: 'rgba(16,16,20,0.82)',
+        backdropFilter: 'blur(4px)',
       }}>
         <WillCoLogo />
         <span style={{ fontSize: 10, letterSpacing: '0.25em', color: CRT_FG, textTransform: 'uppercase' }}>
@@ -239,7 +259,7 @@ export function WillCoDesktop() {
       </div>
 
       {/* Desktop surface (below header) */}
-      <div style={{ position: 'absolute', top: 28, left: 0, right: 0, bottom: 0 }}>
+      <div style={{ position: 'absolute', top: 28, left: 0, right: 0, bottom: 0, zIndex: 1 }}>
         {/* Icon column — upper right */}
         <div style={{
           position: 'absolute',

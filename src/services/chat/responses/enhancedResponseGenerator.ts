@@ -2,7 +2,7 @@
 import { ContentEntry } from '@/services/content/contentService';
 import { getChatCompletion } from '@/services/openai';
 import { Project } from '@/components/project/ProjectCard';
-import { buildWillbotSystemPrompt } from '../willbotPrompt';
+import { buildWillbotSystemPrompt, ConversationMessage } from '../willbotPrompt';
 
 /**
  * Generates more focused responses based on content analysis
@@ -10,7 +10,8 @@ import { buildWillbotSystemPrompt } from '../willbotPrompt';
 export const generateFocusedResponse = async (
   userMessage: string,
   contentEntries: ContentEntry[],
-  projects?: Project[]
+  projects?: Project[],
+  history: ConversationMessage[] = []
 ): Promise<{
   content: string;
   contentEntries?: ContentEntry[];
@@ -62,6 +63,7 @@ export const generateFocusedResponse = async (
         role: 'system',
         content: buildWillbotSystemPrompt(systemPrompt)
       },
+      ...history,
       {
         role: 'user',
         content: userMessage

@@ -79,7 +79,7 @@ const Index = () => {
         <Hero />
       </div>
 
-      <div className="relative z-10 bg-background">
+      <div className="relative z-10 bg-background" style={{ boxShadow: '0 -6px 24px 0 rgba(0,0,0,0.10)' }}>
         {/* Section heading */}
         <div className="max-w-7xl mx-auto px-6 md:px-12 pt-20 md:pt-8 pb-2">
           <p

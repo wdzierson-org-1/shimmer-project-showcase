@@ -33,52 +33,28 @@ const queryClient = new QueryClient();
 const App = () => {
   const [isApiKeyChecked, setIsApiKeyChecked] = useState(false);
   
-  // Setup database on first load
+  // Check OpenAI key and update schema on first load
   useEffect(() => {
-    const setupDb = async () => {
+    const init = async () => {
+      // Update the content_entries schema
       try {
-        const { data, error } = await supabase.functions.invoke('setup-db');
-        if (error) {
-          console.error('Error setting up database:', error);
-        } else {
-          console.log('Database setup complete:', data);
-        }
-        
-        // Update the content_entries schema
-        try {
-          const { data: schemaData, error: schemaError } = await supabase.functions.invoke('update-content-entries-schema');
-          
-          if (schemaError) {
-            console.error('Error updating content entries schema:', schemaError);
-          } else if (schemaData) {
-            console.log('Content entries schema update:', schemaData);
-          }
-        } catch (error) {
-          console.error('Error calling update-content-entries-schema function:', error);
-        }
-        
-        // Silently check OpenAI API key without showing toasts
-        try {
-          const { data: keyData, error: keyError } = await supabase.functions.invoke('check-openai-key');
-          
-          if (keyError) {
-            console.error('Error checking OpenAI key:', keyError);
-          } else if (keyData) {
-            console.log('OpenAI API key status:', keyData.status);
-          }
-          
-          setIsApiKeyChecked(true);
-        } catch (error) {
-          console.error('Error checking OpenAI key:', error);
-          setIsApiKeyChecked(true);
-        }
-      } catch (error) {
-        console.error('Error in setup process:', error);
-        setIsApiKeyChecked(true);
+        await supabase.functions.invoke('update-content-entries-schema');
+      } catch {
+        // non-critical
       }
+
+      // Silently check OpenAI API key
+      try {
+        const { data: keyData } = await supabase.functions.invoke('check-openai-key');
+        if (keyData) console.log('OpenAI API key status:', keyData.status);
+      } catch {
+        // non-critical
+      }
+
+      setIsApiKeyChecked(true);
     };
-    
-    setupDb();
+
+    init();
   }, []);
 
   return (

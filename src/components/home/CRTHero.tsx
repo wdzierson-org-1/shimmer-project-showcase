@@ -9,6 +9,7 @@ import {
   generateShortcut2Response,
   generateShortcut3Response,
 } from '@/services/chat/personaContext';
+import type { ConversationMessage } from '@/services/chat/willbotPrompt';
 
 const TERMINAL_STATE_KEY = 'crtTerminalState';
 const TERMINAL_META_KEY = 'crtTerminalMeta';
@@ -150,6 +151,8 @@ const CRTHero = () => {
   const bootAbortRef = useRef(false);
   /** Project titles for the last numbered list (1–N); numeric input selects one */
   const pendingOptionsRef = useRef<{ title: string }[]>([]);
+  /** Rolling conversation history passed to the LLM on each turn (capped at 20 messages) */
+  const conversationHistoryRef = useRef<ConversationMessage[]>([]);
   const ghostTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
   const ghostVisibleRef = useRef(false);
   const lastTopicRef = useRef("Will's work");
@@ -548,6 +551,7 @@ const CRTHero = () => {
 
         if (input === 'clear') {
           pendingOptionsRef.current = [];
+          conversationHistoryRef.current = [];
           xterm.clear();
           xterm.write('\x1b[2J\x1b[H');
           // Wipe persisted state so next page load boots fresh
@@ -614,10 +618,11 @@ const CRTHero = () => {
         // Answered via persona LLM call — no vector search.
         if (input === '1' || input === '2' || input === '3') {
           let text: string;
+          const history = conversationHistoryRef.current;
           try {
-            if (input === '1') text = await generateShortcut1Response();
-            else if (input === '2') text = await generateShortcut2Response();
-            else text = await generateShortcut3Response();
+            if (input === '1') text = await generateShortcut1Response(history);
+            else if (input === '2') text = await generateShortcut2Response(history);
+            else text = await generateShortcut3Response(history);
           } catch {
             text = "Sorry, something went wrong fetching that. Try asking directly.";
           }
@@ -625,6 +630,12 @@ const CRTHero = () => {
           xterm.write('\r\n');
           await writeResponse(text);
           xterm.write('\r\n');
+          // Append shortcut turn to conversation history
+          conversationHistoryRef.current = [
+            ...conversationHistoryRef.current,
+            { role: 'user' as const, content: input },
+            { role: 'assistant' as const, content: text },
+          ].slice(-20);
           // Parse any AI-generated numbered list so digit input on next turn selects correctly.
           const shortcutListMatches = [...text.matchAll(/^\s*\d+\]\s*(.+)$/gm)];
           pendingOptionsRef.current = shortcutListMatches.map((m) => ({ title: m[1]!.trim() }));
@@ -640,7 +651,7 @@ const CRTHero = () => {
 
         let result: Awaited<ReturnType<typeof processUserMessage>>;
         try {
-          result = await processUserMessage(input);
+          result = await processUserMessage(input, conversationHistoryRef.current);
         } catch {
           stopWaitingState();
           xterm.write('\r\nSorry, something went wrong. Please try again.\r\n\r\n');
@@ -675,6 +686,13 @@ const CRTHero = () => {
             pendingOptionsRef.current = [];
           }
         }
+
+        // Append this turn to the rolling conversation history
+        conversationHistoryRef.current = [
+          ...conversationHistoryRef.current,
+          { role: 'user' as const, content: input },
+          { role: 'assistant' as const, content: result.content || '' },
+        ].slice(-20);
 
         xterm.write('\r\n');
         isProcessingRef.current = false;

@@ -62,6 +62,9 @@ const Header = () => {
         borderBottom: isHome
           ? '1px solid rgba(255,255,255,0.06)'
           : '1px solid rgba(0,0,0,0.06)',
+        boxShadow: isHome
+          ? '0 4px 24px 0 rgba(0,0,0,0.22)'
+          : '0 4px 20px 0 rgba(0,0,0,0.06), 0 1px 4px 0 rgba(0,0,0,0.04)',
         transform: isVisible ? 'translateY(0)' : 'translateY(-100%)',
         transition: 'transform 300ms ease',
       }}

@@ -1,4 +1,4 @@
-import { generateWillbotPromptResponse } from './willbotPrompt';
+import { generateWillbotPromptResponse, ConversationMessage } from './willbotPrompt';
 
 // ── Topic matcher ─────────────────────────────────────────────────────────────
 // These patterns cover questions that can be answered from WILLBOT_PERSONA alone,
@@ -27,19 +27,22 @@ export const matchesPersonaTopic = (msg: string): boolean =>
 
 // ── LLM response using persona context ───────────────────────────────────────
 // Fast single-turn call: persona injected as system context, no vector search.
-export const generatePersonaResponse = async (userMessage: string): Promise<string> => {
-  return generateWillbotPromptResponse(userMessage);
+export const generatePersonaResponse = async (
+  userMessage: string,
+  history: ConversationMessage[] = [],
+): Promise<string> => {
+  return generateWillbotPromptResponse(userMessage, undefined, history);
 };
 
 // ── Shortcut response generators ─────────────────────────────────────────────
 // Used by the 1/2/3 shortcuts in CRTHero. These call the LLM with a focused
 // prompt so answers feel natural, not canned. No vector search involved.
 
-export const generateShortcut1Response = async (): Promise<string> =>
-  generateWillbotPromptResponse("Give me a concise summary of Will's most recent and notable work and projects.");
+export const generateShortcut1Response = async (history: ConversationMessage[] = []): Promise<string> =>
+  generateWillbotPromptResponse("Give me a concise summary of Will's most recent and notable work and projects.", undefined, history);
 
-export const generateShortcut2Response = async (): Promise<string> =>
-  generateWillbotPromptResponse("Describe Will's design and creative process — how he approaches problems, the role coding plays in his workflow, and what makes his process distinctive.");
+export const generateShortcut2Response = async (history: ConversationMessage[] = []): Promise<string> =>
+  generateWillbotPromptResponse("Describe Will's design and creative process — how he approaches problems, the role coding plays in his workflow, and what makes his process distinctive.", undefined, history);
 
-export const generateShortcut3Response = async (): Promise<string> =>
-  generateWillbotPromptResponse("What is Will currently working on or exploring? What are his in-flight projects and areas of focus?");
+export const generateShortcut3Response = async (history: ConversationMessage[] = []): Promise<string> =>
+  generateWillbotPromptResponse("What is Will currently working on or exploring? What are his in-flight projects and areas of focus?", undefined, history);

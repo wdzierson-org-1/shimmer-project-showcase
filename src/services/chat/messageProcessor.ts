@@ -31,7 +31,7 @@ import { generateFocusedResponse, assessContentRelevance } from './responses/enh
 // Persona short-circuit: answer identity/background questions from bundled
 // knowledge, skipping vector search and embedding calls entirely.
 import { matchesPersonaTopic, generatePersonaResponse } from './personaContext';
-import { getWillbotRouteMode, type WillbotRouteMode } from './willbotPrompt';
+import { getWillbotRouteMode, type WillbotRouteMode, type ConversationMessage } from './willbotPrompt';
 
 export const classifyWillbotRequestMode = (userMessage: string): WillbotRouteMode =>
   getWillbotRouteMode(userMessage);
@@ -41,7 +41,8 @@ export const classifyWillbotRequestMode = (userMessage: string): WillbotRouteMod
  * Persona-matched queries are answered from the bundled knowledge base without RAG.
  */
 export const processUserMessage = async (
-  userMessage: string
+  userMessage: string,
+  history: ConversationMessage[] = []
 ): Promise<{
   content: string;
   projects?: Project[];
@@ -54,7 +55,7 @@ export const processUserMessage = async (
   // Answers questions about Will's identity, background, and interests using
   // the bundled WILLBOT_PERSONA constant — no embeddings or vector search needed.
   if (matchesPersonaTopic(userMessage)) {
-    const content = await generatePersonaResponse(userMessage);
+    const content = await generatePersonaResponse(userMessage, history);
     return { content };
   }
 
@@ -77,7 +78,7 @@ export const processUserMessage = async (
   }
   
   if (classifyWillbotRequestMode(userMessage) === 'prompt') {
-    const content = await generatePersonaResponse(userMessage);
+    const content = await generatePersonaResponse(userMessage, history);
     return { content };
   }
 
@@ -99,7 +100,7 @@ export const processUserMessage = async (
       const relevanceAssessment = assessContentRelevance(userMessage, contentEntries);
       
       if (relevanceAssessment.isHighlyRelevant) {
-        return await generateFocusedResponse(userMessage, contentEntries);
+        return await generateFocusedResponse(userMessage, contentEntries, undefined, history);
       }
       
       // Fallback to traditional content-based response for lower relevance
@@ -133,7 +134,7 @@ export const processUserMessage = async (
     const relevanceAssessment = assessContentRelevance(userMessage, contentEntries);
     
     if (relevanceAssessment.isHighlyRelevant || queryAnalysis.isSpecific) {
-      return await generateFocusedResponse(userMessage, contentEntries);
+      return await generateFocusedResponse(userMessage, contentEntries, undefined, history);
     }
     
     // Use traditional response for broader queries

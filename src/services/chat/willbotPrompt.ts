@@ -3,6 +3,11 @@ import { getChatCompletion } from '@/services/openai';
 
 export type WillbotRouteMode = 'prompt' | 'retrieval';
 
+export interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 const PROMPT_ONLY_PATTERNS: RegExp[] = [
   /\b(who is|who are|tell me about|introduce)\b/i,
   /\b(background|bio|biography|resume|cv|career|work style)\b/i,
@@ -70,6 +75,7 @@ export function buildWillbotSystemPrompt(extraContext?: string): string {
 export async function generateWillbotPromptResponse(
   userMessage: string,
   extraContext?: string,
+  history: ConversationMessage[] = [],
 ): Promise<string> {
   return getChatCompletion({
     model: 'gpt-4o-mini',
@@ -78,6 +84,7 @@ export async function generateWillbotPromptResponse(
         role: 'system',
         content: buildWillbotSystemPrompt(extraContext),
       },
+      ...history,
       {
         role: 'user',
         content: userMessage,

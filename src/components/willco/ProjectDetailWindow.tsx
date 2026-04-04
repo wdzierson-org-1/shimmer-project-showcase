@@ -100,18 +100,20 @@ function MonochromeThumbnail({ src, onViewProject }: { src: string; onViewProjec
           width: '100%',
           aspectRatio: '16 / 9',
           objectFit: 'cover',
-          filter: 'grayscale(1) contrast(1.1) brightness(0.80) hue-rotate(180deg) saturate(2)',
-          opacity: 0.9,
+          /* Duotone: collapse to luminance, sepia shifts into warm amber,
+             hue-rotate lands in the cyan/teal band, saturate pumps the chroma */
+          filter: 'grayscale(1) brightness(0.9) sepia(1) hue-rotate(148deg) saturate(2.4) contrast(1.05)',
+          opacity: 0.92,
           transition: 'opacity 0.15s',
         }}
       />
-      {/* Phosphor tint — matches #88c0d0 palette */}
+      {/* Subtle cyan bloom — lifts the highlight areas slightly */}
       <div
         aria-hidden="true"
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'rgba(136,192,208,0.14)',
+          background: 'rgba(100,210,210,0.07)',
           mixBlendMode: 'screen',
           pointerEvents: 'none',
         }}
@@ -121,7 +123,7 @@ function MonochromeThumbnail({ src, onViewProject }: { src: string; onViewProjec
         <div style={{
           position: 'absolute',
           inset: 0,
-          background: 'rgba(17,17,24,0.78)',
+          background: 'rgba(8,14,16,0.82)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -317,28 +319,6 @@ export function ProjectDetailWindow({ projectId }: ProjectDetailWindowProps) {
         >
           [ VIEW FULL PROJECT → ]
         </button>
-        {project.liveurl && (
-          <a
-            href={project.liveurl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              fontFamily: 'IBM Plex Mono, monospace',
-              fontSize: 10,
-              color: CRT_FG_DIM,
-              border: `1px solid rgba(136,192,208,0.3)`,
-              padding: '5px 12px',
-              cursor: 'pointer',
-              letterSpacing: '0.15em',
-              textTransform: 'uppercase',
-              textDecoration: 'none',
-              display: 'inline-flex',
-              alignItems: 'center',
-            }}
-          >
-            [ LIVE SITE ↗ ]
-          </a>
-        )}
       </div>
     </div>
   );

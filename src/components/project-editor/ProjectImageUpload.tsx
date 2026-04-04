@@ -67,6 +67,7 @@ const ProjectImageUpload = ({
                   updated[index] = value;
                   setAdditionalImages(updated);
                 }}
+                onReorder={setAdditionalImages}
                 primaryImageUrl={imageUrl}
               />
             )}
