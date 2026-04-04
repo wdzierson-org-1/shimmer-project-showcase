@@ -2,9 +2,10 @@ interface WillCoTrafficLightsProps {
   onClose: () => void;
   onMinimize?: () => void;
   isActive?: boolean;
+  isMinimized?: boolean;
 }
 
-export function WillCoTrafficLights({ onClose, onMinimize, isActive = true }: WillCoTrafficLightsProps) {
+export function WillCoTrafficLights({ onClose, onMinimize, isActive = true, isMinimized = false }: WillCoTrafficLightsProps) {
   const dim = !isActive ? 'opacity-40' : '';
   return (
     <div role="group" aria-label="Window controls" className={`flex items-center gap-1 ${dim}`}>
@@ -28,7 +29,7 @@ export function WillCoTrafficLights({ onClose, onMinimize, isActive = true }: Wi
       {onMinimize && (
         <button
           onClick={(e) => { e.stopPropagation(); onMinimize(); }}
-          aria-label="Minimize"
+          aria-label={isMinimized ? 'Expand' : 'Minimize'}
           style={{
             fontFamily: 'IBM Plex Mono, monospace',
             fontSize: 11,
@@ -40,7 +41,7 @@ export function WillCoTrafficLights({ onClose, onMinimize, isActive = true }: Wi
             cursor: 'pointer',
           }}
         >
-          _
+          {isMinimized ? '□' : '_'}
         </button>
       )}
     </div>

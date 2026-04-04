@@ -81,7 +81,7 @@ const Index = () => {
 
       <div className="relative z-10 bg-background" style={{ boxShadow: '0 -6px 24px 0 rgba(0,0,0,0.10)' }}>
         {/* Section heading */}
-        <div className="max-w-7xl mx-auto px-6 md:px-12 pt-20 md:pt-8 pb-2">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 pt-20 md:pt-16 pb-2">
           <p
             className="text-muted-foreground font-sans"
             style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase' }}

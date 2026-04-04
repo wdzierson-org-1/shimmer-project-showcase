@@ -39,6 +39,7 @@ const CRT_BG = '#0e0e14';
 const CRT_FG = '#88c0d0';
 const CRT_BORDER = 'rgba(136,192,208,0.35)';
 const CRT_TITLE_BG = '#111118';
+const ANIM_MS = 180;
 
 export function WillCoWindowFrame({
   title,
@@ -61,9 +62,22 @@ export function WillCoWindowFrame({
 }: WillCoWindowFrameProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const resizeStart = useRef({ x: 0, y: 0, w: 0, h: 0 });
   const windowRef = useRef<HTMLDivElement>(null);
+
+  // Fade in on mount
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setIsOpen(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+    setTimeout(onClose, ANIM_MS);
+  }, [onClose]);
 
   const handleTitleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -121,7 +135,8 @@ export function WillCoWindowFrame({
     };
   }, [isResizing, onResize, minWidth, minHeight]);
 
-  if (isMinimized) return null;
+  const visible = isOpen && !isClosing;
+  const animatedHeight = isMinimized ? TITLE_H + 2 : height;
 
   return (
     <div
@@ -134,7 +149,7 @@ export function WillCoWindowFrame({
         left: x,
         top: y,
         width,
-        height,
+        height: animatedHeight,
         zIndex,
         display: 'flex',
         flexDirection: 'column',
@@ -145,6 +160,10 @@ export function WillCoWindowFrame({
           : `0 2px 12px rgba(0,0,0,0.6)`,
         fontFamily: 'IBM Plex Mono, monospace',
         userSelect: isDragging || isResizing ? 'none' : undefined,
+        opacity: visible ? 1 : 0,
+        transition: `opacity ${ANIM_MS}ms ease, height ${ANIM_MS}ms ease`,
+        overflow: 'hidden',
+        pointerEvents: isClosing ? 'none' : undefined,
       }}
     >
       {/* Title bar */}
@@ -155,7 +174,7 @@ export function WillCoWindowFrame({
           height: TITLE_H,
           minHeight: TITLE_H,
           background: CRT_TITLE_BG,
-          borderBottom: `1px solid ${CRT_BORDER}`,
+          borderBottom: isMinimized ? 'none' : `1px solid ${CRT_BORDER}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -164,7 +183,12 @@ export function WillCoWindowFrame({
           flexShrink: 0,
         }}
       >
-        <WillCoTrafficLights onClose={onClose} onMinimize={onMinimize} isActive={isActive} />
+        <WillCoTrafficLights
+          onClose={handleClose}
+          onMinimize={onMinimize}
+          isActive={isActive}
+          isMinimized={isMinimized}
+        />
         <span
           style={{
             flex: 1,
@@ -189,36 +213,40 @@ export function WillCoWindowFrame({
       {/* Content area */}
       <div
         style={{
-          flex: 1,
-          overflow: 'auto',
+          flex: isMinimized ? 0 : 1,
+          overflow: 'hidden',
           position: 'relative',
           background: CRT_BG,
           color: CRT_FG,
+          opacity: isMinimized ? 0 : 1,
+          transition: `opacity ${ANIM_MS}ms ease`,
         }}
       >
         {children}
       </div>
 
       {/* Resize handle */}
-      <div
-        onMouseDown={handleResizeMouseDown}
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          right: 0,
-          width: 14,
-          height: 14,
-          cursor: 'se-resize',
-          opacity: 0.5,
-        }}
-        aria-hidden="true"
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14">
-          <line x1="3" y1="13" x2="13" y2="3" stroke={CRT_FG} strokeWidth="1" opacity="0.4" />
-          <line x1="7" y1="13" x2="13" y2="7" stroke={CRT_FG} strokeWidth="1" opacity="0.6" />
-          <line x1="11" y1="13" x2="13" y2="11" stroke={CRT_FG} strokeWidth="1" opacity="0.8" />
-        </svg>
-      </div>
+      {!isMinimized && (
+        <div
+          onMouseDown={handleResizeMouseDown}
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            width: 14,
+            height: 14,
+            cursor: 'se-resize',
+            opacity: 0.5,
+          }}
+          aria-hidden="true"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14">
+            <line x1="3" y1="13" x2="13" y2="3" stroke={CRT_FG} strokeWidth="1" opacity="0.4" />
+            <line x1="7" y1="13" x2="13" y2="7" stroke={CRT_FG} strokeWidth="1" opacity="0.6" />
+            <line x1="11" y1="13" x2="13" y2="11" stroke={CRT_FG} strokeWidth="1" opacity="0.8" />
+          </svg>
+        </div>
+      )}
     </div>
   );
 }
