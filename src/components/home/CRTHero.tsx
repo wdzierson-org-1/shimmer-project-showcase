@@ -10,6 +10,7 @@ import {
   generateShortcut3Response,
 } from '@/services/chat/personaContext';
 import type { ConversationMessage } from '@/services/chat/willbotPrompt';
+import { savePrompt } from '@/services/promptTrackingService';
 
 const TERMINAL_STATE_KEY = 'crtTerminalState';
 const TERMINAL_META_KEY = 'crtTerminalMeta';
@@ -626,6 +627,7 @@ const CRTHero = () => {
           } catch {
             text = "Sorry, something went wrong fetching that. Try asking directly.";
           }
+          savePrompt(input, text);
           stopSpinner();
           xterm.write('\r\n');
           await writeResponse(text);
@@ -652,6 +654,7 @@ const CRTHero = () => {
         let result: Awaited<ReturnType<typeof processUserMessage>>;
         try {
           result = await processUserMessage(input, conversationHistoryRef.current);
+          savePrompt(input, result.content || '');
         } catch {
           stopWaitingState();
           xterm.write('\r\nSorry, something went wrong. Please try again.\r\n\r\n');
