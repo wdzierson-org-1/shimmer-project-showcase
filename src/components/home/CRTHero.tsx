@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CRTTerminal } from 'cool-retro-term-renderer';
 import { Terminal } from '@xterm/xterm';
 import { SerializeAddon } from '@xterm/addon-serialize';
@@ -11,9 +12,15 @@ import {
 } from '@/services/chat/personaContext';
 import type { ConversationMessage } from '@/services/chat/willbotPrompt';
 import { savePrompt } from '@/services/promptTrackingService';
+import {
+  prepareTerminalParagraphLine,
+  spansToLineLinks,
+  wrapTextWithOffsets,
+} from '@/utils/crHeroTerminalLinks';
 
 const TERMINAL_STATE_KEY = 'crtTerminalState';
 const TERMINAL_META_KEY = 'crtTerminalMeta';
+const TERMINAL_LINK_HINT_KEY = 'crtLinkHintSeen';
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
@@ -95,49 +102,6 @@ function waitForDimensions(el: HTMLElement): Promise<void> {
   });
 }
 
-// Strip markdown syntax that looks noisy in a plain-text terminal.
-// Preserves bare [text] bracket links (they are hoverable/clickable in the terminal).
-// Only strips markdown-URL form [text](url) → [text] to keep the bracket as a link.
-function stripMarkdown(text: string): string {
-  return text
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '[$1]')  // [label](url) → [label]  (keep brackets)
-    .replace(/\*\*(.+?)\*\*/gs, '$1')             // **bold** → bold
-    .replace(/\*(.+?)\*/gs, '$1')                 // *italic* → italic
-    .replace(/`([^`]+)`/g, '$1')                  // `code` → code
-    .replace(/^#{1,6}\s+/gm, '');                 // # Heading → Heading
-}
-
-// Extract bracket links from a line of text, returning { label, colStart, colEnd }[]
-// colStart/colEnd are 0-indexed character positions within the line.
-function extractBracketLinks(line: string): { label: string; colStart: number; colEnd: number }[] {
-  const results: { label: string; colStart: number; colEnd: number }[] = [];
-  const re = /\[([^\]]+)\]/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(line)) !== null) {
-    results.push({ label: m[1]!, colStart: m.index, colEnd: m.index + m[0].length - 1 });
-  }
-  return results;
-}
-
-function wrapText(text: string, cols: number): string[] {
-  if (!text) return [''];
-  const words = text.split(' ');
-  const lines: string[] = [];
-  let current = '';
-  for (const word of words) {
-    if (current.length === 0) {
-      current = word;
-    } else if (current.length + 1 + word.length <= cols) {
-      current += ' ' + word;
-    } else {
-      lines.push(current);
-      current = word;
-    }
-  }
-  if (current.length > 0) lines.push(current);
-  return lines.length > 0 ? lines : [''];
-}
-
 const CRTHero = () => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -157,8 +121,13 @@ const CRTHero = () => {
   const ghostTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
   const ghostVisibleRef = useRef(false);
   const lastTopicRef = useRef("Will's work");
-  /** Registry of bracket links rendered in the terminal: row/col positions for hover detection */
-  const linkRegistryRef = useRef<{ row: number; colStart: number; colEnd: number; label: string }[]>([]);
+  /** Registry of clickable links: row/col + href for navigation */
+  const linkRegistryRef = useRef<
+    { row: number; colStart: number; colEnd: number; label: string; href: string }[]
+  >([]);
+  const navigate = useNavigate();
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
   /** Currently hovered link index in the registry, or -1 */
   const hoveredLinkRef = useRef<number>(-1);
   /** Cached scale factor from applyLayout for mouse→cell conversion */
@@ -173,6 +142,18 @@ const CRTHero = () => {
   const setGhostTextRef = useRef(setGhostText);
   /** Row index (xterm buffer) at which the ghost overlay should be positioned */
   const ghostRowRef = useRef<number>(0);
+
+  // Ctrl+click hint overlay — shown when hovering a link.
+  // bright=true when Ctrl/Cmd is held (ready to click); false shows the "hold Ctrl" nudge.
+  const [hoverHint, setHoverHint] = useState<{
+    text: string;
+    bright: boolean;
+    /** viewport-relative row of the hovered link */
+    viewportRow: number;
+    /** left offset in unscaled terminal pixels from the terminal text area origin */
+    colPx: number;
+  } | null>(null);
+  const setHoverHintRef = useRef(setHoverHint);
 
   useEffect(() => {
     const wrapper = wrapperRef.current;
@@ -295,11 +276,14 @@ const CRTHero = () => {
       const pixelToCell = (offsetX: number, offsetY: number): { col: number; row: number } => {
         const scale = scaleRef.current;
         const { w: cw, h: ch } = cellDimsRef.current;
-        // The CRT canvas is offset by FRAME_M*scale from the container edge
+        // offsetX/Y is measured from container.getBoundingClientRect().left/top.
+        // The container is positioned at CSS left: -FRAME_M*scale to hide the bezel shadow,
+        // so its rendered left edge is FRAME_M*scale to the left of the visible terminal area.
+        // Dividing by scale gives unscaled coords within the container; subtracting FRAME_M
+        // converts to coords within the terminal text area (where xterm starts rendering).
         const FRAME_M = 30;
-        const frameOffset = FRAME_M * scale;
-        const termX = (offsetX + frameOffset) / scale;
-        const termY = (offsetY + frameOffset) / scale;
+        const termX = offsetX / scale - FRAME_M;
+        const termY = offsetY / scale - FRAME_M;
         // xterm renders with a small viewport margin (~3px left, varies)
         const XTERM_PAD_LEFT = 3;
         const XTERM_PAD_TOP = 3;
@@ -315,6 +299,43 @@ const CRTHero = () => {
         );
       };
 
+      const navigateToHref = (href: string) => {
+        try {
+          const u = new URL(href, window.location.origin);
+          if (u.protocol === 'mailto:' || u.protocol === 'tel:') {
+            window.location.assign(href);
+            return;
+          }
+          if (u.origin === window.location.origin) {
+            navigateRef.current(`${u.pathname}${u.search}${u.hash}`);
+          } else {
+            window.open(href, '_blank', 'noopener,noreferrer');
+          }
+        } catch {
+          window.open(href, '_blank', 'noopener,noreferrer');
+        }
+      };
+
+      /** Whether Ctrl or Cmd is currently held — used for Ctrl+click link activation */
+      let ctrlHeld = false;
+
+      /** Show (or refresh) the hint overlay for the currently hovered link. */
+      const showLinkHint = (linkIdx: number, ctrl: boolean) => {
+        const link = linkRegistryRef.current[linkIdx];
+        if (!link) return;
+        const viewportY = (xterm as unknown as { buffer: { active: { viewportY: number } } }).buffer.active.viewportY;
+        const viewportRow = link.row - viewportY;
+        const colPx = link.colStart * cellDimsRef.current.w;
+        const isMac = navigator.platform.startsWith('Mac') || navigator.userAgent.includes('Mac');
+        if (ctrl) {
+          setHoverHintRef.current({ text: `${isMac ? '⌘' : 'Ctrl'}+click to open →`, bright: true, viewportRow, colPx });
+          container.style.cursor = 'pointer';
+        } else {
+          setHoverHintRef.current({ text: `hold ${isMac ? '⌘' : 'Ctrl'} to follow link`, bright: false, viewportRow, colPx });
+          container.style.cursor = 'text';
+        }
+      };
+
       const handleMouseMove = (e: MouseEvent) => {
         if (isProcessingRef.current || isBootingRef.current) return;
         const rect = container.getBoundingClientRect();
@@ -328,49 +349,59 @@ const CRTHero = () => {
             if (prev) {
               const absRow = prev.row - (xterm as unknown as { buffer: { active: { viewportY: number } } }).buffer.active.viewportY;
               xterm.write(`\x1b[${absRow + 1};${prev.colStart + 1}H\x1b[27m`);
-              // Re-write the original text (brackets included) in normal color
-              const label = `[${prev.label}]`;
-              xterm.write(label);
-              // Return cursor to current prompt position
+              xterm.write(prev.label);
               xterm.write('\x1b[?25l');
             }
+            setHoverHintRef.current(null);
           }
           // Apply new hover
           if (idx >= 0) {
             const link = linkRegistryRef.current[idx]!;
             const absRow = link.row - (xterm as unknown as { buffer: { active: { viewportY: number } } }).buffer.active.viewportY;
             xterm.write(`\x1b[${absRow + 1};${link.colStart + 1}H\x1b[7m`);
-            const label = `[${link.label}]`;
-            xterm.write(label);
+            xterm.write(link.label);
             xterm.write('\x1b[0m\x1b[?25l');
-            container.style.cursor = 'pointer';
+            showLinkHint(idx, ctrlHeld);
           } else {
             container.style.cursor = 'text';
+            setHoverHintRef.current(null);
             xterm.write(SHOW_CURSOR);
           }
           hoveredLinkRef.current = idx;
         }
       };
 
-      const handleLinkClick = (e: MouseEvent) => {
+      const handleContainerClick = (e: MouseEvent) => {
         if (isProcessingRef.current || isBootingRef.current) return;
         const rect = container.getBoundingClientRect();
         const { col, row } = pixelToCell(e.clientX - rect.left, e.clientY - rect.top);
         const idx = findLinkAt(col, row);
-        if (idx >= 0) {
+        if (idx >= 0 && (e.ctrlKey || e.metaKey)) {
           const link = linkRegistryRef.current[idx]!;
           hoveredLinkRef.current = -1;
-          const query = `Tell me more about "${link.label}".`;
-          lastTopicRef.current = link.label.slice(0, 120);
+          setHoverHintRef.current(null);
+          e.preventDefault();
           xterm.write(SHOW_CURSOR);
-          // Simulate user typing the query
-          xterm.write(`\r\n> ${query}\r\n`);
-          handleUserInput(query);
+          navigateToHref(link.href);
+          return;
+        }
+        if (isBootingRef.current) bootAbortRef.current = true;
+        xterm.focus();
+      };
+
+      /** Refresh hint when Ctrl/Cmd is pressed or released while hovering a link. */
+      const handleKeyModifier = (e: KeyboardEvent) => {
+        if (e.key !== 'Control' && e.key !== 'Meta') return;
+        ctrlHeld = e.type === 'keydown';
+        if (hoveredLinkRef.current >= 0) {
+          showLinkHint(hoveredLinkRef.current, ctrlHeld);
         }
       };
 
       container.addEventListener('mousemove', handleMouseMove);
-      container.addEventListener('click', handleLinkClick);
+      container.addEventListener('click', handleContainerClick);
+      document.addEventListener('keydown', handleKeyModifier);
+      document.addEventListener('keyup', handleKeyModifier);
 
       // ── Helpers ──────────────────────────────────────────────────────────────
       const writePrompt = () => xterm.write('> ');
@@ -503,11 +534,10 @@ const CRTHero = () => {
       };
 
       const writeResponse = async (raw: string) => {
-        const responseText = stripMarkdown(raw);
         const cols = (xterm as unknown as { cols: number }).cols || 80;
-        const paragraphs = responseText.split('\n');
+        const baseOrigin = window.location.origin;
+        const paragraphs = raw.split('\n');
 
-        // Try to update cached cell dimensions from xterm internals
         try {
           const core = (xterm as unknown as { _core: { _renderService: { dimensions: { actualCellWidth: number; actualCellHeight: number } } } })._core;
           const dims = core._renderService.dimensions;
@@ -516,26 +546,42 @@ const CRTHero = () => {
           }
         } catch { /* ignore — fallback values remain */ }
 
+        let foundLinksInResponse = false;
         for (const para of paragraphs) {
           if (para.trim() === '') {
             xterm.write('\r\n');
             await sleep(15);
             continue;
           }
-          for (const line of wrapText(para, cols - 6)) {
-            // Register any bracket links on this line before writing
-            const currentRow = (xterm as unknown as { buffer: { active: { cursorY: number } } }).buffer.active.cursorY;
-            const links = extractBracketLinks(line);
-            const currentCol = 0; // lines always start at col 0 after \r\n
+          const { text: prepared, spans } = prepareTerminalParagraphLine(para, baseOrigin);
+          const wrapped = wrapTextWithOffsets(prepared, cols - 6);
+          for (const { line, startOffset } of wrapped) {
+            const activeBuf = (xterm as unknown as { buffer: { active: { cursorY: number; viewportY: number } } }).buffer.active;
+            const currentRow = activeBuf.cursorY + activeBuf.viewportY;
+            const links = spansToLineLinks(line, startOffset, spans);
             for (const link of links) {
               linkRegistryRef.current.push({
                 row: currentRow,
-                colStart: currentCol + link.colStart,
-                colEnd: currentCol + link.colEnd,
+                colStart: link.colStart,
+                colEnd: link.colEnd,
                 label: link.label,
+                href: link.href,
               });
+              foundLinksInResponse = true;
             }
             await writeTypewriter(line, 5);
+            xterm.write('\r\n');
+          }
+        }
+
+        // One-time hint: tell the user how to follow links the first time they appear.
+        if (foundLinksInResponse) {
+          const hintSeen = (() => { try { return localStorage.getItem(TERMINAL_LINK_HINT_KEY); } catch { return null; } })();
+          if (!hintSeen) {
+            try { localStorage.setItem(TERMINAL_LINK_HINT_KEY, '1'); } catch { /* ignore */ }
+            const isMac = navigator.platform.startsWith('Mac') || navigator.userAgent.includes('Mac');
+            xterm.write('\r\n');
+            await writeTypewriter(`Tip: hold ${isMac ? '⌘ Cmd' : 'Ctrl'} and click any [link] to open it.`, 5);
             xterm.write('\r\n');
           }
         }
@@ -772,11 +818,6 @@ const CRTHero = () => {
         }
       });
 
-      const handleClick = () => {
-        if (isBootingRef.current) bootAbortRef.current = true;
-        xterm.focus();
-      };
-      container.addEventListener('click', handleClick);
 
       // ── Boot sequence or state restore ────────────────────────────────────
       (async () => {
@@ -825,9 +866,10 @@ const CRTHero = () => {
 
       (container as HTMLElement & { _crtCleanup?: () => void })._crtCleanup = () => {
         resizeObserver?.disconnect();
-        container.removeEventListener('click', handleClick);
+        container.removeEventListener('click', handleContainerClick);
         container.removeEventListener('mousemove', handleMouseMove);
-        container.removeEventListener('click', handleLinkClick);
+        document.removeEventListener('keydown', handleKeyModifier);
+        document.removeEventListener('keyup', handleKeyModifier);
       };
     })();
 
@@ -914,6 +956,39 @@ const CRTHero = () => {
             {ghostText}
           </div>
         )}
+
+        {/* Ctrl+click hint overlay — shown when hovering a registered link.
+            Appears on the row above the link (or below if link is near top).
+            bright=true when Ctrl/Cmd is held and the link is ready to activate. */}
+        {hoverHint && (() => {
+          const ch = cellDimsRef.current.h * scaleRef.current;
+          const cw = cellDimsRef.current.w * scaleRef.current;
+          const hintRow = hoverHint.viewportRow > 0 ? hoverHint.viewportRow - 1 : hoverHint.viewportRow + 1;
+          return (
+            <div
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                top: hintRow * ch,
+                left: hoverHint.colPx * scaleRef.current + cw * 0,
+                lineHeight: `${ch}px`,
+                fontSize: `${ch * 0.65}px`,
+                fontFamily: 'monospace',
+                color: hoverHint.bright ? '#88c0d0' : '#4a7a9b',
+                opacity: hoverHint.bright ? 0.9 : 0.6,
+                pointerEvents: 'none',
+                whiteSpace: 'pre',
+                zIndex: 11,
+                userSelect: 'none',
+                background: 'rgba(17,17,24,0.85)',
+                padding: '0 4px',
+                borderRadius: 2,
+              }}
+            >
+              {hoverHint.text}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
