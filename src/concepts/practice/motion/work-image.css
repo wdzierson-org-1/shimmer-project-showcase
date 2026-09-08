@@ -1,0 +1,21 @@
+.work-image { display:block; position:relative; width:100%; min-width:0; transform-origin:center 55%; }
+.work-image-plane { display:block; position:relative; width:100%; border-radius:3px; overflow:hidden; background:#e4e7dc; }
+.work-image-feature .work-image-plane { box-shadow:0 1px 1px #2c39241a,0 15px 26px -20px #24392266; }
+.work-image img { display:block; width:100%; height:auto; }
+.work-image-mask { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.work-image[data-reveal='waiting'] .work-image-plane::after { content:''; position:absolute; inset:0; background:#e4e7dc; pointer-events:none; }
+.work-image[data-reveal='building'] { will-change:transform; }
+.work-image-archive,.work-image-archive .work-image-plane { height:100%; }
+.work-image-archive .work-image-plane { border-radius:2px; }
+.work-image-detail .work-image-plane { border-radius:2px; }
+.practice .lead-case-image,.practice .featured-image { overflow:visible; perspective:1800px; }
+.practice .lead-case-image .work-image img,.practice .featured-image .work-image img,.practice .archive-image .work-image img { transform:none; opacity:1; transition:none; }
+.practice .gallery-stage:has(.work-image) { overflow:visible; background:transparent; }
+.practice .gallery-stage .work-image { flex:1; }
+.practice .archive-image:has(.work-image) { padding:0; }
+.practice .archive-image .work-image img { height:100%; object-fit:cover; }
+@media(prefers-reduced-motion:reduce){
+  .work-image,.work-image-plane { transform:none!important; }
+  .work-image-mask { display:none; }
+  .work-image[data-reveal='waiting'] .work-image-plane::after { display:none; }
+}

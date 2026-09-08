@@ -9,11 +9,9 @@ import { useEffect, useState } from "react";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
-import Index from "./pages/Index";
+import PortfolioRedirect from "./components/layout/PortfolioRedirect";
 import CommandPalette from "./components/command-palette/CommandPalette";
-import AllProjects from "./pages/AllProjects";
 import AllEntries from "./pages/AllEntries";
-import About from "./pages/About";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import AdminProjects from "./pages/AdminProjects"; 
@@ -23,7 +21,6 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminAbout from "./pages/AdminAbout";
 import ProjectEditor from "./pages/ProjectEditor";
 import ContentEditor from "./pages/ContentEditor";
-import ProjectDetail from "./pages/ProjectDetail";
 import ContentDetail from "./pages/ContentDetail";
 import NotFound from "./pages/NotFound";
 import { supabase } from "./integrations/supabase/client";
@@ -66,11 +63,11 @@ const App = () => {
           <BrowserRouter>
             <CommandPalette />
             <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/projects" element={<AllProjects />} />
-              <Route path="/about" element={<About />} />
+              <Route path="/" element={<PortfolioRedirect />} />
+              <Route path="/projects" element={<PortfolioRedirect />} />
+              <Route path="/about" element={<PortfolioRedirect />} />
               <Route path="/entries" element={<AllEntries />} />
-              <Route path="/project/:id" element={<ProjectDetail />} />
+              <Route path="/project/:id" element={<PortfolioRedirect />} />
               <Route path="/content/:id" element={<ContentDetail />} />
               <Route path="/login" element={<Auth />} />
               <Route path="/auth" element={<Auth />} />
