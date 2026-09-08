@@ -61,6 +61,13 @@ test('rail includes only complete, allowed citations, in answer order', () => {
   assert.deepEqual(citedSources(text, sources).map(s => s.id), ['b','a']);
   assert.deepEqual(citedSources('`[Code](#case=abc)`\n```\n[Code](#case=abc)\n```', sources), []);
 });
+test('canonical project citations accept relative links and the verified www alias, not invented domains', () => {
+  const sources = [{ id:'a', url:'https://dzierson.com/#case=abc' }];
+  for (const url of ['#case=abc', '/#case=abc', 'https://dzierson.com/#case=abc', 'https://www.dzierson.com/#case=abc']) {
+    assert.deepEqual(citedSources(`[Project](${url})`, sources).map(s => s.id), ['a']);
+  }
+  assert.deepEqual(citedSources('[Project](https://www.willdzierson.com/#case=abc)', sources), []);
+});
 test('edge handler keeps legacy JSON and forwards opt-in SSE incrementally', async () => {
   const requests = []; let upstream;
   const handler = createChatHandler('test-key', async (_url, options) => {

@@ -26,6 +26,8 @@ supabase functions deploy chat --project-ref uilvozcryifnpldfpwiz --use-api --no
 
 The `--no-verify-jwt` flag preserves the function's existing production setting (version 25 before this release); it does not change its access policy. Do not deploy unrelated functions or migrations as part of this frontend release.
 
+Streaming was activated and verified against the live function during release preparation. A browser request returned `text/event-stream`, displayed words before completion, and populated the rail with the cited Google Beijing project. A legacy request still returned HTTP 200 with `{ generatedText }`. Source records supply absolute `https://dzierson.com/` URLs to avoid model-invented hostnames; validation also recognizes relative links and the verified `www.dzierson.com` alias.
+
 ## Verification
 
 ```sh
@@ -36,6 +38,8 @@ npm run preview -- --host 127.0.0.1 --port 8082
 ```
 
 Browser checks cover the root homepage, 21 visible projects, gallery, old project URL compatibility, desktop and mobile layouts, the career story player, lazy CRT terminal and keyboard movement, Ask AI, and the existing admin sign-in. Route verification intercepts the legacy application's schema initialization request rather than performing a schema change.
+
+Thirteen chat and routing regression tests pass, along with the focused TypeScript check and production build. Vercel also built the initial release preview successfully; its protected entry page was verified through the authenticated CLI.
 
 The build retains size warnings for the optional CRT and legacy CMS bundles. Neither is requested by the public homepage before it is needed.
 
