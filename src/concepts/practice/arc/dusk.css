@@ -1,0 +1,36 @@
+/* An abstract evening landscape. The sky and hills remain visible without either renderer. */
+.career-arc { --arc-ink:#f4eceb; --arc-quiet:#cec0d7; --arc-rule:#dbcce02e; }
+.career-arc .arc-stage { background:#514563; }
+.arc-dusk,.arc-dusk-landscape,.arc-dusk-shade,.arc-dusk>canvas { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.arc-dusk { overflow:hidden; }
+.arc-dusk-landscape { display:block; }
+.arc-dusk-shade { background:linear-gradient(90deg,#29263eda 0%,#302c47ad 28%,#3d365133 58%,transparent 77%),linear-gradient(0deg,#24263bd1,transparent 25%); }
+.arc-stage::before { background:none; box-shadow:inset 0 0 110px #27253c28,inset 0 0 0 1px #efcfdd18; }
+.arc-stage .arc-grain { opacity:.035; }
+.arc-stage .arc-heading { color:#e3d0e2; }
+.arc-stage .arc-credit { color:#e1ccdf; }
+.arc-stage .arc-copy h2 { color:#fff1e9; text-shadow:0 2px 22px #2e294633; }
+.arc-stage .arc-copy p { color:#e4d8e7; }
+.arc-stage .arc-evidence { color:#cabbcf; }
+.arc-stage .arc-signature { color:#bfb2cc; font-family:inherit; }
+.arc-stage .arc-signature>span:first-child::before { content:none; }
+.arc-stage .arc-start { background:#3c344c4d; border-color:#e8ccdc70; color:#fff0e4; }
+.practice .arc-stage .arc-start:hover { background:#41374d80; color:#fff4e8; }
+.arc-stage .arc-start small { color:#ded0de; }
+.arc-stage .arc-controls button,.arc-stage .arc-controls output { color:#dacee1; }
+.arc-stage .arc-controls input[type=range] { background:linear-gradient(to right,#e7cfbb var(--played,0%),#dbccdf30 var(--played,0%)); }
+.arc-stage .arc-controls input[type=range]::-webkit-slider-thumb { background:#f2d7bd; }
+.arc-stage .arc-controls input[type=range]::-moz-range-thumb { background:#f2d7bd; }
+.arc-stage .arc-atmosphere-toggle { color:#e2cfdf; }
+.arc-stage .arc-letter::before { color:#e4c9d7; }
+.arc-stage .arc-letter.is-caret::after { background:#f3dfc6; box-shadow:0 0 .2em #f6d3ab30; }
+.arc-firefly-cover { opacity:1; transition:opacity .8s; pointer-events:none; }
+.arc-firefly-cover svg { display:block; width:100%; height:100%; }
+.arc-stage.is-ready .arc-firefly-cover { opacity:0; }
+@media(prefers-reduced-motion:reduce) { .arc-firefly-cover { transition:none; } }
+@media(max-width:800px) {
+  .arc-dusk-landscape { height:74%; }
+  .arc-dusk { background:#302e49; }
+  .arc-dusk-shade { background:linear-gradient(0deg,#292a43 0%,#302e49 33%,#302e49c9 48%,#3b354b0d 74%),linear-gradient(90deg,#413a5526,transparent 70%); }
+  .arc-stage .arc-copy p { color:#ded5e5; }
+}

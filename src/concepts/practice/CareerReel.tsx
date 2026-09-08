@@ -3,15 +3,17 @@ import { ArrowRight, Maximize2, Minimize2, Pause, Play, RotateCcw, Volume2, Volu
 import { chapters, chapterAt, CHAPTER_SECONDS, DURATION, formatTime } from './arc/story';
 import type { SceneHandle } from './arc/AsciiScene';
 import DecodedTitle, { type TitleHandle } from './arc/DecodedTitle';
-import ShaderBackdrop, { type BackdropHandle } from './motion/ShaderBackdrop';
+import DuskAtmosphere, { type DuskHandle } from './arc/DuskAtmosphere';
+import FireflyCover from './arc/FireflyCover';
 import { useScrollExpansion } from './motion/useScrollExpansion';
 import './arc/arc.css';
+import './arc/dusk.css';
 const JourneyScene = lazy(() => import('./arc/JourneyScene'));
 
 export default function CareerReel() {
   const stage = useRef<HTMLDivElement>(null);
   const shell = useRef<HTMLDivElement>(null);
-  const backdrop = useRef<BackdropHandle>(null);
+  const backdrop = useRef<DuskHandle>(null);
   const scene = useRef<SceneHandle | null>(null);
   const title = useRef<TitleHandle | null>(null);
   const elapsed = useRef(0);
@@ -116,8 +118,8 @@ export default function CareerReel() {
         if (started && event.code === 'Space') { event.preventDefault(); toggle(); }
         if (started && ['ArrowLeft', 'ArrowRight'].includes(event.key)) { event.preventDefault(); seek(elapsed.current + (event.key === 'ArrowRight' ? 4 : -4)); }
       }}>
-      <ShaderBackdrop ref={backdrop} mode="rays" active={!started && !atmospherePaused} clocked={started}/>
-      <picture><source media="(max-width:800px)" srcSet="/portfolio/reel/question-art-mobile.webp"/><img className="arc-poster" src="/portfolio/reel/question-art.webp" alt="" aria-hidden="true" /></picture>
+      <DuskAtmosphere ref={backdrop} active={!started && !atmospherePaused} clocked={started}/>
+      <FireflyCover/>
       {started && !failed && <Suspense fallback={null}><JourneyScene onReady={onReady} onError={onError}/></Suspense>}
       <div className="arc-grain" aria-hidden="true" />
       <div className="arc-heading"><span>Will Dzierson / Still asking why</span><span>{started ? current.period : 'A designer’s journey'}</span></div>

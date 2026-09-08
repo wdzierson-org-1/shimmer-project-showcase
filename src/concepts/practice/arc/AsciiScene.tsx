@@ -3,7 +3,7 @@ import { CHAPTER_SECONDS, chapterAt } from './story';
 import { craftSculpture, globeSculpture, heartSculpture, knowledgeSculpture, phoneSculpture, questionSculpture, sourceSculpture, type Sculpture, type Vec3 } from './journeyGeometry';
 
 export type SceneHandle = { render: (seconds: number, still?: boolean) => void };
-type Props = { onReady: (handle: SceneHandle) => void; onError: () => void };
+type Props = { onReady: (handle: SceneHandle) => void; onError: () => void; fireflies?: boolean };
 const TAU = Math.PI * 2;
 const GLYPHS = ['.', ':', '-', '~', '+', '=', 'x', '*', '#', '%', '@'];
 const INKS = [[207, 231, 203], [168, 214, 185], [188, 227, 218], [247, 191, 150], [222, 223, 177], [217, 232, 204]];
@@ -13,7 +13,7 @@ const noise = (n: number) => { const x = Math.sin(n * 127.1) * 43758.5453; retur
 type Pose = { x?: number; y?: number; z?: number; scale?: number; yaw?: number; pitch?: number; roll?: number; light?: number };
 
 /** A lit, depth-buffered ASCII renderer. Geometry is cached; animation follows only the player's clock. */
-export default function AsciiScene({ onReady, onError }: Props) {
+export default function AsciiScene({ onReady, onError, fireflies = false }: Props) {
   const mount = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const host = mount.current;
@@ -28,11 +28,20 @@ export default function AsciiScene({ onReady, onError }: Props) {
     const atlas = document.createElement('canvas'), ac = atlas.getContext('2d');
     if (!ac) { canvas.remove(); onError(); return; }
     const aw = 24, ah = 38, levels = 16;
+    const inks = fireflies ? [[243,221,181], [235,216,188], [225,220,240], [242,207,176], [238,224,184], [244,223,191]] : INKS;
     atlas.width = GLYPHS.length * aw; atlas.height = INKS.length * levels * ah;
     ac.font = '29px ui-monospace, monospace'; ac.textAlign = 'center'; ac.textBaseline = 'middle';
-    INKS.forEach((ink, color) => { for (let l = 0; l < levels; l++) {
+    inks.forEach((ink, color) => { for (let l = 0; l < levels; l++) {
       ac.fillStyle = `rgba(${ink.join(',')},${.13 + l / 15 * .87})`;
-      GLYPHS.forEach((glyph, i) => ac.fillText(glyph, (i + .5) * aw, (color * levels + l + .5) * ah));
+      GLYPHS.forEach((glyph, i) => {
+        const x = (i + .5) * aw, y = (color * levels + l + .5) * ah;
+        if (!fireflies) { ac.fillText(glyph, x, y); return; }
+        const glow = ac.createRadialGradient(x, y, 0, x, y, aw * .49);
+        glow.addColorStop(0, `rgba(${ink.join(',')},${.2 + l / 15 * .8})`);
+        glow.addColorStop(.15, `rgba(${ink.join(',')},${.1 + l / 15 * .6})`);
+        glow.addColorStop(.4, `rgba(${ink.join(',')},.12)`); glow.addColorStop(1, `rgba(${ink.join(',')},0)`);
+        ac.fillStyle = glow; ac.fillRect(i * aw, y - ah / 2, aw, ah);
+      });
     } });
     let width = 1, height = 1, columns = 1, rows = 1, cw = 1, ch = 1, unit = 1;
     let depth = new Float32Array(0), light = new Float32Array(0), seeds = new Float32Array(0);
@@ -77,6 +86,7 @@ export default function AsciiScene({ onReady, onError }: Props) {
         px - cw * size / 2, py - ch * size / 2, cw * size, ch * size);
     }
     function atmosphere(t: number) {
+      if (fireflies) return;
       ctx!.fillStyle = '#c4debf18';
       const step = width < 500 ? 26 : 38;
       for (let x = step; x < width - step; x += step) for (let y = step * 2; y < height - step; y += step) ctx!.fillRect(x, y, .7, .7);
@@ -94,7 +104,13 @@ export default function AsciiScene({ onReady, onError }: Props) {
       const f = 4.8 / (4.8 - p[2]); return [width * .52 + p[0] * unit * f, height * .49 + p[1] * unit * f];
     }
     function path(fn: (u: number) => Vec3, ink: number, alpha: number, phase?: number) {
-      ctx!.strokeStyle = `rgba(${INKS[ink].join(',')},${alpha})`; ctx!.lineWidth = .65;
+      if (fireflies) {
+        for (let i = 0; i <= 100; i += 3) {
+          const [x, y] = project(fn(i / 100)); character(x, y, alpha * 1.6, ink, noise(i + ink), .9);
+        }
+        return;
+      }
+      ctx!.strokeStyle = `rgba(${inks[ink].join(',')},${alpha})`; ctx!.lineWidth = .65;
       ctx!.beginPath();
       for (let i = 0; i <= 120; i++) { const [x, y] = project(fn(i / 120)); if (i === 0) ctx!.moveTo(x, y); else ctx!.lineTo(x, y); }
       ctx!.stroke();
@@ -164,7 +180,9 @@ export default function AsciiScene({ onReady, onError }: Props) {
         const highlight = Math.max(0, -nx * .24 - ny * .3 + nz * .92);
         const h2 = highlight * highlight, h4 = h2 * h2, h8 = h4 * h4, rim = 1 - nz;
         const value = (.17 + diffuse * .61 + h8 * h8 * h2 * .24 + rim * rim * rim * .22) * light[i];
-        character(x, y, value, stage, seeds[i]);
+        if (fireflies && seeds[i] < .3) continue;
+        const pulse = fireflies ? .45 + .55 * Math.pow(.5 + .5 * Math.sin(t * .7 + seeds[i] * 97), 2) : 1;
+        character(x, y, value * pulse, stage, seeds[i], fireflies ? 1.5 : 1);
       }
       accents(stage, t, true); ctx!.restore();
     }
@@ -196,6 +214,6 @@ export default function AsciiScene({ onReady, onError }: Props) {
     };
     const observer = new ResizeObserver(resize); observer.observe(host); resize(); onReady({ render });
     return () => { disposed = true; observer.disconnect(); canvas.remove(); atlas.width = 0; };
-  }, [onReady, onError]);
+  }, [onReady, onError, fireflies]);
   return <div className="arc-canvas" ref={mount} aria-hidden="true" />;
 }
