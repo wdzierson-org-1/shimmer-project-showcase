@@ -6,7 +6,7 @@ import DecodedTitle, { type TitleHandle } from './arc/DecodedTitle';
 import ShaderBackdrop, { type BackdropHandle } from './motion/ShaderBackdrop';
 import { useScrollExpansion } from './motion/useScrollExpansion';
 import './arc/arc.css';
-const AsciiScene = lazy(() => import('./arc/AsciiScene'));
+const JourneyScene = lazy(() => import('./arc/JourneyScene'));
 
 export default function CareerReel() {
   const stage = useRef<HTMLDivElement>(null);
@@ -118,13 +118,13 @@ export default function CareerReel() {
       }}>
       <ShaderBackdrop ref={backdrop} mode="rays" active={!started && !atmospherePaused} clocked={started}/>
       <picture><source media="(max-width:800px)" srcSet="/portfolio/reel/question-art-mobile.webp"/><img className="arc-poster" src="/portfolio/reel/question-art.webp" alt="" aria-hidden="true" /></picture>
-      {started && !failed && <Suspense fallback={null}><AsciiScene onReady={onReady} onError={onError}/></Suspense>}
+      {started && !failed && <Suspense fallback={null}><JourneyScene onReady={onReady} onError={onError}/></Suspense>}
       <div className="arc-grain" aria-hidden="true" />
       <div className="arc-heading"><span>Will Dzierson / Still asking why</span><span>{started ? current.period : 'A designer’s journey'}</span></div>
       <div className="arc-copy" key={started ? chapter : 'cover'}>
         <span className="arc-credit">{started ? current.credit : 'It all started with a question.'}</span>
         <DecodedTitle ref={title} text={started ? current.title : 'How can this\nbe made better?'} time={elapsed.current - chapter * CHAPTER_SECONDS} animate={started && playing && !manual}/>
-        <p>{started ? current.body : 'A little curiosity. A lifetime of making. And the feeling that we’re only getting started.'}</p>
+        <p>{started ? current.body : 'One question. Twenty-five years of turning curiosity into things people can use.'}</p>
         {started && <span className="arc-evidence">{current.evidence}</span>}
       </div>
       {!started && <button className="arc-start" onClick={begin}><Play size={16} fill="currentColor"/><span>{reduced ? 'Explore the story' : 'Play the story'}<small>{reduced ? 'Six chapters · At your pace' : `${formatTime(DURATION)} · A short story`}</small></span></button>}
@@ -142,7 +142,7 @@ export default function CareerReel() {
     </div>
     </div>
     <div className="arc-meta"><span>Still asking why.</span><span>{started ? manual ? 'Explore at your own pace' : 'Sound optional' : 'An animated story, in six chapters'}</span></div>
-    {started && <nav className="arc-chapters" aria-label="Career story chapters">{chapters.map((item, i) => <button key={item.name} aria-pressed={chapter === i} onClick={() => seek(i * CHAPTER_SECONDS + (manual || !playing ? 2 : 0))}><span>0{i + 1}</span>{item.name}</button>)}</nav>}
+    {started && <nav className="arc-chapters" aria-label="Career story chapters">{chapters.map((item, i) => <button key={item.name} aria-pressed={chapter === i} onClick={() => seek(i * CHAPTER_SECONDS + (manual || !playing ? 3.2 : 0))}><span>0{i + 1}</span>{item.name}</button>)}</nav>}
     <details className="arc-transcript"><summary>Read the story</summary><div>{chapters.map(item => <article key={item.name}><span>{item.period} / {item.credit}</span><h3>{item.title.replace(/\n/g, ' ')}</h3><p>{item.body}</p><small>{item.evidence}</small></article>)}<p className="arc-source-note">Adapted from Will’s own reflections, with career details drawn from his résumé and published work. Noodle operated in 2023–2025 and has since dissolved.</p></div></details>
     {started && <audio ref={audio} src="/portfolio/reel/question-score.m4a" preload="none" onError={() => setSound(false)}/>}
   </section>;

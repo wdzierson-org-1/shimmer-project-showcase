@@ -3,14 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { withProjectOrder } from '@/lib/projectOrder';
 export type Media = { image_url: string; caption: string | null; media_type: string | null; video_thumbnail_url: string | null; display_order: number | null; is_primary: boolean | null };
 export type PortfolioProject = { id: string; title: string; client: string; description: string; involvement: string | null; year: number | null; liveurl: string | null; project_images: Media[]; tags: string[] };
-export const featuredIds = ['a29df936-41db-4244-b968-203b71235c76','dff59819-cbc1-46ab-8cef-011e0e2a963f','04193cf2-c3f0-4698-89d5-7593e1f29563','ab7e77cd-080f-43c8-b583-2d69a83f1509','7b4a9961-a088-46f4-bc88-8f0d64589227','d8307ba2-cc0e-4fc5-bc00-48fd5458dd08'];
+export const featuredIds = ['a29df936-41db-4244-b968-203b71235c76','dff59819-cbc1-46ab-8cef-011e0e2a963f','04193cf2-c3f0-4698-89d5-7593e1f29563','e7149d46-fad6-477b-a91c-77e76723df7d','7b4a9961-a088-46f4-bc88-8f0d64589227','d8307ba2-cc0e-4fc5-bc00-48fd5458dd08'];
 export const featuredCopy = [
  ['See the risk. Know where to act.','Turning complex disease signals into a clear operational picture for global enterprises.','The Public Health Company / Decision intelligence'],
- ['Research that changed the product brief.','Three months of field research, team mentorship, and product exploration with Google Beijing.','Google Beijing / Project Backpack'],
- ['Designing for a much longer future.','An exploration of textiles, materials science, and the preservation of human knowledge.','Project Ariadne / Research'],
- ['A clearer gateway to care.','Evaluating and refining the Optum Store homepage through usability analysis and prototyping.','Optum Store / Commerce'],
- ['Bringing the museum into your hands.','A location-aware guide, designed and developed for Smithsonian visitors.','Smithsonian / SIguide'],
- ['An operating system built around intelligence.','A working exploration of persistent agents, shared memory, and natural-language interaction.','Agentic OS / Design & engineering'],
+ ['A microethnography with strategic imperative.','Three months of field research, team mentorship, and product exploration with Google Beijing.','Google Beijing / Project Backpack'],
+ ['Inspiration from the distant past to inform the distant future.','An exploration of textiles, materials science, and the preservation of human knowledge.','Project Ariadne / Research'],
+ ['An AI companion for complex care.','Co-founded and co-built a platform that brought scattered health records into a patient’s own conversational workspace.','Noodle AI / Founder & builder'],
+ ['A location-aware guide for the Smithsonian.','A location-aware guide, designed and developed for Smithsonian visitors.','Smithsonian / SIguide'],
+ ['A browser-based OS built with AI. From the ground up.','A working exploration of persistent agents, shared memory, and natural-language interaction.','Agentic OS / Design & engineering'],
 ];
 export function cover(p: PortfolioProject) { const preferred: Record<string,number>={'d8307ba2-cc0e-4fc5-bc00-48fd5458dd08':9,'dff59819-cbc1-46ab-8cef-011e0e2a963f':3}; const m=p.project_images.find(m=>m.display_order===preferred[p.id])||p.project_images.find(m=>m.is_primary)||p.project_images[0]; return m?.media_type==='video'?m.video_thumbnail_url:m?.image_url; }
 export function usePortfolioProjects(){
