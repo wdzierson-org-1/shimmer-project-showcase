@@ -35,7 +35,8 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
       ac.fillStyle = `rgba(${ink.join(',')},${.13 + l / 15 * .87})`;
       GLYPHS.forEach((glyph, i) => {
         const x = (i + .5) * aw, y = (color * levels + l + .5) * ah;
-        if (!fireflies) { ac.fillText(glyph, x, y); return; }
+        ac.fillStyle = `rgba(${ink.join(',')},${.13 + l / 15 * .87})`;
+        if (!fireflies || i !== 7) { ac.fillText(glyph, x, y); return; }
         const glow = ac.createRadialGradient(x, y, 0, x, y, aw * .49);
         glow.addColorStop(0, `rgba(${ink.join(',')},${.2 + l / 15 * .8})`);
         glow.addColorStop(.15, `rgba(${ink.join(',')},${.1 + l / 15 * .6})`);
@@ -104,12 +105,6 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
       const f = 4.8 / (4.8 - p[2]); return [width * .52 + p[0] * unit * f, height * .49 + p[1] * unit * f];
     }
     function path(fn: (u: number) => Vec3, ink: number, alpha: number, phase?: number) {
-      if (fireflies) {
-        for (let i = 0; i <= 100; i += 3) {
-          const [x, y] = project(fn(i / 100)); character(x, y, alpha * 1.6, ink, noise(i + ink), .9);
-        }
-        return;
-      }
       ctx!.strokeStyle = `rgba(${inks[ink].join(',')},${alpha})`; ctx!.lineWidth = .65;
       ctx!.beginPath();
       for (let i = 0; i <= 120; i++) { const [x, y] = project(fn(i / 120)); if (i === 0) ctx!.moveTo(x, y); else ctx!.lineTo(x, y); }
@@ -180,9 +175,8 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
         const highlight = Math.max(0, -nx * .24 - ny * .3 + nz * .92);
         const h2 = highlight * highlight, h4 = h2 * h2, h8 = h4 * h4, rim = 1 - nz;
         const value = (.17 + diffuse * .61 + h8 * h8 * h2 * .24 + rim * rim * rim * .22) * light[i];
-        if (fireflies && seeds[i] < .3) continue;
-        const pulse = fireflies ? .45 + .55 * Math.pow(.5 + .5 * Math.sin(t * .7 + seeds[i] * 97), 2) : 1;
-        character(x, y, value * pulse, stage, seeds[i], fireflies ? 1.5 : 1);
+        const pulse = fireflies ? .9 + .1 * Math.sin(t * .6 + seeds[i] * 97) : 1;
+        character(x, y, value * pulse, stage, seeds[i]);
       }
       accents(stage, t, true); ctx!.restore();
     }
