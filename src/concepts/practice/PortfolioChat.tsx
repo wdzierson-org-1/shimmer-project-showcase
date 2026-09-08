@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpRight, BookOpen, Check, Copy, MessageSquareText, Plus, Square } from 'lucide-react';
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '@/integrations/supabase/config';
+import { savePrompt } from '@/services/promptTrackingService';
 import type { PortfolioProject } from './projects';
 import { portfolioInstructions, retrieveProjects, retrieveWriting } from './chatContext';
 import { articleSources, citedSources, projectSource, type ChatSource, type PortfolioArticle } from './chat/sources';
@@ -84,6 +85,9 @@ export default function PortfolioChat({ projects, articles, writingLoading, init
       }
     } finally {
       clearTimeout(timeout); clearTimeout(updateTimer);
+      // Use the terminal's prompt log, including failed or interrupted answers.
+      // Keep this outside the mounted-request guard so leaving the page still records the question.
+      void savePrompt(question, latest || (abort.signal.aborted ? 'Answer interrupted' : 'Error processing request'));
       if (controller.current === abort) { controller.current = null; setBusy(false); }
     }
   }

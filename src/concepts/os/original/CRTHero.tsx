@@ -5,6 +5,7 @@ import { Terminal } from '@xterm/xterm';
 import { SerializeAddon } from '@xterm/addon-serialize';
 import { processUserMessage } from './messageProcessor';
 import { classifyWillbotRequestMode } from './messageProcessor';
+import { savePrompt } from '@/services/promptTrackingService';
 import {
   generateShortcut1Response,
   generateShortcut2Response,
@@ -686,6 +687,7 @@ const CRTHero = ({ onNavigate }: { onNavigate: (href: string) => void }) => {
           } catch {
             text = "Sorry, something went wrong fetching that. Try asking directly.";
           }
+          void savePrompt(input, text);
           stopSpinner();
           xterm.write('\r\n');
           await writeResponse(text);
@@ -712,8 +714,9 @@ const CRTHero = ({ onNavigate }: { onNavigate: (href: string) => void }) => {
         let result: Awaited<ReturnType<typeof processUserMessage>>;
         try {
           result = await processUserMessage(input, conversationHistoryRef.current);
-
+          void savePrompt(input, result.content || '');
         } catch {
+          void savePrompt(input, 'Error processing request');
           stopWaitingState();
           xterm.write('\r\nSorry, something went wrong. Please try again.\r\n\r\n');
           isProcessingRef.current = false;
