@@ -1,8 +1,5 @@
 
 import React from 'react';
-import { Project } from '@/components/project/ProjectCard';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import ProjectBasicInfoFields from './ProjectBasicInfoFields';
 import ProjectDescriptionField from './ProjectDescriptionField';
 import ProjectImageUpload from './ProjectImageUpload';
@@ -59,8 +56,6 @@ const ProjectEditorForm = ({
   setInvolvement,
   year,
   setYear,
-  featured,
-  setFeatured,
   tags,
   setTags,
   newTag,
@@ -88,22 +83,6 @@ const ProjectEditorForm = ({
         year={year}
         setYear={setYear}
       />
-      
-      <div className="flex items-center gap-3">
-        <Switch
-          id="featured"
-          checked={featured}
-          onCheckedChange={setFeatured}
-        />
-        <Label htmlFor="featured" className="text-sm font-medium cursor-pointer">
-          Feature on homepage
-        </Label>
-        {featured && (
-          <span className="text-xs text-muted-foreground">
-            This project will appear in the Selected Work section
-          </span>
-        )}
-      </div>
       
       <ProjectUrlField
         liveUrl={liveUrl}

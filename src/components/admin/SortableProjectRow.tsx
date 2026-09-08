@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GripVertical, Edit, Trash2, Star } from 'lucide-react';
+import { GripVertical, Edit, Trash2 } from 'lucide-react';
 
 export interface AdminProject {
   id: string;
@@ -13,17 +13,18 @@ export interface AdminProject {
   description: string;
   imageUrl: string;
   tags: string[];
-  featured: boolean;
-  displayOrder: number;
+  displayOrder: number | null;
   createdAt: string | null;
 }
 
 interface SortableProjectRowProps {
   project: AdminProject;
   onDelete: (id: string) => void;
+  disabled?: boolean;
+  sortingDisabled?: boolean;
 }
 
-const SortableProjectRow = ({ project, onDelete }: SortableProjectRowProps) => {
+const SortableProjectRow = ({ project, onDelete, disabled = false, sortingDisabled = false }: SortableProjectRowProps) => {
   const {
     attributes,
     listeners,
@@ -32,7 +33,7 @@ const SortableProjectRow = ({ project, onDelete }: SortableProjectRowProps) => {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: project.id });
+  } = useSortable({ id: project.id, disabled: disabled || sortingDisabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -42,20 +43,24 @@ const SortableProjectRow = ({ project, onDelete }: SortableProjectRowProps) => {
   return (
     <div
       ref={setNodeRef}
+      data-project-id={project.id}
       style={style}
       className={`grid grid-cols-12 gap-4 p-4 items-center group ${
         isDragging ? 'opacity-50 bg-muted/50 z-10 relative shadow-lg rounded' : ''
       }`}
     >
       <div className="col-span-5 flex items-center gap-3">
-        <div
+        <button
+          type="button"
           ref={setActivatorNodeRef}
           {...attributes}
           {...listeners}
-          className="opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing flex-shrink-0 p-0.5 -ml-2 text-muted-foreground hover:text-foreground"
+          aria-label={`Reorder ${project.title}`}
+          disabled={disabled || sortingDisabled}
+          className="opacity-50 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity cursor-grab active:cursor-grabbing disabled:cursor-default disabled:opacity-20 flex-shrink-0 p-0.5 -ml-2 text-muted-foreground hover:text-foreground touch-none"
         >
           <GripVertical className="h-4 w-4" />
-        </div>
+        </button>
         <div className="w-16 h-12 bg-muted rounded overflow-hidden flex-shrink-0">
           <img
             src={project.imageUrl}
@@ -69,9 +74,6 @@ const SortableProjectRow = ({ project, onDelete }: SortableProjectRowProps) => {
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <h3 className="font-medium truncate">{project.title}</h3>
-            {project.featured && (
-              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 flex-shrink-0" />
-            )}
           </div>
           <p className="text-sm text-muted-foreground line-clamp-1">
             {project.description}
@@ -96,8 +98,8 @@ const SortableProjectRow = ({ project, onDelete }: SortableProjectRowProps) => {
         </div>
       </div>
       <div className="col-span-2 flex gap-2 justify-end">
-        <Button variant="ghost" size="icon" asChild>
-          <Link to={`/admin/project/${project.id}`}>
+        <Button variant="ghost" size="icon" asChild disabled={disabled}>
+          <Link to={`/admin/project/${project.id}`} aria-label={`Edit ${project.title}`} aria-disabled={disabled} tabIndex={disabled ? -1 : undefined} onClick={event => { if (disabled) event.preventDefault(); }}>
             <Edit className="h-4 w-4" />
           </Link>
         </Button>
@@ -105,6 +107,8 @@ const SortableProjectRow = ({ project, onDelete }: SortableProjectRowProps) => {
           variant="ghost"
           size="icon"
           className="text-destructive"
+          disabled={disabled}
+          aria-label={`Delete ${project.title}`}
           onClick={() => onDelete(project.id)}
         >
           <Trash2 className="h-4 w-4" />

@@ -23,6 +23,8 @@ interface SortableProjectListProps {
   projects: AdminProject[];
   onReorder: (activeId: string, overId: string) => void;
   onDelete: (id: string) => void;
+  disabled?: boolean;
+  sortingDisabled?: boolean;
 }
 
 const modifiers = [restrictToVerticalAxis, restrictToParentElement];
@@ -31,6 +33,8 @@ const SortableProjectList = ({
   projects,
   onReorder,
   onDelete,
+  disabled = false,
+  sortingDisabled = false,
 }: SortableProjectListProps) => {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -41,7 +45,7 @@ const SortableProjectList = ({
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (over && active.id !== over.id) {
+    if (!disabled && !sortingDisabled && over && active.id !== over.id) {
       onReorder(active.id as string, over.id as string);
     }
   };
@@ -71,6 +75,8 @@ const SortableProjectList = ({
               key={project.id}
               project={project}
               onDelete={onDelete}
+              disabled={disabled}
+              sortingDisabled={sortingDisabled}
             />
           ))}
         </div>

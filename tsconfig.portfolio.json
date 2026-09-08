@@ -1,5 +1,5 @@
 {
   "extends": "./tsconfig.app.json",
   "compilerOptions": { "allowSyntheticDefaultImports": true },
-  "include": ["src/concepts/practice/**/*.tsx", "src/concepts/practice/**/*.ts", "src/portfolio-route.ts", "src/vite-env.d.ts"]
+  "include": ["src/concepts/practice/**/*.tsx", "src/concepts/practice/**/*.ts", "src/pages/AdminProjects.tsx", "src/portfolio-route.ts", "src/vite-env.d.ts"]
 }
