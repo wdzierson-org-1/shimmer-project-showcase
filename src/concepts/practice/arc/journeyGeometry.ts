@@ -18,6 +18,17 @@ class Geometry {
   line(fn: (u: number) => Vec3, steps = 220, material = 1.15) {
     for (let i = 0; i <= steps; i++) this.point(fn(i / steps), [0, 0, 1], material);
   }
+  cylinder(a: Vec3, b: Vec3, radius: number, material = 1, steps = 64) {
+    const axis = normal(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+    const side = Math.abs(axis[2]) < .9 ? normal(-axis[1], axis[0], 0) : normal(0, -axis[2], axis[1]);
+    const across: Vec3 = [axis[1] * side[2] - axis[2] * side[1], axis[2] * side[0] - axis[0] * side[2], axis[0] * side[1] - axis[1] * side[0]];
+    this.surface(steps, 18, (u, v) => {
+      const c = Math.cos(v * TAU) * radius, s = Math.sin(v * TAU) * radius;
+      return [a[0] + (b[0] - a[0]) * u + side[0] * c + across[0] * s,
+        a[1] + (b[1] - a[1]) * u + side[1] * c + across[1] * s,
+        a[2] + (b[2] - a[2]) * u + side[2] * c + across[2] * s];
+    }, () => material);
+  }
   finish() { return new Float32Array(this.values); }
 }
 
@@ -94,6 +105,67 @@ export function phoneSculpture() {
   }
   g.line(u => [-.12 + u * .24, -.65, .069], 100, 1.35);
   g.line(u => [Math.cos(u * TAU) * .038, .65 + Math.sin(u * TAU) * .038, .069], 90, 1.1);
+  return g.finish();
+}
+
+/** A generic wrist-worn interface: curved band, rounded bezel, activity ring and hands. */
+export function wearableSculpture() {
+  const g = new Geometry();
+  const rounded = (x: number) => Math.sign(x) * Math.pow(Math.abs(x), .4);
+  g.surface(240, 18, (u, v) => {
+    const a = u * TAU, bevel = v * TAU;
+    return [rounded(Math.cos(a)) * (.44 + Math.cos(bevel) * .045), rounded(Math.sin(a)) * (.48 + Math.cos(bevel) * .045), .08 + Math.sin(bevel) * .075];
+  });
+  g.surface(112, 18, (u, v) => [rounded(Math.cos(u * TAU)) * .402 * v, rounded(Math.sin(u * TAU)) * .44 * v, .12], () => .12);
+  for (const side of [-1, 1]) {
+    g.surface(72, 24, (u, v) => [(v - .5) * (.54 - u * .1), side * (.49 + u * .55), -.02 - Math.sin(u * Math.PI / 2) * .17], () => .7);
+    for (const edge of [-1, 1]) g.line(u => [edge * (.27 - u * .05), side * (.49 + u * .55), -.02 - Math.sin(u * Math.PI / 2) * .17], 160, 1.1);
+    for (let rib = 0; rib < 9; rib++) {
+      const u = (rib + .5) / 9;
+      g.line(v => [(v - .5) * (.51 - u * .1), side * (.49 + u * .55), -.015 - Math.sin(u * Math.PI / 2) * .17], 36, .85);
+    }
+  }
+  g.line(u => [Math.cos(u * TAU * .83 - 1.2) * .285, Math.sin(u * TAU * .83 - 1.2) * .285, .139], 340, 1.35);
+  for (let i = 0; i < 12; i++) {
+    const angle = i / 12 * TAU;
+    g.line(u => [Math.cos(angle) * (.337 + u * .033), Math.sin(angle) * (.337 + u * .033), .137], 18, 1.05);
+  }
+  g.line(u => [-u * .12, -u * .13, .15], 85, 1.4);
+  g.line(u => [u * .16, -u * .2, .15], 110, 1.4);
+  g.cylinder([.455, .04, .035], [.57, .04, .035], .065, 1.1, 24);
+  return g.finish();
+}
+
+/** An articulated arm with rotary joints and an open gripper; deliberately not a product likeness. */
+export function roboticsSculpture() {
+  const g = new Geometry();
+  const shoulder: Vec3 = [-.46, .46, 0], elbow: Vec3 = [-.05, -.29, .02], wrist: Vec3 = [.6, -.66, .06];
+  const joint = (p: Vec3, radius: number) => {
+    g.surface(64, 28, (u, v) => {
+      const a = u * TAU, b = v * Math.PI;
+      return [p[0] + Math.cos(a) * Math.sin(b) * radius, p[1] + Math.sin(a) * Math.sin(b) * radius, p[2] + Math.cos(b) * radius * .75];
+    }, () => .9);
+    for (const r of [radius * .5, radius * .83]) g.line(u => [p[0] + Math.cos(u * TAU) * r, p[1] + Math.sin(u * TAU) * r, p[2] + radius * .78], 150, 1.25);
+  };
+  // A low, elliptical pedestal anchors the mechanism without a literal factory setting.
+  g.surface(128, 16, (u, v) => [-.46 + Math.cos(u * TAU) * .4, .76 + (v - .5) * .14, Math.sin(u * TAU) * .25], () => .85);
+  g.line(u => [-.46 + Math.cos(u * TAU) * .4, .69, Math.sin(u * TAU) * .25], 260, 1.1);
+  g.cylinder([-.46, .71, 0], shoulder, .16, .8, 32);
+  g.cylinder(shoulder, elbow, .12, .85);
+  g.cylinder(elbow, wrist, .095, .95);
+  // A second fine rail makes each link read as an engineered assembly.
+  g.cylinder([-.57, .42, .09], [-.16, -.29, .11], .023, 1.2, 48);
+  g.cylinder([-.01, -.18, .11], [.63, -.55, .15], .02, 1.2, 48);
+  joint(shoulder, .23); joint(elbow, .2); joint(wrist, .15);
+  const tip: Vec3 = [.84, -.55, .07];
+  g.cylinder(wrist, tip, .075, 1.05, 30);
+  // Two offset fingers open around a small pocket of air.
+  for (const side of [-1, 1]) {
+    const root: Vec3 = [tip[0] - side * .04, tip[1] + side * .09, tip[2]];
+    const bend: Vec3 = [1.02 - side * .035, -.37 + side * .16, .07];
+    const end: Vec3 = [1.13 - side * .035, -.26 + side * .1, .07];
+    g.cylinder(root, bend, .035, 1.2, 32); g.cylinder(bend, end, .032, 1.3, 24);
+  }
   return g.finish();
 }
 export function heartSculpture() {

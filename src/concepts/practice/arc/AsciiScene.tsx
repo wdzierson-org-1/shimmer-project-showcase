@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { CHAPTER_SECONDS, chapterAt } from './story';
-import { craftSculpture, globeSculpture, heartSculpture, knowledgeSculpture, phoneSculpture, questionSculpture, sourceSculpture, type Sculpture, type Vec3 } from './journeyGeometry';
+import { craftSculpture, globeSculpture, heartSculpture, knowledgeSculpture, phoneSculpture, questionSculpture, roboticsSculpture, sourceSculpture, wearableSculpture, type Sculpture, type Vec3 } from './journeyGeometry';
 
 export type SceneHandle = { render: (seconds: number, still?: boolean) => void };
 type Props = { onReady: (handle: SceneHandle) => void; onError: () => void; fireflies?: boolean };
@@ -23,6 +23,7 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
     const question = questionSculpture();
     if (!question) { onError(); return; }
     const craft = craftSculpture(), globe = globeSculpture(), phone = phoneSculpture();
+    const wearable = wearableSculpture(), robotics = roboticsSculpture();
     const heart = heartSculpture(), knowledge = knowledgeSculpture(), sources = sourceSculpture();
     host.appendChild(canvas);
     const atlas = document.createElement('canvas'), ac = atlas.getContext('2d');
@@ -159,8 +160,10 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
         case 0: sculpture(question!, { yaw: -.48 + Math.sin(t * .2) * .17, pitch: -.08, roll: -.07, y: .03, scale: .86 }); break;
         case 1: sculpture(craft, { yaw: -.17 + Math.sin(t * .12) * .22, pitch: -.23, roll: t * .025, scale: .94 }); break;
         case 2:
-          sculpture(globe, { x: .3, y: -.14, z: -.42, scale: .94, yaw: t * .13, roll: -.23, light: .8 });
-          sculpture(phone, { x: -.5, y: .16, z: .65, scale: .8, yaw: -.3 + Math.sin(t * .12) * .08, pitch: -.12, roll: -.12 }); break;
+          sculpture(globe, { x: -.05, y: -.1, z: -.45, scale: .72, yaw: t * .13, roll: -.23, light: .8 });
+          sculpture(phone, { x: -1.01, y: .1, z: .55, scale: .66, yaw: -.17, pitch: -.08 });
+          sculpture(wearable, { x: .93, y: -.62, z: .58, scale: .54, yaw: -.17 });
+          sculpture(robotics, { x: .55, y: .72, z: .6, scale: .65, yaw: -.12 }); break;
         case 3: sculpture(heart, { yaw: -.22 + Math.sin(t * .14) * .16, pitch: -.1, roll: -.06, scale: 1.02 + Math.sin(t * TAU / 1.65) ** 8 * .022 }); break;
         case 4:
           sculpture(knowledge, { x: .29, yaw: t * .13, pitch: -.14, scale: 1.08 });

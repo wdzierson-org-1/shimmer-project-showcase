@@ -1,4 +1,4 @@
-import { craftSculpture, globeSculpture, heartSculpture, knowledgeSculpture, phoneSculpture, questionSculpture, sourceSculpture, type Sculpture, type Vec3 } from './journeyGeometry';
+import { craftSculpture, globeSculpture, heartSculpture, knowledgeSculpture, phoneSculpture, questionSculpture, roboticsSculpture, sourceSculpture, wearableSculpture, type Sculpture, type Vec3 } from './journeyGeometry';
 
 export const TAU = Math.PI * 2;
 export const clamp = (x: number) => Math.max(0, Math.min(1, x));
@@ -35,13 +35,23 @@ export function sampleShape(model: Sculpture, count: number): FieldShape {
   return { positions, normals, weights };
 }
 
+/** A connected world of mobile, wearable, and embodied interfaces. */
+export function mobileWorldSculpture(): Sculpture {
+  return combine(
+    placed(globeSculpture(), .82, -.05, .1, -.45),
+    placed(phoneSculpture(), .66, -1.01, -.1, .55),
+    placed(wearableSculpture(), .54, .93, .62, .58),
+    placed(roboticsSculpture(), .65, .55, -.72, .6),
+  );
+}
+
 export function createJourneyShapes(count: number): FieldShape[] {
   const question = questionSculpture();
   if (!question) throw new Error('Could not create the letter field');
   return [
     placed(question, 1.04, 0, .03),
     placed(craftSculpture(), 1.18),
-    combine(placed(globeSculpture(), 1.12, .2, .06, -.27), placed(phoneSculpture(), .78, -.76, -.09, .63)),
+    mobileWorldSculpture(),
     placed(heartSculpture(), 1.25, 0, .08),
     combine(placed(knowledgeSculpture(), 1.38, .16), placed(sourceSculpture(), .78, -1.08, 0, .25)),
     placed(question, .8, 0, .23),
@@ -74,12 +84,16 @@ export function contourPoint(stage: number, line: number, u: number, time: numbe
       return [(r + Math.cos(v) * u * .19) * Math.cos(a), -(r + Math.cos(v) * u * .19) * Math.sin(a), Math.sin(v) * u * .32];
     }
     case 2: {
-      if (line < 24) {
-        const lat = (line / 23 - .5) * Math.PI, r = Math.cos(lat) * 1.16;
-        return [.2 + Math.cos(angle) * r, Math.sin(lat) * 1.16, -.27 + Math.sin(angle) * r];
+      if (line < 20) {
+        const lat = (line / 19 - .5) * Math.PI, r = Math.cos(lat) * .85;
+        return [-.05 + Math.cos(angle) * r, .1 + Math.sin(lat) * .85, -.45 + Math.sin(angle) * r];
       }
-      const lon = (line - 24) / 24 * TAU;
-      return [.2 + Math.cos(angle) * Math.sin(lon) * 1.16, Math.sin(angle) * 1.16, -.27 + Math.cos(angle) * Math.cos(lon) * 1.16];
+      if (line < 40) {
+        const lon = (line - 20) / 20 * TAU;
+        return [-.05 + Math.cos(angle) * Math.sin(lon) * .85, .1 + Math.sin(angle) * .85, -.45 + Math.cos(angle) * Math.cos(lon) * .85];
+      }
+      const a = u * TAU * .78 + (line - 40) * .13;
+      return [Math.cos(a) * 1.5, Math.sin(a) * .97 - .04, -.25 + Math.sin(a) * .2];
     }
     case 3: {
       if (line < 12) {
