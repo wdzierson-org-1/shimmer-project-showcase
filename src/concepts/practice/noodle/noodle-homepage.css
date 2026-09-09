@@ -71,11 +71,7 @@
 .noodle-legal{display:flex;gap:8px;margin-top:14px;color:#666;font-size:13px}
 .noodle-footer>p{font-size:12px;color:#666}
 .noodle-archive-note{margin:14px 0 0;font-size:11px;color:#717862}
-.noodle-project-media{border-top:1px solid #d6dacb;border-bottom:1px solid #d6dacb;margin-top:25px}
-.noodle-project-media summary{cursor:pointer;padding:20px 0;font-size:13px}
-.noodle-project-media summary span{margin-left:12px;color:#717862;font-size:11px}
-.noodle-project-media summary:focus-visible{outline:2px solid #687743;outline-offset:4px}
-.noodle-project-media .project-gallery{margin:5px 0 20px}
+.noodle-project>.project-gallery{margin:30px 0 20px}
 
 @container (max-width:800px){
   .noodle-topbar{height:64px}
