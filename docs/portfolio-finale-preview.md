@@ -1,6 +1,6 @@
-# Pearly particles and an open-ended finale — local preview
+# Pearly particles and an open-ended finale — approved release
 
-This continues the unpublished wearables/robotics preview on `preview-wearables-robotics`. The user asked to review before publishing. Production remains at `20ca91e`; do not push or deploy these changes without approval.
+The user reviewed the wearables/robotics and finale preview and explicitly approved publication: “love it! let's publish”. The approved implementation is `c87dd46`, including the wearables/robotics work in `ec238f7`. Release through the existing `main` branch and Vercel project; this approval supersedes the earlier preview-only constraint. Production before this release is `20ca91e`.
 
 The working source is `/private/tmp/shimmer-dusk-fireflies`. Review at http://127.0.0.1:8083/.
 

@@ -45,6 +45,8 @@ The build retains size warnings for the optional CRT and legacy CMS bundles. Nei
 
 ## Rollback
 
+For the pearly-particle, wearables/robotics, and finale release approved after preview commit `c87dd46`, the preceding production version is `20ca91e`: `shimmer-project-showcase-mwwmzj9tm-wdzierson-s-team.vercel.app` (`dpl_2D9jegMrccqyzz4A5R84ocmZK7su`). This is the immediate rollback target for that refinement. See `portfolio-finale-preview.md` for approval and validation.
+
 The previous production deployment is `shimmer-project-showcase-2d9uamhek-wdzierson-s-team.vercel.app` (`dpl_ErL365EuYLD54xfW65hccNCNjDJG`), based on commit `f3e3d8fe68e1e95363e8fd16b71c21bdc25fa7a4`. Vercel can restore that deployment if necessary. A source revert is needed as well if future pushes should keep the previous version.
 
 Earlier `portfolio-*.md` documents describe the local design iterations and their verification at that time. This document supersedes their preview-only build and routing instructions.
