@@ -1,4 +1,4 @@
-import { craftSculpture, globeSculpture, heartSculpture, knowledgeSculpture, phoneSculpture, questionSculpture, roboticsSculpture, sourceSculpture, wearableSculpture, type Sculpture, type Vec3 } from './journeyGeometry';
+import { craftSculpture, globeSculpture, heartSculpture, ideaFlowPoint, ideaSculpture, intelligenceNodes, intelligenceSculpture, knowledgeSculpture, lifeSculpture, phoneSculpture, questionSculpture, questionsSculpture, roboticsSculpture, wearableSculpture, type Sculpture, type Vec3 } from './journeyGeometry';
 
 export const TAU = Math.PI * 2;
 export const clamp = (x: number) => Math.max(0, Math.min(1, x));
@@ -53,8 +53,11 @@ export function createJourneyShapes(count: number): FieldShape[] {
     placed(craftSculpture(), 1.18),
     mobileWorldSculpture(),
     placed(heartSculpture(), 1.25, 0, .08),
-    combine(placed(knowledgeSculpture(), 1.38, .16), placed(sourceSculpture(), .78, -1.08, 0, .25)),
-    placed(question, .8, 0, .23),
+    placed(ideaSculpture()),
+    combine(placed(globeSculpture(), 1.12), placed(knowledgeSculpture(), 1.31)),
+    placed(lifeSculpture()),
+    placed(intelligenceSculpture()),
+    placed(questionsSculpture(question)),
   ].map(model => sampleShape(model, count));
 }
 
@@ -70,8 +73,9 @@ nodes.forEach((p, i) => nodes.slice(i + 1).forEach(q => {
 }));
 export const CONTOURS = 48;
 export const CONTOUR_STEPS = 96;
+const intelligence = intelligenceNodes();
 
-/** A continuous drawing underneath the letters: inquiry, craft, mobility, care, knowledge, horizon. */
+/** Fine connecting paths beneath each sculpture and the four glimpses of the finale. */
 export function contourPoint(stage: number, line: number, u: number, time: number): Vec3 {
   const angle = u * TAU;
   switch (stage) {
@@ -104,14 +108,27 @@ export function contourPoint(stage: number, line: number, u: number, time: numbe
       return [Math.sin(angle) ** 3 * r * 1.25, (13 * Math.cos(angle) - 5 * Math.cos(2 * angle) - 2 * Math.cos(3 * angle) - Math.cos(4 * angle)) / 17 * r * 1.25 + .08, -.1 + Math.sqrt(Math.max(0, 1 - r * r)) * .4];
     }
     case 4: {
+      if (line >= 24) return [0, 0, 0];
+      const p = ideaFlowPoint(line, u);
+      return [p[0], -p[1], p[2]];
+    }
+    case 5: {
       const [p, q] = links[line % links.length];
-      return [p[0] + (q[0] - p[0]) * u + .16, p[1] + (q[1] - p[1]) * u, p[2] + (q[2] - p[2]) * u];
+      return [p[0] + (q[0] - p[0]) * u, p[1] + (q[1] - p[1]) * u, p[2] + (q[2] - p[2]) * u];
+    }
+    case 6: {
+      const a = u * TAU * 1.65 + (line % 2) * Math.PI, r = .45 + Math.floor(line / 2) * .002;
+      const x = Math.cos(a) * r, y = (u - .5) * 2.35;
+      return [x * .91 - y * .41, -(x * .41 + y * .91), Math.sin(a) * r];
+    }
+    case 7: {
+      const p = intelligence[line], q = intelligence[(line + 23) % intelligence.length];
+      return [p[0] + (q[0] - p[0]) * u, -p[1] - (q[1] - p[1]) * u, p[2] + (q[2] - p[2]) * u];
     }
     default: {
-      // An open horizon, never a closed final form. Fine contours recall the topographic studies in ThreeUI.
-      const x = (u - .5) * 4.6, z = (line / CONTOURS - .5) * 3.6;
-      const ridge = Math.sin(x * 1.7 + z * .7 + time * .08) * Math.cos(z * 1.35 - time * .07);
-      return [x, -.9 + ridge * .19 + z * .11, z - .6];
+      if (line >= 12) return [0, 0, 0];
+      const a = u * TAU * .83 + line * .09, r = 1.38 + line * .005;
+      return [Math.cos(a) * r, Math.sin(a) * r * .85, -.6 + Math.sin(a) * .2];
     }
   }
 }

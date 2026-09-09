@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { CHAPTER_SECONDS, chapterAt } from './story';
-import { craftSculpture, globeSculpture, heartSculpture, knowledgeSculpture, phoneSculpture, questionSculpture, roboticsSculpture, sourceSculpture, wearableSculpture, type Sculpture, type Vec3 } from './journeyGeometry';
+import { CHAPTER_SECONDS } from './story';
+import { craftSculpture, globeSculpture, heartSculpture, ideaFlowPoint, ideaSculpture, intelligenceSculpture, knowledgeSculpture, lifeSculpture, phoneSculpture, questionSculpture, questionsSculpture, roboticsSculpture, wearableSculpture, type Sculpture, type Vec3 } from './journeyGeometry';
+import { journeyFrame, PARTICLE_RGB } from './journeySequence';
 
 export type SceneHandle = { render: (seconds: number, still?: boolean) => void };
 type Props = { onReady: (handle: SceneHandle) => void; onError: () => void; fireflies?: boolean };
@@ -24,12 +25,13 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
     if (!question) { onError(); return; }
     const craft = craftSculpture(), globe = globeSculpture(), phone = phoneSculpture();
     const wearable = wearableSculpture(), robotics = roboticsSculpture();
-    const heart = heartSculpture(), knowledge = knowledgeSculpture(), sources = sourceSculpture();
+    const heart = heartSculpture(), knowledge = knowledgeSculpture(), idea = ideaSculpture();
+    const life = lifeSculpture(), intelligence = intelligenceSculpture(), questions = questionsSculpture(question);
     host.appendChild(canvas);
     const atlas = document.createElement('canvas'), ac = atlas.getContext('2d');
     if (!ac) { canvas.remove(); onError(); return; }
     const aw = 24, ah = 38, levels = 16;
-    const inks = fireflies ? [[243,221,181], [235,216,188], [225,220,240], [242,207,176], [238,224,184], [244,223,191]] : INKS;
+    const inks = fireflies ? INKS.map(() => PARTICLE_RGB) : INKS;
     atlas.width = GLYPHS.length * aw; atlas.height = INKS.length * levels * ah;
     ac.font = '29px ui-monospace, monospace'; ac.textAlign = 'center'; ac.textBaseline = 'middle';
     inks.forEach((ink, color) => { for (let l = 0; l < levels; l++) {
@@ -50,6 +52,7 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
     let normalsX = new Float32Array(0), normalsY = new Float32Array(0), normalsZ = new Float32Array(0);
     const densityCurve = Float32Array.from({ length: 256 }, (_, i) => Math.pow(i / 255, .58));
     let last = 4, lastDrawn = -Infinity, frozen = true, disposed = false;
+    let dispersion = 0;
 
     function sculpture(model: Sculpture, pose: Pose = {}) {
       const { x = 0, y = 0, z = 0, scale = 1, yaw = 0, pitch = 0, roll = 0, light: brightness = 1 } = pose;
@@ -60,9 +63,18 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
       const m6 = -cp * sy, m7 = sp, m8 = cp * cy;
       for (let i = 0; i < model.length; i += 8) {
         const vx = model[i], vy = model[i + 1], vz = model[i + 2];
-        const px = (m0 * vx + m1 * vy + m2 * vz) * scale + x;
-        const py = (m3 * vx + m4 * vy + m5 * vz) * scale + y;
-        const pz = (m6 * vx + m7 * vy + m8 * vz) * scale + z;
+        let px = (m0 * vx + m1 * vy + m2 * vz) * scale + x;
+        let py = (m3 * vx + m4 * vy + m5 * vz) * scale + y;
+        let pz = (m6 * vx + m7 * vy + m8 * vz) * scale + z;
+        let visibility = 1;
+        if (dispersion > 0) {
+          const seed = model[i + 7], flight = ease((dispersion - seed * .22) / (.75 + seed * .03));
+          const drift = flight * flight * 1.7;
+          px += Math.sin(seed * 41 + flight * 1.2) * drift;
+          py -= (.3 + Math.cos(seed * 29)) * drift;
+          pz += Math.sin(seed * 67) * drift;
+          visibility = 1 - ease((flight - .05) / .95);
+        }
         const perspective = 4.8 / (4.8 - pz);
         const col = Math.floor((width * .52 + px * unit * perspective) / cw);
         const row = Math.floor((height * .49 + py * unit * perspective) / ch);
@@ -77,7 +89,7 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
         // Store the winning surface normal; shade each occupied character once, after all actors.
         if (nz < 0) { nx = -nx; ny = -ny; nz = -nz; }
         normalsX[cell] = nx; normalsY[cell] = ny; normalsZ[cell] = nz;
-        light[cell] = model[i + 6] * brightness;
+        light[cell] = model[i + 6] * brightness * visibility;
         seeds[cell] = model[i + 7];
       }
     }
@@ -106,6 +118,8 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
       const f = 4.8 / (4.8 - p[2]); return [width * .52 + p[0] * unit * f, height * .49 + p[1] * unit * f];
     }
     function path(fn: (u: number) => Vec3, ink: number, alpha: number, phase?: number) {
+      ink = Math.min(ink, 5);
+      ctx!.save(); ctx!.globalAlpha *= 1 - ease(dispersion / .4);
       ctx!.strokeStyle = `rgba(${inks[ink].join(',')},${alpha})`; ctx!.lineWidth = .65;
       ctx!.beginPath();
       for (let i = 0; i <= 120; i++) { const [x, y] = project(fn(i / 120)); if (i === 0) ctx!.moveTo(x, y); else ctx!.lineTo(x, y); }
@@ -113,6 +127,7 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
       if (phase !== undefined) {
         for (let i = 0; i < 4; i++) { const [x, y] = project(fn((phase + i * .012) % 1)); character(x, y, .7 - i * .14, ink, .55, 1.15); }
       }
+      ctx!.restore();
     }
     function accents(stage: number, t: number, front: boolean) {
       if (stage === 0 && !front) {
@@ -123,7 +138,7 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
         for (let ring = 0; ring < 3; ring++) path(u => { const a = u * TAU; return [Math.cos(a) * (1.22 + ring * .09), Math.sin(a) * (1.22 + ring * .09), -.3]; }, stage, .11);
         for (let j = 0; j < 4; j++) path(u => { const a = j / 4 * TAU + .15; return [Math.cos(a) * u * 1.52, Math.sin(a) * u * 1.52, -.35]; }, stage, .13);
       }
-      if (stage === 2 && !front) {
+      if ((stage === 2 || stage === 5) && !front) {
         for (let j = 0; j < 3; j++) path(u => {
           const a = u * TAU + j * .7, x = Math.cos(a) * 1.25, y = Math.sin(a) * .37;
           const angle = -.38 + j * .56; return [x * Math.cos(angle) - y * Math.sin(angle), x * Math.sin(angle) + y * Math.cos(angle), -.3 + Math.sin(a) * .3];
@@ -138,17 +153,11 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
         }, stage, j === 1 ? .62 : .24);
       }
       if (stage === 4 && !front) {
-        for (let j = 0; j < 3; j++) path(u => [-1.07 + u * 1.28, -.25 + j * .25 + Math.sin(u * Math.PI) * (j - 1) * .28, .12 - u * .4], stage, .3, (t * .13 + j / 3) % 1);
-        path(u => { const a = u * TAU; return [.28 + Math.cos(a) * 1.03, Math.sin(a) * 1.03, -.4]; }, stage, .12);
+        for (let j = 0; j < 3; j++) path(u => ideaFlowPoint(j + 9, u), stage, .3, (t * .23 + j / 3) % 1);
       }
-      if (stage === 5 && !front) {
-        // An unfinished aperture and a horizon: the question stays open.
+      if (stage === 8 && !front) {
         for (let j = 0; j < 3; j++) path(u => { const a = u * TAU * .78 + .2 + j * .08;
-          return [Math.cos(a) * (1.02 + j * .065), -.27 + Math.sin(a) * (1.02 + j * .065), -.5]; }, stage, .19 - j * .035);
-        for (let j = -9; j <= 9; j++) path(u => [j * .18 * (.25 + u * 1.25), .5 + u * .55, -2.5 + u * 3], stage, .15);
-        for (let j = 0; j < 11; j++) { const progress = (j / 11 + t * .013) % 1;
-          path(u => [(u - .5) * 3.6, .5 + progress * .55, -2.5 + progress * 3], stage, .06 + progress * .13);
-        }
+          return [Math.cos(a) * (1.38 + j * .025), Math.sin(a) * (1.16 + j * .025), -.6]; }, stage, .19 - j * .035);
       }
     }
     function chapter(stage: number, t: number, opacity: number) {
@@ -165,10 +174,13 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
           sculpture(wearable, { x: .93, y: -.62, z: .58, scale: .54, yaw: -.17 });
           sculpture(robotics, { x: .55, y: .72, z: .6, scale: .65, yaw: -.12 }); break;
         case 3: sculpture(heart, { yaw: -.22 + Math.sin(t * .14) * .16, pitch: -.1, roll: -.06, scale: 1.02 + Math.sin(t * TAU / 1.65) ** 8 * .022 }); break;
-        case 4:
-          sculpture(knowledge, { x: .29, yaw: t * .13, pitch: -.14, scale: 1.08 });
-          sculpture(sources, { x: -1.1, y: .08, z: .35, yaw: -.23, roll: -.1 }); break;
-        default: sculpture(question!, { yaw: -.25 + Math.sin(t * .13) * .2, pitch: -.06, roll: .035, scale: .68, y: -.3 });
+        case 4: sculpture(idea, { yaw: -.12, pitch: -.05 }); break;
+        case 5:
+          sculpture(globe, { scale: 1.08, yaw: t * .08 });
+          sculpture(knowledge, { scale: 1.25, yaw: t * .08 }); break;
+        case 6: sculpture(life, { yaw: -.12, pitch: -.06 }); break;
+        case 7: sculpture(intelligence, { yaw: -.12, pitch: -.06 }); break;
+        default: sculpture(questions, { yaw: -.12, pitch: -.06 });
       }
       for (let i = 0; i < light.length; i++) {
         if (light[i] < .04) continue;
@@ -179,7 +191,7 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
         const h2 = highlight * highlight, h4 = h2 * h2, h8 = h4 * h4, rim = 1 - nz;
         const value = (.17 + diffuse * .61 + h8 * h8 * h2 * .24 + rim * rim * rim * .22) * light[i];
         const pulse = fireflies ? .9 + .1 * Math.sin(t * .6 + seeds[i] * 97) : 1;
-        character(x, y, value * pulse, stage, seeds[i]);
+        character(x, y, value * pulse, Math.min(stage, 5), seeds[i]);
       }
       accents(stage, t, true); ctx!.restore();
     }
@@ -190,12 +202,12 @@ export default function AsciiScene({ onReady, onError, fireflies = false }: Prop
       // A backward seek, static frame or resize always paints immediately.
       if (!still && seconds >= lastDrawn && seconds - lastDrawn < 1 / 30 - .001) return;
       lastDrawn = seconds;
-      const stage = chapterAt(seconds), local = seconds - stage * CHAPTER_SECONDS;
-      const previous = Math.max(0, stage - 1), mix = still ? 1 : ease(local / 1.9);
-      const t = still ? stage * CHAPTER_SECONDS + 4 : seconds;
+      const frame = journeyFrame(seconds, still), mix = ease(frame.mix);
+      dispersion = frame.dissolve;
+      const t = still ? frame.chapter * CHAPTER_SECONDS + 4 : seconds;
       ctx!.clearRect(0, 0, width, height); atmosphere(t);
-      if (previous !== stage && mix < 1) chapter(previous, t, 1 - mix);
-      chapter(stage, t, stage === 0 ? 1 : mix);
+      if (frame.from !== frame.to && mix < 1) chapter(frame.from, t, 1 - mix);
+      chapter(frame.to, t, frame.chapter === 0 ? 1 : mix);
     }
     const resize = () => {
       const rect = host.getBoundingClientRect(); width = rect.width; height = rect.height;

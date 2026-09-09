@@ -1,23 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import AsciiScene, { type SceneHandle } from './AsciiScene';
-import { CHAPTER_SECONDS, chapterAt } from './story';
-import { CONTOURS, CONTOUR_STEPS, contourPoint, createJourneyShapes, hash, smooth } from './journeyField';
+import { CHAPTER_SECONDS } from './story';
+import { CONTOURS, CONTOUR_STEPS, contourPoint, createJourneyShapes, hash } from './journeyField';
+import { journeyFrame, PARTICLE_INK } from './journeySequence';
 
 type Props = { onReady: (handle: SceneHandle) => void; onError: () => void };
-const COLORS = ['#e9dec7', '#d7cde4', '#cbdde5', '#edc0a8', '#e7d9ba', '#ede0cf'];
 const morphVertex = `
   attribute vec3 aTarget;
   attribute float aSeed;
   uniform float uMix;
   uniform float uTime;
   uniform float uChapter;
+  uniform float uDissolve;
+  float flight() { return smoothstep(aSeed * .22, .75 + aSeed * .25, uDissolve); }
   float blend() { return smoothstep(aSeed * .22, .76 + aSeed * .24, uMix); }
   vec3 form(float m) {
     vec3 p = mix(position, aTarget, m);
     float travel = sin(m * 3.14159265);
     p += vec3(sin(aSeed * 37.0 + uTime * .16), cos(aSeed * 23.0), sin(aSeed * 19.0)) * travel * .28;
     if (uChapter > 2.5 && uChapter < 3.5) p *= 1.0 + pow(max(0.0, sin(uTime * 3.8)), 14.0) * .018;
+    float d = flight();
+    p += vec3(sin(aSeed * 41.0 + d * 1.2), .3 + cos(aSeed * 29.0), sin(aSeed * 67.0)) * d * d * 1.7;
     return p;
   }
 `;
@@ -30,7 +34,6 @@ const pointVertex = morphVertex + `
   varying float vLight;
   varying float vGlyph;
   varying float vAlpha;
-  varying float vWarm;
   varying float vSpark;
   void main() {
     float m = blend();
@@ -44,10 +47,9 @@ const pointVertex = morphVertex + `
     vLight = clamp((.2 + diffuse * .72 + rim * .28) * weight, 0.0, 1.0);
     // Keep the surface legible throughout each form; only a few points become firefly highlights.
     float shimmer = .9 + .1 * sin(uTime * .6 + aSeed * 97.0);
-    vAlpha = (.55 + facing * .4) * min(1.0, weight * 1.4) * shimmer;
+    vAlpha = (.55 + facing * .4) * min(1.0, weight * 1.4) * shimmer * (1.0 - smoothstep(.05, 1.0, flight()));
     vSpark = step(.976, aSeed);
     vGlyph = floor(clamp(vLight * 8.0 + aSeed * 2.0, 0.0, 9.0));
-    vWarm = pow(max(0.0, cos(p.y * 1.8 + p.x - uTime * .42)), 18.0) * .48;
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
     gl_Position = projectionMatrix * mv;
     gl_PointSize = clamp(uPointSize * (1.0 + vSpark * .65) * (5.4 / -mv.z), 1.0, 16.0);
@@ -59,7 +61,6 @@ const pointFragment = `
   varying float vLight;
   varying float vGlyph;
   varying float vAlpha;
-  varying float vWarm;
   varying float vSpark;
   void main() {
     vec2 uv = vec2((vGlyph + gl_PointCoord.x) / 10.0, 1.0 - gl_PointCoord.y);
@@ -69,7 +70,7 @@ const pointFragment = `
     float surface = mix(mask, glow, vSpark);
     float alpha = surface * vAlpha * (.3 + vLight * .7);
     if (alpha < .008) discard;
-    vec3 ink = mix(uColor * (.68 + vLight * .38), vec3(1.0,.86,.63), max(vWarm, vSpark * .7));
+    vec3 ink = uColor * (.68 + vLight * .32 + vSpark * .08);
     gl_FragColor = vec4(ink, alpha);
     #include <colorspace_fragment>
   }
@@ -93,13 +94,13 @@ const lineFragment = `
   uniform float uTime;
   uniform vec3 uColor;
   uniform float uOpacity;
+  uniform float uDissolve;
   varying float vProgress;
   varying float vSeed;
   void main() {
     float distance = abs(fract(vProgress - uTime * .065 + vSeed * .9) - .5);
     float signal = 1.0 - smoothstep(.0, .04, distance);
-    vec3 ink = mix(uColor, vec3(1.0,.84,.65), signal * .7);
-    gl_FragColor = vec4(ink, uOpacity * (.35 + signal * 1.3));
+    gl_FragColor = vec4(uColor, uOpacity * (.35 + signal * 1.3) * (1.0 - smoothstep(0.0, .4, uDissolve)));
     #include <colorspace_fragment>
   }
 `;
@@ -114,7 +115,7 @@ function WebGLJourney({ onReady, onError }: Props) {
     catch { onError(); return; }
     const resources: { dispose: () => void }[] = [];
     let disposed = false;
-    let last = 0, lastDrawn = -Infinity, frozen = false, activeChapter = -1;
+    let last = 0, lastDrawn = -Infinity, frozen = false, activePair = '';
     const pixelRatio = Math.min(devicePixelRatio, 1.75);
     renderer.setPixelRatio(pixelRatio);
     renderer.setClearColor(0x39324c, 0);
@@ -150,8 +151,8 @@ function WebGLJourney({ onReady, onError }: Props) {
       const atlas = new THREE.CanvasTexture(canvas); atlas.minFilter = THREE.LinearFilter; atlas.generateMipmaps = false;
       resources.push(atlas);
       const uniforms = {
-        uMix: { value: 0 }, uTime: { value: 0 }, uChapter: { value: 0 },
-        uPointSize: { value: 4.4 * pixelRatio }, uAtlas: { value: atlas }, uColor: { value: new THREE.Color(COLORS[0]) },
+        uMix: { value: 0 }, uTime: { value: 0 }, uChapter: { value: 0 }, uDissolve: { value: 0 },
+        uPointSize: { value: 4.4 * pixelRatio }, uAtlas: { value: atlas }, uColor: { value: new THREE.Color(PARTICLE_INK) },
       };
       const pointsGeometry = new THREE.BufferGeometry(); resources.push(pointsGeometry);
       const attribute = (name: string, data: Float32Array, size: number) => {
@@ -182,38 +183,36 @@ function WebGLJourney({ onReady, onError }: Props) {
       linesGeometry.setAttribute('aTarget', new THREE.BufferAttribute(contourFrames[0].slice(), 3));
       linesGeometry.setAttribute('aSeed', new THREE.BufferAttribute(lineSeeds, 1));
       linesGeometry.setAttribute('aProgress', new THREE.BufferAttribute(progress, 1));
-      const lineUniforms = { uMix: uniforms.uMix, uTime: uniforms.uTime, uChapter: uniforms.uChapter, uColor: uniforms.uColor, uOpacity: { value: .25 } };
+      const lineUniforms = { uMix: uniforms.uMix, uTime: uniforms.uTime, uChapter: uniforms.uChapter, uDissolve: uniforms.uDissolve, uColor: uniforms.uColor, uOpacity: { value: .25 } };
       const linesMaterial = new THREE.ShaderMaterial({ uniforms: lineUniforms, vertexShader: lineVertex, fragmentShader: lineFragment, transparent: true, depthWrite: false });
       resources.push(linesMaterial);
       const lines = new THREE.LineSegments(linesGeometry, linesMaterial); lines.frustumCulled = false; sculpture.add(lines);
-
-      const colorA = new THREE.Color(), colorB = new THREE.Color();
 
       function render(seconds: number, still = false) {
         if (disposed) return;
         last = seconds; frozen = still;
         if (!still && seconds > lastDrawn && seconds - lastDrawn < 1 / 30 - .001) return;
         lastDrawn = seconds;
-        const chapter = chapterAt(seconds), previous = Math.max(0, chapter - 1), local = seconds - chapter * CHAPTER_SECONDS;
+        const frame = journeyFrame(seconds, still), { chapter } = frame;
         const time = still ? chapter * CHAPTER_SECONDS + 4 : seconds;
-        if (activeChapter !== chapter) {
-          activeChapter = chapter;
-          const from = shapes[previous], to = shapes[chapter];
+        const pair = `${frame.from}:${frame.to}`;
+        if (activePair !== pair) {
+          activePair = pair;
+          const from = shapes[frame.from], to = shapes[frame.to];
           attribute('position', chapter === 0 ? scatter : from.positions, 3);
           attribute('aTarget', to.positions, 3);
           attribute('aNormal', from.normals, 3); attribute('aTargetNormal', to.normals, 3);
           attribute('aWeight', from.weights, 1); attribute('aTargetWeight', to.weights, 1);
-          for (const [name, frame] of [['position', previous], ['aTarget', chapter]] as const) {
+          for (const [name, index] of [['position', frame.from], ['aTarget', frame.to]] as const) {
             const buffer = linesGeometry.getAttribute(name) as THREE.BufferAttribute;
-            buffer.copyArray(contourFrames[frame]); buffer.needsUpdate = true;
+            buffer.copyArray(contourFrames[index]); buffer.needsUpdate = true;
           }
-          host.dataset.form = String(chapter);
+          host.dataset.form = String(frame.to);
         }
-        uniforms.uMix.value = still ? 1 : Math.min(1, local / 2.6);
+        uniforms.uMix.value = frame.mix;
+        uniforms.uDissolve.value = frame.dissolve;
         uniforms.uTime.value = time; uniforms.uChapter.value = chapter;
-        colorA.set(COLORS[previous]); colorB.set(COLORS[chapter]);
-        uniforms.uColor.value.copy(colorA).lerp(colorB, smooth(uniforms.uMix.value));
-        lineUniforms.uOpacity.value = chapter === 4 ? .65 : chapter === 5 ? .32 : .2;
+        lineUniforms.uOpacity.value = chapter === 4 ? .42 : chapter === 5 ? .24 : .2;
         sculpture.rotation.set(Math.sin(time * .09) * .08 - .06, Math.sin(time * .12) * .19 - .16, Math.sin(time * .07) * .035);
         sculpture.position.y = Math.sin(time * .22) * .025;
         renderer.render(scene, camera);

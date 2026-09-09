@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useId, useImperativeHandle, useRef } from 'react';
+import { PARTICLE_RGB } from './journeySequence';
 
 export type DuskHandle = { render: (seconds: number) => void };
 type Props = { active: boolean; clocked: boolean };
@@ -26,7 +27,8 @@ const DuskAtmosphere = forwardRef<DuskHandle, Props>(function DuskAtmosphere({ a
     if (!element || !context) return;
     const preference = matchMedia('(prefers-reduced-motion: reduce)');
     let width = 1, height = 1, visible = false, frame = 0, previous = 0, lastPaint = 0, lastDrawn = -Infinity;
-    const sprites = ['255,230,174', '247,213,191', '224,221,248'].map(color => {
+    const sprite = (() => {
+      const color = PARTICLE_RGB.join(',');
       const sprite = document.createElement('canvas'); sprite.width = sprite.height = 64;
       const ctx = sprite.getContext('2d');
       if (!ctx) return sprite;
@@ -34,7 +36,7 @@ const DuskAtmosphere = forwardRef<DuskHandle, Props>(function DuskAtmosphere({ a
       glow.addColorStop(0, `rgba(${color},1)`); glow.addColorStop(.08, `rgba(${color},.95)`);
       glow.addColorStop(.2, `rgba(${color},.3)`); glow.addColorStop(.5, `rgba(${color},.07)`); glow.addColorStop(1, `rgba(${color},0)`);
       ctx.fillStyle = glow; ctx.fillRect(0, 0, 64, 64); return sprite;
-    });
+    })();
     const mist = document.createElement('canvas'); mist.width = 512; mist.height = 128;
     const mistContext = mist.getContext('2d');
     if (mistContext) {
@@ -66,7 +68,7 @@ const DuskAtmosphere = forwardRef<DuskHandle, Props>(function DuskAtmosphere({ a
         // The closest lights drift softly out of focus; keep the copy area quiet.
         const size = 8 + depth * depth * 27, copyArea = mobile ? y > height * .46 : x < width * .48;
         context.globalAlpha = pulse * (copyArea ? .32 : .76) * (.45 + depth * .55);
-        context.drawImage(sprites[i % 11 === 0 ? 2 : i % 4 === 0 ? 1 : 0], x - size / 2, y - size / 2, size, size);
+        context.drawImage(sprite, x - size / 2, y - size / 2, size, size);
       }
       context.globalAlpha = 1;
     }
@@ -95,7 +97,7 @@ const DuskAtmosphere = forwardRef<DuskHandle, Props>(function DuskAtmosphere({ a
     return () => {
       painter.current = null; cancelAnimationFrame(frame); observer.disconnect(); dimensions.disconnect();
       preference.removeEventListener('change', sync); document.removeEventListener('visibilitychange', sync);
-      sprites.forEach(sprite => { sprite.width = 0; }); mist.width = 0;
+      sprite.width = 0; mist.width = 0;
     };
   }, [active, clocked]);
 

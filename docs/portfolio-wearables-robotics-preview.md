@@ -8,4 +8,6 @@ These are conceptual illustrations, not specific products or new claims about Wi
 
 Review at http://127.0.0.1:8083/: play the story, then select **Untethered** (18–27 seconds). Source is in `/private/tmp/shimmer-dusk-fireflies`, on local branch `preview-wearables-robotics`.
 
+The same unpublished preview now includes [pearly particles, a clearer Noodle visual, and an expanded finale](portfolio-finale-preview.md).
+
 TypeScript, focused ESLint, and the production build pass. Both new geometry models contain only finite coordinates; the fully assembled 22,000-point composition stays inside the desktop and 320px mobile camera frames. A native projection of the actual sampled geometry was visually inspected for recognizability and spacing. Browser playback verification remains unavailable because there is no browser connection. Nothing has been pushed or deployed.

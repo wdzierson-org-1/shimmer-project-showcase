@@ -7,6 +7,12 @@ const normal = (x: number, y: number, z: number): Vec3 => { const d = Math.hypot
 class Geometry {
   values: number[] = [];
   point(p: Vec3, n: Vec3 = [0, 0, 1], material = 1) { this.values.push(...p, ...n, material, hash(this.values.length)); }
+  add(model: Sculpture, scale = 1, x = 0, y = 0, z = 0) {
+    for (let i = 0; i < model.length; i += 8) this.point(
+      [model[i] * scale + x, model[i + 1] * scale + y, model[i + 2] * scale + z],
+      [model[i + 3], model[i + 4], model[i + 5]], model[i + 6],
+    );
+  }
   surface(nu: number, nv: number, fn: (u: number, v: number) => Vec3, material: (u: number, v: number) => number = () => 1) {
     for (let a = 0; a <= nu; a++) for (let b = 0; b <= nv; b++) {
       const u = a / nu, v = b / nv, p = fn(u, v), pu = fn(u + .0001, v), pv = fn(u, v + .0001);
@@ -30,6 +36,104 @@ class Geometry {
     }, () => material);
   }
   finish() { return new Float32Array(this.values); }
+}
+
+/** Three separate records flow into a single, readable conversation. Coordinates are y-down. */
+export function ideaFlowPoint(line: number, u: number): Vec3 {
+  const row = line % 3, lane = Math.floor(line / 3) - 3.5;
+  const startY = (row - 1) * .65;
+  return [-.8 + u * .69, startY * (1 - u) + (row - 1) * .16 * u + Math.sin(u * Math.PI) * lane * .012,
+    .16 + Math.sin(u * Math.PI) * .12 + lane * .005];
+}
+
+export function ideaSculpture(): Sculpture {
+  const g = new Geometry();
+  for (let page = 0; page < 3; page++) {
+    const x = -1.09 + (page === 1 ? -.07 : 0), y = (page - 1) * .65;
+    const outline: Vec3[] = [[x - .22, y - .26, .14], [x + .1, y - .26, .14], [x + .22, y - .14, .14],
+      [x + .22, y + .26, .14], [x - .22, y + .26, .14]];
+    outline.forEach((p, i) => g.cylinder(p, outline[(i + 1) % outline.length], .013, 1, 42));
+    g.line(u => [x + .1, y - .26 + u * .12, .16], 35);
+    g.line(u => [x + .1 + u * .12, y - .14, .16], 35);
+    for (let row = 0; row < 4; row++) g.line(u => [x - .14 + u * (row === 3 ? .19 : .28), y - .07 + row * .071, .17], 75, .8);
+  }
+  // A substantial speech outline, with a small tail and an answer arranged inside it.
+  const outline = (u: number, z: number): Vec3 => {
+    const t = ((u % 1) + 1) % 1 * 8, segment = Math.floor(t), v = t - segment;
+    const x = .55, y = .57, r = .13;
+    if (segment === 0) return [.57 - x + v * x * 2, -.7, z];
+    if (segment === 2) return [1.25, -y + v * y * 2, z];
+    if (segment === 4) return [.57 + x - v * x * 2, .7, z];
+    if (segment === 6) return [-.11, y - v * y * 2, z];
+    const corner = (segment - 1) / 2, a = (-1 + corner + v) * Math.PI / 2;
+    return [.57 + (corner < 2 ? x : -x) + Math.cos(a) * r,
+      (corner === 0 || corner === 3 ? -y : y) + Math.sin(a) * r, z];
+  };
+  g.surface(600, 12, (u, v) => {
+    const p = outline(u, .13 + Math.sin(v * TAU) * .025);
+    p[0] += Math.cos(u * TAU) * Math.cos(v * TAU) * .022;
+    p[1] += Math.sin(u * TAU) * Math.cos(v * TAU) * .022;
+    return p;
+  });
+  g.cylinder([.03, .61, .14], [-.04, .94, .14], .018, 1, 70);
+  g.cylinder([-.04, .94, .14], [.4, .69, .14], .018, 1, 70);
+  // One question, then a more complete answer. The circle recalls the companion's voice.
+  g.line(u => [.15 + u * .61, -.39, .17], 180, .8);
+  g.line(u => [.15 + u * .4, -.29, .17], 140, .65);
+  g.surface(120, 10, (u, v) => {
+    const a = u * TAU, r = .092 + Math.cos(v * TAU) * .011;
+    return [.22 + Math.cos(a) * r, .03 + Math.sin(a) * r, .18 + Math.sin(v * TAU) * .011];
+  });
+  for (let row = 0; row < 5; row++) g.line(u => [.41 + u * (row === 4 ? .34 : .56), -.015 + row * .092, .18], 180, .9);
+  return g.finish();
+}
+
+/** Life as a twisted ladder: a distinct silhouette between the planet and the connected field. */
+export function lifeSculpture(): Sculpture {
+  const g = new Geometry();
+  const helix = (u: number, offset: number): Vec3 => {
+    const a = u * TAU * 1.65 + offset, x = Math.cos(a) * .45, y = (u - .5) * 2.35;
+    return [x * .91 - y * .41, x * .41 + y * .91, Math.sin(a) * .45];
+  };
+  for (const offset of [0, Math.PI]) g.surface(480, 16, (u, v) => {
+    const p = helix(u, offset), a = v * TAU;
+    return [p[0] + Math.cos(a) * .035, p[1] + Math.sin(a) * .025, p[2] + Math.sin(a) * .035];
+  });
+  for (let i = 0; i < 29; i++) g.cylinder(helix(i / 28, 0), helix(i / 28, Math.PI), .012, .75, 62);
+  return g.finish();
+}
+
+export function intelligenceNodes(): Vec3[] {
+  return Array.from({ length: 64 }, (_, i) => {
+    const a = i / 64 * TAU, layer = i % 3;
+    return [Math.cos(a) * 1.27, Math.sin(a * 2) * (.62 + layer * .1), Math.sin(a) * .46 + (layer - 1) * .12];
+  });
+}
+
+/** An open, interwoven network: many domains meeting at a shared center. */
+export function intelligenceSculpture(): Sculpture {
+  const g = new Geometry(), nodes = intelligenceNodes();
+  nodes.forEach((p, i) => {
+    g.surface(22, 12, (u, v) => {
+      const a = u * TAU, b = v * Math.PI, r = i % 8 === 0 ? .065 : .033;
+      return [p[0] + Math.cos(a) * Math.sin(b) * r, p[1] + Math.cos(b) * r, p[2] + Math.sin(a) * Math.sin(b) * r];
+    });
+    for (const jump of [1, 7, 23]) {
+      const q = nodes[(i + jump) % nodes.length];
+      g.line(u => [p[0] + (q[0] - p[0]) * u, p[1] + (q[1] - p[1]) * u, p[2] + (q[2] - p[2]) * u], 86, jump === 1 ? .85 : .3);
+    }
+  });
+  return g.finish();
+}
+
+export function questionsSculpture(question: Sculpture): Sculpture {
+  const g = new Geometry();
+  g.add(question, .72, 0, -.05, .22);
+  g.add(question, .35, -.98, -.34, -.15);
+  g.add(question, .31, 1.02, .28, -.1);
+  g.add(question, .27, .75, -.9, -.35);
+  g.add(question, .26, -.65, .87, -.3);
+  return g.finish();
 }
 
 export function questionSculpture(): Sculpture | null {
