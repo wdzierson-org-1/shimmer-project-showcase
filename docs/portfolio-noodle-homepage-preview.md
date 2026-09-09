@@ -1,6 +1,6 @@
 # Career navigation and Noodle homepage reconstruction
 
-Source: `/private/tmp/shimmer-dusk-fireflies`, branch `preview-career-noodle`, continuing from production `cd47759`. This revision is prepared locally for review and has not been published.
+Source: `/private/tmp/shimmer-dusk-fireflies`, branch `preview-career-noodle`, continuing from production `cd47759`. The user reviewed the reconstruction and inline gallery, then explicitly approved checking in and pushing this version. The approved implementation is `52689b8`, including the Career navigation and Noodle reconstruction from `906cc1b`. Release through the existing `main` branch and Vercel project.
 
 The top navigation now places **Career** immediately after **All work** and before **About**, with a real `/#career` link and the existing client-side career view. Modified clicks preserve normal new-tab behavior, and the link exposes `aria-current` while visiting the career view.
 
@@ -13,3 +13,5 @@ The reconstruction is loaded only for the Noodle case, including its CSS and fon
 Validation: focused TypeScript and ESLint; production build; three existing route regressions; server-rendered markup and local asset checks; component callback checks of all three demo selections. The inline gallery was checked against the current public media list to confirm that only the original homepage screenshot is excluded. Reference screenshot and original media were inspected. Automated browser layout/playback verification is unavailable because there is no connected browser; do not treat these checks as browser screenshots or full browser validation.
 
 Preview: http://127.0.0.1:8083/#case=e7149d46-fad6-477b-a91c-77e76723df7d . Career: http://127.0.0.1:8083/#career .
+
+Production before this release: `cd47759`, Vercel deployment `dpl_9zPZs5Rrxkmj2ySgEQMF7QMcR2w1` at https://shimmer-project-showcase-jmgv3el3p-wdzierson-s-team.vercel.app. This is the immediate rollback target.
