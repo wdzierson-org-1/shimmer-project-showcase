@@ -40,6 +40,7 @@ export function PortfolioTimelineWindow({ onOpenProject }: PortfolioTimelineWind
           .from('projects')
           .select('id, title, client, year, description')
           .eq('visible', true)
+          .eq('unlisted', false)
           .not('year', 'is', null)
           .order('year', { ascending: true });
         if (error) throw error;

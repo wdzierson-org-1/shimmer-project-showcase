@@ -70,6 +70,7 @@ const VillaBook = ({ villa, onClose }: VillaBookProps) => {
             project_tags (tags (name))`)
           .ilike('client', `%${pattern}%`)
           .eq('visible', true)
+          .eq('unlisted', false)
           .order('year', { ascending: true })
       )
     ).then(results => {

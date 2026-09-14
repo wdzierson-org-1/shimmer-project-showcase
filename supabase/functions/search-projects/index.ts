@@ -68,6 +68,7 @@ serve(async (req) => {
         .from('projects')
         .select('id')
         .eq('visible', true)
+        .eq('unlisted', false)
         .limit(5);
 
       if (fallbackError) {

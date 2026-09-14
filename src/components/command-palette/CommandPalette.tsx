@@ -33,6 +33,7 @@ const CommandPalette = () => {
         .from('projects')
         .select('id, title, client')
         .eq('visible', true)
+        .eq('unlisted', false)
         .order('created_at', { ascending: false });
 
       if (data) {

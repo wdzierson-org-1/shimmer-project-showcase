@@ -237,6 +237,7 @@ export type Database = {
           description: string
           display_order: number
           featured: boolean
+          unlisted: boolean
           id: string
           involvement: string | null
           liveurl: string | null
@@ -251,6 +252,7 @@ export type Database = {
           description: string
           display_order?: number
           featured?: boolean
+          unlisted?: boolean
           id?: string
           involvement?: string | null
           liveurl?: string | null
@@ -265,6 +267,7 @@ export type Database = {
           description?: string
           display_order?: number
           featured?: boolean
+          unlisted?: boolean
           id?: string
           involvement?: string | null
           liveurl?: string | null

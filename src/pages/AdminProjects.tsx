@@ -23,7 +23,7 @@ export default function AdminProjects() {
     setLoadError(false);
     try {
       const { data, error } = await withProjectOrder(supabase.from('projects').select(`
-        id, title, client, description, display_order, created_at,
+        id, title, client, description, display_order, created_at, unlisted,
         project_images (image_url, is_primary), project_tags (tags (name))
       `));
       if (error) throw error;
@@ -31,7 +31,7 @@ export default function AdminProjects() {
         id: item.id, title: item.title, client: item.client, description: item.description,
         imageUrl: item.project_images.find(img => img.is_primary)?.image_url || '/placeholder.svg',
         tags: item.project_tags.map(tag => tag.tags?.name).filter((name): name is string => !!name),
-        displayOrder: item.display_order, createdAt: item.created_at,
+        displayOrder: item.display_order, createdAt: item.created_at, unlisted: item.unlisted,
       })));
     } catch {
       setLoadError(true);
@@ -68,6 +68,14 @@ export default function AdminProjects() {
     }
   }
 
+  async function handleToggleUnlisted(id: string, unlisted: boolean) {
+    if (savingOrder.current) return;
+    const { data, error } = await supabase.from('projects').update({ unlisted }).eq('id', id).select('id, unlisted').single();
+    if (error || data?.unlisted !== unlisted) { toast.error('Couldn’t update the listing setting'); return; }
+    setProjects(previous => previous.map(project => project.id === id ? { ...project, unlisted } : project));
+    toast.success(unlisted ? 'Project unlisted. It stays reachable by direct link.' : 'Project listed on the site again');
+  }
+
   async function handleDeleteProject(id: string) {
     if (savingOrder.current || !confirm('Are you sure you want to delete this project?')) return;
     try {
@@ -99,7 +107,7 @@ export default function AdminProjects() {
         </div>
         <div className="bg-card rounded-lg border shadow-sm overflow-x-auto"><div className="min-w-[680px]">
           <div className="grid grid-cols-12 gap-4 p-4 font-medium text-muted-foreground border-b text-xs uppercase tracking-wider"><div className="col-span-5">Project</div><div className="col-span-3">Client</div><div className="col-span-2">Tags</div><div className="col-span-2 text-right">Actions</div></div>
-          <SortableProjectList projects={filtered} onReorder={handleReorder} onDelete={handleDeleteProject} disabled={saving} sortingDisabled={!!query}/>
+          <SortableProjectList projects={filtered} onReorder={handleReorder} onDelete={handleDeleteProject} onToggleUnlisted={handleToggleUnlisted} disabled={saving} sortingDisabled={!!query}/>
         </div></div>
       </>}
   </div></div>;

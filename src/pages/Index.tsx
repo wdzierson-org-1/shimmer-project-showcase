@@ -43,6 +43,7 @@ const Index = () => {
           )
           .eq('featured', true)
           .eq('visible', true)
+          .eq('unlisted', false)
           .order('display_order', { ascending: true });
 
         if (error) throw error;

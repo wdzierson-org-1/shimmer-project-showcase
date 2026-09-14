@@ -23,6 +23,7 @@ interface SortableProjectListProps {
   projects: AdminProject[];
   onReorder: (activeId: string, overId: string) => void;
   onDelete: (id: string) => void;
+  onToggleUnlisted: (id: string, unlisted: boolean) => void;
   disabled?: boolean;
   sortingDisabled?: boolean;
 }
@@ -33,6 +34,7 @@ const SortableProjectList = ({
   projects,
   onReorder,
   onDelete,
+  onToggleUnlisted,
   disabled = false,
   sortingDisabled = false,
 }: SortableProjectListProps) => {
@@ -75,6 +77,7 @@ const SortableProjectList = ({
               key={project.id}
               project={project}
               onDelete={onDelete}
+              onToggleUnlisted={onToggleUnlisted}
               disabled={disabled}
               sortingDisabled={sortingDisabled}
             />

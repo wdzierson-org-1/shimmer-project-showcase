@@ -37,6 +37,7 @@ export function ProjectBrowserWindow({ onOpenProject }: ProjectBrowserWindowProp
           .from('projects')
           .select('id, title, client, year, description')
           .eq('visible', true)
+          .eq('unlisted', false)
           .order('year', { ascending: false });
         if (error) throw error;
         setProjects(data ?? []);

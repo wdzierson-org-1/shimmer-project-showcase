@@ -25,7 +25,8 @@ export const fetchProjects = async (projectIds?: string[]): Promise<Project[]> =
         project_tags (
           tags (name)
         )
-      `);
+      `)
+      .eq('unlisted', false);
       
     // If specific projectIds are provided, filter by them
     if (projectIds && projectIds.length > 0) {
