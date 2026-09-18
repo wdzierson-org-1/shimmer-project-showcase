@@ -23,7 +23,6 @@
 .arc-stage .arc-controls input[type=range] { background:linear-gradient(to right,#e7cfbb var(--played,0%),#dbccdf30 var(--played,0%)); }
 .arc-stage .arc-controls input[type=range]::-webkit-slider-thumb { background:#f2d7bd; }
 .arc-stage .arc-controls input[type=range]::-moz-range-thumb { background:#f2d7bd; }
-.arc-stage .arc-atmosphere-toggle { color:#e2cfdf; }
 .arc-stage .arc-letter::before { color:#e4c9d7; }
 .arc-stage .arc-letter.is-caret::after { background:#f3dfc6; box-shadow:0 0 .2em #f6d3ab30; }
 .arc-firefly-cover { opacity:1; transition:opacity .8s; pointer-events:none; }

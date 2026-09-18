@@ -25,7 +25,6 @@ export default function CareerReel() {
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [sound, setSound] = useState(false);
-  const [atmospherePaused, setAtmospherePaused] = useState(false);
   const [chapter, setChapter] = useState(0);
   const [ended, setEnded] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -118,7 +117,7 @@ export default function CareerReel() {
         if (started && event.code === 'Space') { event.preventDefault(); toggle(); }
         if (started && ['ArrowLeft', 'ArrowRight'].includes(event.key)) { event.preventDefault(); seek(elapsed.current + (event.key === 'ArrowRight' ? 4 : -4)); }
       }}>
-      <DuskAtmosphere ref={backdrop} active={!started && !atmospherePaused} clocked={started}/>
+      <DuskAtmosphere ref={backdrop} active={!started} clocked={started}/>
       <FireflyCover/>
       {started && !failed && <Suspense fallback={null}><JourneyScene onReady={onReady} onError={onError}/></Suspense>}
       <div className="arc-grain" aria-hidden="true" />
@@ -130,7 +129,6 @@ export default function CareerReel() {
         {started && <span className="arc-evidence">{current.evidence}</span>}
       </div>
       {!started && <button className="arc-start" onClick={begin}><Play size={16} fill="currentColor"/><span>{reduced ? 'Explore the story' : 'Play the story'}<small>{reduced ? 'Six chapters · At your pace' : `${formatTime(DURATION)} · A short story`}</small></span></button>}
-      {!started && !reduced && <button className="arc-atmosphere-toggle" aria-label={atmospherePaused ? 'Resume reel atmosphere' : 'Pause reel atmosphere'} aria-pressed={atmospherePaused} onClick={() => setAtmospherePaused(value => !value)}>{atmospherePaused ? <Play size={12}/> : <Pause size={12}/>}</button>}
       {started && !ready && !failed && <p className="arc-loading" role="status">Opening the story…</p>}
       {started && <div className="arc-controls">
         <button onClick={toggle} aria-label={manual ? 'Next chapter' : ended ? 'Replay story' : playing ? 'Pause story' : 'Play story'}>

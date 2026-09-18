@@ -11,8 +11,6 @@
 .shader-rays[data-shader='fallback'] { background:conic-gradient(from 192deg at 112% -48%,transparent 0deg,#e7d39b17 14deg,transparent 25deg,#b8d4bb12 41deg,transparent 60deg); }
 .arc-stage .arc-canvas { z-index:1; }
 .arc-stage .arc-poster { z-index:1; }
-.arc-atmosphere-toggle { position:absolute; z-index:2; right:calc(4% - 10px); bottom:52px; width:36px; height:36px; display:grid; place-items:center; color:#c3d0c3; opacity:.7; }
-.arc-atmosphere-toggle:hover,.arc-atmosphere-toggle:focus-visible { opacity:1; color:#f0ebdb; }
 .practice-signal { position:relative; margin:8px 0 0; border-bottom:1px solid #d8dacd; }
 .practice-signal-art { position:relative; height:clamp(190px,23vw,310px); overflow:hidden; }
 .practice-signal-art canvas { position:absolute; inset:0; display:block; width:100%; height:100%; }
