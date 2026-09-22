@@ -24,7 +24,8 @@ const CommandPalette = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const isProjectDetail = location.pathname.startsWith('/project/');
+  // Pages that draw their own bottom-right controls; ⌘K still works, only the badge is hidden.
+  const hideTrigger = location.pathname.startsWith('/project/') || location.pathname === '/experienceoasis';
   const debounceRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -171,7 +172,7 @@ const CommandPalette = () => {
       {/* Trigger hint — hidden on mobile and project detail pages */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`${isProjectDetail ? 'hidden' : 'hidden sm:flex'} fixed bottom-6 right-6 z-40 items-center gap-1.5 px-3 py-2 rounded-full bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 transition-all text-foreground/40 hover:text-foreground/60 backdrop-blur-sm`}
+        className={`${hideTrigger ? 'hidden' : 'hidden sm:flex'} fixed bottom-6 right-6 z-40 items-center gap-1.5 px-3 py-2 rounded-full bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 transition-all text-foreground/40 hover:text-foreground/60 backdrop-blur-sm`}
       >
         <Command size={13} />
         <span className="text-xs font-mono">K</span>

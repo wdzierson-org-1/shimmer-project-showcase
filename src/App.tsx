@@ -22,6 +22,7 @@ import AdminAbout from "./pages/AdminAbout";
 import ProjectEditor from "./pages/ProjectEditor";
 import ContentEditor from "./pages/ContentEditor";
 import ContentDetail from "./pages/ContentDetail";
+import ExperienceOasis from "./pages/ExperienceOasis";
 import NotFound from "./pages/NotFound";
 import { supabase } from "./integrations/supabase/client";
 
@@ -69,6 +70,7 @@ const App = () => {
               <Route path="/entries" element={<AllEntries />} />
               <Route path="/project/:id" element={<PortfolioRedirect />} />
               <Route path="/content/:id" element={<ContentDetail />} />
+              <Route path="/experienceoasis" element={<ExperienceOasis />} />
               <Route path="/login" element={<Auth />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<Auth />} />

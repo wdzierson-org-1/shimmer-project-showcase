@@ -23,3 +23,9 @@ test('CMS, authentication, content, and unknown paths stay with the existing rou
     assert.equal(portfolioDestination(path), null, path);
   }
 });
+test('the island game keeps its own route in the existing router', async () => {
+  assert.equal(portfolioDestination('/experienceoasis'), null);
+  assert.equal(portfolioDestination('/experienceoasis/'), null);
+  const app = await fs.readFile('src/App.tsx', 'utf8');
+  assert.match(app, /path="\/experienceoasis"/, 'App.tsx declares the /experienceoasis route');
+});
