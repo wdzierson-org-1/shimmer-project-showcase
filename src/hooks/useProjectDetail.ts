@@ -8,6 +8,7 @@ interface ProjectWithImages extends Project {
   additionalImages?: string[];
   liveUrl?: string;
   involvement?: string;
+  year?: number;
 }
 
 export const useProjectDetail = () => {
@@ -106,7 +107,8 @@ export const useProjectDetail = () => {
           tags: tags,
           createdAt: projectData.created_at,
           liveUrl: projectData.liveurl,
-          involvement: projectData.involvement
+          involvement: projectData.involvement,
+          year: projectData.year,
         };
         
         console.log('Complete project object:', completeProject);

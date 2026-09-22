@@ -1,0 +1,1 @@
+{"name":"aspect-portfolio-concept","private":true,"type":"module","dependencies":{"@xterm/addon-serialize":"0.14.0","@xterm/xterm":"6.0.0","cool-retro-term-renderer":"1.0.1","lenis":"1.3.26","three":"0.180.0"}}

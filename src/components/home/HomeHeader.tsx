@@ -23,7 +23,7 @@ const HomeHeader = () => {
                 "transition-all hover:opacity-70 uppercase"
               )}
             >
-              All Projects
+              Projects
             </Link>
             <Link 
               to="/entries" 
@@ -32,7 +32,16 @@ const HomeHeader = () => {
                 "transition-all hover:opacity-70 uppercase"
               )}
             >
-              All Entries
+              Writing
+            </Link>
+            <Link 
+              to="/about" 
+              className={cn(
+                "font-serif text-sm tracking-wide text-foreground",
+                "transition-all hover:opacity-70 uppercase"
+              )}
+            >
+              About
             </Link>
           </nav>
         </div>

@@ -11,13 +11,15 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    const bucketName = 'project_images';
+
     // Check if bucket exists and create it if it doesn't
     const { data: buckets } = await supabase.storage.listBuckets();
-    const bucketExists = buckets?.some(bucket => bucket.name === 'project_images');
+    const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
 
     if (!bucketExists) {
-      // Create bucket for project images
-      const { data, error } = await supabase.storage.createBucket('project_images', {
+      // Create the bucket without a bucket-specific file size cap.
+      const { data, error } = await supabase.storage.createBucket(bucketName, {
         public: true,
       });
 
@@ -25,7 +27,19 @@ serve(async (req) => {
         throw new Error(`Failed to create bucket: ${error.message}`);
       }
       
-      console.log('Created storage bucket: project_images');
+      console.log(`Created storage bucket: ${bucketName}`, data);
+    } else {
+      // Clear any bucket-level file size restriction so uploads only use the project-wide storage limit.
+      const { data, error } = await supabase.storage.updateBucket(bucketName, {
+        public: true,
+        fileSizeLimit: null,
+      });
+
+      if (error) {
+        throw new Error(`Failed to update bucket: ${error.message}`);
+      }
+
+      console.log(`Updated storage bucket: ${bucketName}`, data);
     }
 
     return new Response(

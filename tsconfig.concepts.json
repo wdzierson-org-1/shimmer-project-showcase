@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": { "allowSyntheticDefaultImports": true },
+  "include": ["src/concepts/**/*.tsx", "src/concepts/**/*.ts"],
+  "exclude": ["src/concepts/os/node_modules"]
+}

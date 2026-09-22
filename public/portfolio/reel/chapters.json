@@ -1,0 +1,119 @@
+[
+  {
+    "duration": 5,
+    "act": 0,
+    "year": "2005—2026",
+    "company": "A builder’s story",
+    "title": "The interface changes.\nThe question stays.",
+    "line": "How can technology become useful?",
+    "kind": "title",
+    "start": 0
+  },
+  {
+    "duration": 6,
+    "act": 0,
+    "year": "2005",
+    "company": "Smithsonian / SIguide",
+    "title": "Make discovery\ntangible.",
+    "line": "An interactive guide to the world beyond the screen.",
+    "kind": "image",
+    "file": "7b4a9961-a088-46f4-bc88-8f0d64589227.png",
+    "start": 5
+  },
+  {
+    "duration": 7,
+    "act": 0,
+    "year": "2009",
+    "company": "Google / Beijing",
+    "title": "Start with real lives.",
+    "line": "Field research became the foundation for a mobile experience.",
+    "kind": "photo",
+    "file": "dff59819-cbc1-46ab-8cef-011e0e2a963f-3.png",
+    "start": 11
+  },
+  {
+    "duration": 5,
+    "act": 1,
+    "year": "2014—2018",
+    "company": "Grand Rounds",
+    "title": "Build the team.\nRaise the standard.",
+    "line": "Building and leading Product Design and Research.",
+    "kind": "title",
+    "start": 18
+  },
+  {
+    "duration": 6,
+    "act": 1,
+    "year": "2019",
+    "company": "DarwinAI / Obvious Ventures",
+    "title": "Make the invisible\nunderstandable.",
+    "line": "Giving people a way to interrogate machine learning.",
+    "kind": "image",
+    "file": "af307088-2085-4a60-b697-964b6b37eb82.png",
+    "start": 23
+  },
+  {
+    "duration": 7,
+    "act": 1,
+    "year": "2021—2022",
+    "company": "The Public Health Company",
+    "title": "Turn uncertainty\ninto a decision.",
+    "line": "Disease signals. Operational risk. A clear next step.",
+    "kind": "image",
+    "file": "a29df936-41db-4244-b968-203b71235c76-0.png",
+    "start": 29
+  },
+  {
+    "duration": 7,
+    "act": 2,
+    "year": "2023—2025",
+    "company": "Noodle AI / Co-founder",
+    "title": "When the answer\ndoesn’t exist,\nbuild it.",
+    "line": "A company built around making personal health history useful.",
+    "kind": "phone",
+    "file": "e7149d46-fad6-477b-a91c-77e76723df7d-1.mp4",
+    "start": 36
+  },
+  {
+    "duration": 6,
+    "act": 2,
+    "year": "2024—2025",
+    "company": "Included Health",
+    "title": "Bring intelligence\ninto the work\nof care.",
+    "line": "Designing and engineering multimodal AI experiences.",
+    "kind": "image",
+    "file": "cc5b34e1-e0a7-4a59-b3b6-c9e814585c34.png",
+    "start": 43
+  },
+  {
+    "duration": 7,
+    "act": 2,
+    "year": "2025",
+    "company": "Agentic OS",
+    "title": "Design the behavior.\nBuild the system.",
+    "line": "From interaction design to a working, agentic operating system.",
+    "kind": "video",
+    "file": "d8307ba2-cc0e-4fc5-bc00-48fd5458dd08-1.mp4",
+    "start": 49
+  },
+  {
+    "duration": 6,
+    "act": 2,
+    "year": "2026—",
+    "company": "InsideTracker / VP, Product & Design",
+    "title": "Lead the product.\nStay a builder.",
+    "line": "Connecting scientific insight, product strategy, and craft.",
+    "kind": "title",
+    "start": 56
+  },
+  {
+    "duration": 4,
+    "act": 2,
+    "year": "WILL DZIERSON",
+    "company": "Design + technology",
+    "title": "Conceive. Design.\nBuild. Deploy.",
+    "line": "25+ years of making ideas work in the world.",
+    "kind": "title",
+    "start": 62
+  }
+]

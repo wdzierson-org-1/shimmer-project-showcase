@@ -11,11 +11,14 @@ const Header = () => {
           Will Dzierson / Portfolio
         </Link>
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link to="/projects">All Projects</Link>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/projects">Projects</Link>
           </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/entries">All Entries</Link>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/entries">Writing</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/about">About</Link>
           </Button>
         </div>
       </div>

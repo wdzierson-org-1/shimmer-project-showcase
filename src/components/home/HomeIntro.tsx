@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Github } from 'lucide-react';
+import { Github, Linkedin, Mail } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Link } from 'react-router-dom';
 
@@ -30,13 +30,18 @@ const HomeIntro = () => {
   return (
     <div className="lg:sticky lg:top-24 flex flex-col justify-between h-full">
       <div className="space-y-6">
-        <h2 className={cn(
-          "font-serif text-4xl md:text-5xl text-foreground",
-          "tracking-tight leading-[1.15]"
-        )}
-        style={{ fontWeight: 200 }}>
-          {greeting} {user ? user.email?.split('@')[0] : ''}
-        </h2>
+        <div>
+          <h2 className={cn(
+            "font-serif text-4xl md:text-5xl text-foreground",
+            "tracking-tight leading-[1.15]"
+          )}
+          style={{ fontWeight: 200 }}>
+            {greeting} {user ? user.email?.split('@')[0] : ''}
+          </h2>
+          <p className="mt-2 text-sm uppercase tracking-widest text-foreground/50 font-light">
+            Design technologist &amp; AI entrepreneur
+          </p>
+        </div>
         
         <div className={cn(
           "text-lg text-foreground/80 leading-relaxed",
@@ -56,15 +61,24 @@ const HomeIntro = () => {
         </div>
       </div>
       
-      <div className="space-y-4 mt-auto pt-12">
-        <div>
-          <a href="https://github.com/wdzierson/shimmer-project-showcase-pub" 
-             className="flex items-center gap-2 text-foreground/80 hover:text-foreground">
-            <Github size={18} />
-            <span className="hover:underline">I'm open source: GitHub</span>
-          </a>
-        </div>
-        
+      <div className="space-y-3 mt-auto pt-12">
+        <a href="mailto:will+hello@dzierson.com"
+           className="flex items-center gap-2 text-foreground/70 hover:text-foreground transition-colors">
+          <Mail size={16} />
+          <span className="text-sm hover:underline">will+hello@dzierson.com</span>
+        </a>
+        <a href="https://www.linkedin.com/in/will-dzierson-1081963/"
+           target="_blank" rel="noopener noreferrer"
+           className="flex items-center gap-2 text-foreground/70 hover:text-foreground transition-colors">
+          <Linkedin size={16} />
+          <span className="text-sm hover:underline">LinkedIn</span>
+        </a>
+        <a href="https://github.com/wdzierson/shimmer-project-showcase-pub"
+           target="_blank" rel="noopener noreferrer"
+           className="flex items-center gap-2 text-foreground/70 hover:text-foreground transition-colors">
+          <Github size={16} />
+          <span className="text-sm hover:underline">GitHub (open source)</span>
+        </a>
       </div>
     </div>
   );

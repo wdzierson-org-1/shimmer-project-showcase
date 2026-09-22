@@ -6,13 +6,14 @@ interface ProjectMetaProps {
   client: string;
   title: string;
   tags: string[];
+  year?: number;
 }
 
-const ProjectMeta: React.FC<ProjectMetaProps> = ({ client, title, tags }) => {
+const ProjectMeta: React.FC<ProjectMetaProps> = ({ client, title, tags, year }) => {
   return (
     <div className="mb-8">
       <div className="text-sm uppercase text-muted-foreground mb-1">
-        {client}
+        {client}{year ? <span className="text-muted-foreground/60"> · {year}</span> : null}
       </div>
       <h1 className="case-study-title mb-6">{title}</h1>
       <div className="flex flex-wrap gap-1 mb-8">

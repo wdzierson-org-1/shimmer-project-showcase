@@ -212,6 +212,24 @@ export type Database = {
           },
         ]
       }
+      site_settings: {
+        Row: {
+          key: string
+          value: string
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          value: string
+          updated_at?: string
+        }
+        Update: {
+          key?: string
+          value?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           client: string
@@ -220,6 +238,7 @@ export type Database = {
           id: string
           involvement: string | null
           liveurl: string | null
+          sort_order: number | null
           title: string
           updated_at: string | null
           visible: boolean | null
@@ -232,6 +251,7 @@ export type Database = {
           id?: string
           involvement?: string | null
           liveurl?: string | null
+          sort_order?: number | null
           title: string
           updated_at?: string | null
           visible?: boolean | null
@@ -244,6 +264,7 @@ export type Database = {
           id?: string
           involvement?: string | null
           liveurl?: string | null
+          sort_order?: number | null
           title?: string
           updated_at?: string | null
           visible?: boolean | null

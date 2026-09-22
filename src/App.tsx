@@ -10,6 +10,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 import Index from "./pages/Index";
+import About from "./pages/About";
 import AllProjects from "./pages/AllProjects";
 import AllEntries from "./pages/AllEntries";
 import Admin from "./pages/Admin";
@@ -18,6 +19,7 @@ import AdminProjects from "./pages/AdminProjects";
 import AdminContent from "./pages/AdminContent";
 import AdminPrompts from "./pages/AdminPrompts";
 import AdminUsers from "./pages/AdminUsers";
+import AdminSettings from "./pages/AdminSettings";
 import ProjectEditor from "./pages/ProjectEditor";
 import ContentEditor from "./pages/ContentEditor";
 import ProjectDetail from "./pages/ProjectDetail";
@@ -87,6 +89,7 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/about" element={<About />} />
               <Route path="/projects" element={<AllProjects />} />
               <Route path="/entries" element={<AllEntries />} />
               <Route path="/project/:id" element={<ProjectDetail />} />
@@ -127,6 +130,11 @@ const App = () => {
               <Route path="/admin/users" element={
                 <ProtectedRoute requireAdmin={true}>
                   <AdminUsers />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/settings" element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminSettings />
                 </ProtectedRoute>
               } />
               <Route path="*" element={<NotFound />} />

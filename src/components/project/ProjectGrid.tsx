@@ -37,6 +37,7 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects: providedProjects, l
             )
           `)
           .eq('visible', true)
+          .order('sort_order', { ascending: true, nullsFirst: false })
           .order('created_at', { ascending: false });
           
         if (limit) {

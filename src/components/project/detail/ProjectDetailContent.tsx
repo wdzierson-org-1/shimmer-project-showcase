@@ -13,6 +13,7 @@ interface ProjectWithImages extends Project {
   additionalImages?: string[];
   liveUrl?: string;
   involvement?: string;
+  year?: number;
 }
 
 interface ProjectDetailContentProps {
@@ -43,6 +44,7 @@ const ProjectDetailContent: React.FC<ProjectDetailContentProps> = ({ project }) 
               client={project.client}
               title={project.title}
               tags={project.tags}
+              year={project.year}
             />
             
             <div className="mt-8">
