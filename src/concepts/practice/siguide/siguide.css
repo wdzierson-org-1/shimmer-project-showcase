@@ -1,0 +1,34 @@
+.si-hero { margin: 0 0 64px; }
+.si-stage { position: relative; isolation: isolate; overflow: hidden; aspect-ratio: 1.65; width: 100%; background: radial-gradient(ellipse at 45% 36%, #fafbf5 0%, #e9ede3 55%, #dce2d5 100%); --si-blueprint: 1; }
+.si-blueprint { position: absolute; inset: 0; opacity: var(--si-blueprint); background-image: linear-gradient(#6a7f6921 1px, transparent 1px), linear-gradient(90deg, #6a7f6921 1px, transparent 1px), linear-gradient(#6a7f690a 1px, transparent 1px), linear-gradient(90deg, #6a7f690a 1px, transparent 1px); background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px; mask-image: radial-gradient(ellipse at center, #000, transparent 85%); pointer-events: none; }
+.si-stage-label { position: absolute; z-index: 2; top: 28px; left: 32px; right: 32px; display: flex; justify-content: space-between; gap: 12px; color: #4f6251; font-size: 10px; font-weight: 500; letter-spacing: .11em; text-transform: uppercase; pointer-events: none; }
+.si-stage-label .si-product-label { text-transform: none; letter-spacing: .04em; }
+.si-canvas { position: absolute; width: 100%; height: 100%; inset: 0; }
+.si-canvas[hidden], .si-poster[hidden] { display: none; }
+.si-poster { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
+.si-phases { position: absolute; bottom: 25px; left: 32px; right: 32px; display: flex; gap: 27px; color: #566750; font-size: 11px; pointer-events: none; }
+.si-phases span { opacity: .55; }
+.si-phases span[data-active=true] { opacity: 1; }
+.si-phases b { font-size: 9px; font-weight: 400; margin-right: 4px; }
+.si-controls { border-bottom: 1px solid #25382d26; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; }
+.si-playback, .si-views { display: flex; align-items: center; gap: 8px; }
+.practice .si-controls button { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; border: 1px solid transparent; border-radius: 3px; padding: 0 12px; background: transparent; color: #344839; font: inherit; font-size: 12px; cursor: pointer; }
+.practice .si-controls button:hover { background: #3448390c; }
+.practice .si-controls button[aria-pressed=true] { border-color: #34483942; background: #34483909; }
+.practice .si-controls button:focus-visible { outline: 2px solid #344839; outline-offset: 3px; }
+.si-views > span, .si-status { font-size: 11px; color: #66735f; margin-right: 8px; }
+.si-status { min-width: 65px; }
+.si-caption { display: flex; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; padding: 16px 0 0; font-size: 11px; line-height: 1.6; color: #687260; }
+.si-caption a { color: #42563f; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 640px) {
+  .si-hero { margin-bottom: 40px; }
+  .si-stage { aspect-ratio: 1.18; }
+  .si-stage-label { top: 18px; left: 18px; right: 18px; font-size: 8px; flex-direction: column; gap: 5px; }
+  .si-phases { bottom: 18px; left: 18px; right: 18px; gap: 16px; font-size: 10px; }
+  .si-controls { flex-wrap: wrap; gap: 2px; padding: 8px 0; }
+  .si-playback { gap: 0; }
+  .si-views { gap: 2px; margin-left: auto; }
+  .si-views > span { display: none; }
+  .si-status { font-size: 10px; min-width: auto; margin-right: 0; }
+  .practice .si-controls button { padding: 0 9px; }
+}
