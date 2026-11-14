@@ -83,9 +83,9 @@ export const roles: Role[] = [
 
 /** Logo wall. A client filters the archive; otherwise the logo opens that role on the career page. */
 export const brands: Brand[] = [
- { id: 'google', label: 'Google', client: 'Google' }, { id: 'included-health', label: 'Included Health', client: 'Included Health' }, { id: 'insidetracker', label: 'InsideTracker', client: '' },
+ { id: 'google', label: 'Google', client: 'Google' }, { id: 'included-health', label: 'Included Health', client: 'Included Health' }, { id: 'softbank', label: 'SoftBank', client: '' },
  { id: 'salesforce', label: 'Salesforce', client: '' }, { id: 'yahoo', label: 'Yahoo!', client: '' }, { id: 'smithsonian', label: 'Smithsonian', client: 'Smithsonian' },
  { id: 'optum', label: 'Optum', client: 'Optum' }, { id: 'ibm', label: 'IBM', client: '' }, { id: 'bose', label: 'Bose', client: '' },
  { id: 'caterpillar', label: 'Caterpillar', client: '' }, { id: 'obvious', label: 'Obvious Ventures', client: '' }, { id: 'lincoln-center', label: 'Lincoln Center', client: '' },
- { id: 'lockheed-martin', label: 'Lockheed Martin', client: '' }, { id: 'dr-seuss', label: 'Dr. Seuss', client: '' }, { id: 'softbank', label: 'SoftBank', client: '' },
+ { id: 'lockheed-martin', label: 'Lockheed Martin', client: '' }, { id: 'dr-seuss', label: 'Dr. Seuss', client: '' }, { id: 'insidetracker', label: 'InsideTracker', client: '' },
 ];
