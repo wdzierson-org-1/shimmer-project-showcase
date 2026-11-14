@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { ArrowDownRight, ArrowRight, BarChart3, Bell, ChevronDown, Download, Home, LogOut, MoreHorizontal, RotateCcw, Settings, Share2, UserRound } from 'lucide-react';
 import { curve, dates, points, regions, xAt, yAt, type Region } from './data';
+import { caseUrl } from '../routes';
 import './risk-dashboard.css';
 
 type Props = { projectId: string };
@@ -75,7 +76,7 @@ export default function RiskDashboard({ projectId }: Props) {
   }, []);
   function select(index: number) { setLocale(index); setDelay(0); }
   async function share() {
-    try { await navigator.clipboard.writeText(`${location.origin}/#case=${projectId}`); setShareState('Link copied'); }
+    try { await navigator.clipboard.writeText(`${location.origin}${caseUrl(projectId)}`); setShareState('Link copied'); }
     catch { setShareState('Copy unavailable'); }
     clearTimeout(shareTimer.current); shareTimer.current = setTimeout(() => setShareState(''), 2500);
   }

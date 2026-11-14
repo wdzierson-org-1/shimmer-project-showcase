@@ -9,6 +9,8 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test": "node --test scripts/portfolio/test_*.mjs",
+    "check:agents": "node scripts/agent-pages/check.mjs",
     "generate:willbot-knowledge": "node scripts/generate-willbot-knowledge.mjs"
   },
   "dependencies": {

@@ -4,4 +4,5 @@ export const publications=[
  {title:'Building a RAG-Based Portfolio Chatbot',type:'Build notes',url:'https://medium.com/@willdzierson/building-a-rag-based-portfolio-chatbot-with-lovable-dev-supabase-and-the-openai-api-0ceafc7a0d9a'},
 ];
 export const linkedin='https://www.linkedin.com/in/will-dzierson-1081963/';
+export const medium='https://medium.com/@willdzierson';
 export const lovableFeature='https://lovable.dev/guides/11-ux-portfolio-examples';
